@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { formatCurrency, generateCustomItemId } from "@/lib/utils";
 import GPayCheckoutModal from "@/components/GPayCheckoutModal";
+import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
+import { CustomerAvatar } from "@/components/common/Avatars";
 
 interface LineItem {
   id: string; // local key
@@ -447,17 +449,32 @@ function NewOrderContent() {
           {selectedCustomer && (
             <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-slate-700">{selectedCustomer.name}</span>
-                <span className="font-mono text-slate-500">{selectedCustomer.mobile}</span>
-                <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                  {selectedCustomer.customerCode}
-                </span>
+                <CustomerAvatar name={selectedCustomer.name} size="sm" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-800 text-sm">{selectedCustomer.name}</span>
+                    <VoiceCalloutButton
+                      payload={{
+                        customerName: selectedCustomer.name,
+                        villageName: villages.find((v) => v.id === selectedVillageId)?.name,
+                        amount: grandTotal > 0 ? grandTotal : undefined,
+                        paymentType,
+                      }}
+                      variant="badge"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 font-mono">
+                    <span>{selectedCustomer.mobile}</span>
+                    <span>•</span>
+                    <span className="bg-slate-100 px-1.5 py-0.2 rounded font-bold">{selectedCustomer.customerCode}</span>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-slate-500">Existing Udhaar:</span>
+                <span className="text-slate-500 font-medium">Existing Udhaar (బకాయి):</span>
                 <span
-                  className={`font-mono font-bold text-sm ${
+                  className={`font-mono font-black text-sm ${
                     selectedCustomer.currentBalance > 0 ? "text-rose-600" : "text-emerald-600"
                   }`}
                 >
@@ -621,25 +638,28 @@ function NewOrderContent() {
 
           {/* 3-Segment Switch */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-            {/* 1. Debit (Fully Paid) */}
+            {/* 1. Debit (Fully Paid / Nagathu) */}
             <button
               type="button"
               onClick={() => {
                 setPaymentType("DEBIT");
                 setPaidAmount("");
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`p-4 rounded-2xl border text-left transition-all ${
                 paymentType === "DEBIT"
-                  ? "bg-emerald-50/80 border-emerald-500 shadow-sm ring-1 ring-emerald-500"
+                  ? "bg-emerald-50/90 border-emerald-500 shadow-md ring-2 ring-emerald-500/30"
                   : "bg-white border-slate-200 hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-slate-900">Debit (Paid in Full)</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <div>
+                  <span className="text-sm font-extrabold text-slate-900 block">నగదు (Nagathu / Debit)</span>
+                  <span className="text-[11px] text-emerald-700 font-bold">Total Payment Paid on Spot</span>
+                </div>
+                <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0 shadow-xs"></span>
               </div>
-              <p className="text-xs text-slate-500">
-                Total payment paid right now. Customer khata balance remains unchanged.
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                కౌంటర్ వద్ద మొత్తం నగదు లేదా UPI చెల్లించారు. కస్టమర్ ఉద్ధార బకాయి మారదు.
               </p>
             </button>
 
@@ -650,18 +670,21 @@ function NewOrderContent() {
                 setPaymentType("PARTIAL");
                 setPaidAmount(Math.round(grandTotal / 2).toString());
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`p-4 rounded-2xl border text-left transition-all ${
                 paymentType === "PARTIAL"
-                  ? "bg-amber-50/80 border-amber-500 shadow-sm ring-1 ring-amber-500"
+                  ? "bg-amber-50/90 border-amber-500 shadow-md ring-2 ring-amber-500/30"
                   : "bg-white border-slate-200 hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-slate-900">Partial Paid</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <div>
+                  <span className="text-sm font-extrabold text-slate-900 block">పాక్షిక (Partial)</span>
+                  <span className="text-[11px] text-amber-700 font-bold">నగదు + ఉద్ధార (Split)</span>
+                </div>
+                <span className="w-3 h-3 rounded-full bg-amber-500 flex-shrink-0 shadow-xs"></span>
               </div>
-              <p className="text-xs text-slate-500">
-                Split: some debit (paid now) + remaining carried forward as credit (Udhaar).
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                కొంత నగదు చెల్లించారు + మిగిలిన బకాయి మొత్తం కస్టమర్ ఖాతాకు (Udhaar) జోడించబడుతుంది.
               </p>
             </button>
 
@@ -672,18 +695,21 @@ function NewOrderContent() {
                 setPaymentType("CREDIT");
                 setPaidAmount("0");
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`p-4 rounded-2xl border text-left transition-all ${
                 paymentType === "CREDIT"
-                  ? "bg-rose-50/80 border-rose-500 shadow-sm ring-1 ring-rose-500"
+                  ? "bg-rose-50/90 border-rose-500 shadow-md ring-2 ring-rose-500/30"
                   : "bg-white border-slate-200 hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-slate-900">Credit (Full Udhaar)</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <div>
+                  <span className="text-sm font-extrabold text-slate-900 block">ఉద్ధార (Udhaar / Credit)</span>
+                  <span className="text-[11px] text-rose-700 font-bold">Not Paid Anything (Debt)</span>
+                </div>
+                <span className="w-3 h-3 rounded-full bg-rose-500 flex-shrink-0 animate-pulse shadow-xs"></span>
               </div>
-              <p className="text-xs text-slate-500">
-                Not paid at all. 100% of the bill amount added to customer&apos;s pending balance.
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                ఎలాంటి చెల్లింపు చేయలేదు. బిల్లులోని 100% మొత్తం కస్టమర్ ఉద్ధార లెడ్జర్‌కు కలుస్తుంది.
               </p>
             </button>
           </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateOtp, sendOtpEmail } from "@/lib/email";
 
 function computeCosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length || vecA.length === 0) return 0;
@@ -83,35 +84,38 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Match Succeeded!
-    const sessionToken = `kb_adm_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    // Match Succeeded: Dispatch MFA OTP to Admin Email
+    const adminEmail = admin.email || process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
+    const otp = generateOtp("admin_mfa");
+    await sendOtpEmail({
+      to: adminEmail,
+      name: admin.username,
+      otp,
+      role: "ADMIN",
+    });
 
-    await prisma.$transaction([
-      prisma.adminProfile.update({
-        where: { id: admin.id },
-        data: { lastLoginAt: new Date() },
-      }),
-      prisma.systemAuditLog.create({
-        data: {
-          actor: admin.username,
-          action: "FACE_LOGIN_SUCCESS",
-          metadata: {
-            confidence: Math.round(similarity * 100),
-            sessionToken: sessionToken.slice(0, 16),
-          },
+    await prisma.systemAuditLog.create({
+      data: {
+        actor: admin.username,
+        action: "FACE_VERIFIED_MFA_OTP_DISPATCHED",
+        metadata: {
+          confidence: Math.round(similarity * 100),
+          dispatchedTo: adminEmail,
         },
-      }),
-    ]);
+      },
+    });
+
+    const maskedEmail = adminEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
 
     return NextResponse.json({
       success: true,
       match: true,
+      requiresMfa: true,
       confidence: Math.round(similarity * 100),
-      sessionToken,
+      maskedEmail,
       admin: {
         username: admin.username,
         role: admin.role,
-        lastLoginAt: new Date(),
       },
     });
   } catch (error: any) {

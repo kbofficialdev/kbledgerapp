@@ -50,6 +50,13 @@ export default function AdminFaceLoginPage() {
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
 
+  // MFA OTP Modal (Face/PIN + Email OTP)
+  const [showMfaModal, setShowMfaModal] = useState(false);
+  const [mfaOtp, setMfaOtp] = useState("");
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [mfaLoading, setMfaLoading] = useState(false);
+
   // 1. Initialize Webcam
   const startCamera = async () => {
     try {
@@ -167,13 +174,19 @@ export default function AdminFaceLoginPage() {
 
       if (data.success && data.match) {
         setMatchConfidence(data.confidence);
-        setLoginSuccess(true);
-        setStatusMessage(`Identity Verified (${data.confidence}% confidence match). Unlocking...`);
-        localStorage.setItem("kb_admin_session", data.sessionToken);
 
-        setTimeout(() => {
-          router.push("/admin");
-        }, 1200);
+        if (data.requiresMfa) {
+          setMaskedEmail(data.maskedEmail);
+          setShowMfaModal(true);
+          setStatusMessage(`Face Verified (${data.confidence}%). Enter OTP sent to ${data.maskedEmail}`);
+        } else {
+          setLoginSuccess(true);
+          setStatusMessage(`Identity Verified (${data.confidence}% confidence match). Unlocking...`);
+          localStorage.setItem("kb_admin_session", data.sessionToken);
+          setTimeout(() => {
+            router.push("/admin");
+          }, 1200);
+        }
       } else {
         setMatchConfidence(data.confidence || 0);
         setStatusMessage(data.error || "Face does not match registered admin.");
@@ -198,10 +211,16 @@ export default function AdminFaceLoginPage() {
 
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem("kb_admin_session", data.sessionToken);
-        setLoginSuccess(true);
         setShowPinModal(false);
-        router.push("/admin");
+        if (data.requiresMfa) {
+          setMaskedEmail(data.maskedEmail);
+          setShowMfaModal(true);
+          setStatusMessage(`PIN Verified. Enter OTP sent to ${data.maskedEmail}`);
+        } else {
+          localStorage.setItem("kb_admin_session", data.sessionToken);
+          setLoginSuccess(true);
+          router.push("/admin");
+        }
       } else {
         setPinError(data.error || "Incorrect admin PIN");
       }
@@ -209,6 +228,40 @@ export default function AdminFaceLoginPage() {
       setPinError("Verification error");
     }
   };
+
+  // MFA OTP submit handler
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mfaOtp.trim().length !== 6) {
+      setMfaError("Please enter the complete 6-digit OTP");
+      return;
+    }
+
+    try {
+      setMfaLoading(true);
+      setMfaError(null);
+      const res = await fetch("/api/auth/admin/verify-mfa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: mfaOtp.trim() }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("kb_admin_session", data.sessionToken);
+        setLoginSuccess(true);
+        setShowMfaModal(false);
+        router.push("/admin");
+      } else {
+        setMfaError(data.error || "Invalid OTP code.");
+      }
+    } catch (err: any) {
+      setMfaError("Verification network error.");
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-4">
@@ -408,7 +461,83 @@ export default function AdminFaceLoginPage() {
           </div>
         </div>
       )}
+
+      {/* Strengthened Multi-Factor Email OTP Modal */}
+      {showMfaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">MFA Email Verification</h3>
+                  <p className="text-[11px] text-slate-400">Step 2: Security Passcode</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMfaModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleMfaSubmit} className="space-y-4 mt-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Biometrics matched! A 6-digit one-time passcode was automatically sent to:
+                <strong className="block text-slate-900 font-mono mt-0.5">{maskedEmail}</strong>
+              </p>
+
+              <div>
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  autoFocus
+                  placeholder="123456"
+                  value={mfaOtp}
+                  onChange={(e) => setMfaOtp(e.target.value.replace(/\D/g, ""))}
+                  className="w-full text-center font-mono text-2xl font-black tracking-[0.4em] bg-slate-50 border border-slate-200 rounded-2xl py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
+                />
+              </div>
+
+              {mfaError && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+                  {mfaError}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowMfaModal(false)}
+                  className="kb-btn-secondary text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={mfaLoading || mfaOtp.length !== 6}
+                  className="kb-btn-primary text-xs flex items-center gap-1.5"
+                >
+                  {mfaLoading ? (
+                    <span>Verifying...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Verify &amp; Enter</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 

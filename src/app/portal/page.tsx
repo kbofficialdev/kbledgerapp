@@ -15,8 +15,11 @@ import {
   BookOpen,
   IndianRupee,
   Phone,
+  KeyRound,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { CustomerAvatar } from "@/components/common/Avatars";
+import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
 
 interface CustomerSummary {
   id: string;
@@ -82,13 +85,23 @@ function CustomerPortalDirectory() {
           </p>
         </div>
 
-        <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
-            G
-          </div>
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Instant UPI Settlement</span>
-            <p className="text-xs font-mono font-bold text-slate-800">kbfashions.eazypay@icici</p>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/portal/login"
+            className="py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>Sign in with Mobile OTP</span>
+          </Link>
+
+          <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
+              G
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Instant UPI Settlement</span>
+              <p className="text-xs font-mono font-bold text-slate-800">kbfashions.eazypay@icici</p>
+            </div>
           </div>
         </div>
       </div>
@@ -139,25 +152,35 @@ function CustomerPortalDirectory() {
               >
                 <div>
                   {/* Header: Name and Status */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-base text-slate-900 group-hover:text-indigo-600 transition-colors">
-                        {cust.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">
-                          {cust.customerCode}
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 font-sans">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          {cust.mobile}
-                        </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <CustomerAvatar name={cust.name} size="md" />
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-bold text-base text-slate-900 group-hover:text-indigo-600 transition-colors">
+                            {cust.name}
+                          </h3>
+                          <VoiceCalloutButton
+                            payload={{
+                              customerName: cust.name,
+                              villageName: cust.villageName,
+                              amount: cust.currentBalance,
+                              paymentType: "CREDIT",
+                            }}
+                            variant="badge"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-mono">
+                          <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600 font-bold">
+                            {cust.customerCode}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1 font-sans">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {cust.mobile}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">
-                      <Smartphone className="w-4 h-4" />
                     </div>
                   </div>
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateOtp, sendOtpEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,18 +23,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const sessionToken = `kb_adm_pin_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const adminEmail = process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
+    const otp = generateOtp("admin_mfa");
+    await sendOtpEmail({
+      to: adminEmail,
+      name: "KB Store Admin",
+      otp,
+      role: "ADMIN",
+    });
 
     await prisma.systemAuditLog.create({
       data: {
         actor: "ADMIN_EMERGENCY_PIN",
-        action: "PIN_LOGIN_SUCCESS",
+        action: "PIN_VERIFIED_MFA_OTP_DISPATCHED",
+        metadata: { dispatchedTo: adminEmail },
       },
     });
 
+    const maskedEmail = adminEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+
     return NextResponse.json({
       success: true,
-      sessionToken,
+      requiresMfa: true,
+      maskedEmail,
       admin: {
         username: "kbadmin",
         role: "ADMIN",

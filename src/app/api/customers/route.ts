@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateCustomerCode } from "@/lib/utils";
+import { sendCustomerWelcomeEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -170,6 +171,21 @@ export async function POST(req: NextRequest) {
 
       return newCust;
     });
+
+    // Automatically send credentials to customer's email if provided
+    if (customer.email) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const portalUrl = `${appUrl}/portal/${customer.id}`;
+      sendCustomerWelcomeEmail({
+        to: customer.email,
+        customerName: customer.name,
+        customerCode: customer.customerCode,
+        villageName: village.name,
+        mobile: customer.mobile,
+        initialBalance: initBal,
+        portalUrl,
+      }).catch((err) => console.error("[Auto Email Error]:", err));
+    }
 
     return NextResponse.json({ success: true, customer }, { status: 201 });
   } catch (error: any) {

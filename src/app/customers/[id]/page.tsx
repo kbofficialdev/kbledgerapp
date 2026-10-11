@@ -20,8 +20,12 @@ import {
   X,
   CreditCard,
   QrCode,
+  Smartphone,
+  Send,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { CustomerAvatar } from "@/components/common/Avatars";
+import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
 
 interface OrderItem {
   id: string;
@@ -100,6 +104,25 @@ export default function CustomerDetailPage() {
   const [payNotes, setPayNotes] = useState("");
   const [submittingPay, setSubmittingPay] = useState(false);
   const [payFeedback, setPayFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  const handleSendCredentials = async () => {
+    if (!customer) return;
+    try {
+      setSendingEmail(true);
+      const res = await fetch(`/api/customers/${customer.id}/resend-credentials`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setPayFeedback({ type: "success", message: data.message });
+      } else {
+        setPayFeedback({ type: "error", message: data.error || "Failed to send credentials." });
+      }
+    } catch (err: any) {
+      setPayFeedback({ type: "error", message: err.message || "Network error." });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   const fetchCustomer = async () => {
     try {
@@ -189,24 +212,64 @@ export default function CustomerDetailPage() {
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
+          <CustomerAvatar name={customer.name} size="lg" />
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">{customer.name}</h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">{customer.name}</h1>
               <span className="font-mono text-xs font-semibold px-2.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-700">
                 {customer.customerCode}
               </span>
+              <VoiceCalloutButton
+                payload={{
+                  customerName: customer.name,
+                  villageName: customer.village.name,
+                  amount: customer.currentBalance,
+                  paymentType: "CREDIT",
+                }}
+                variant="badge"
+              />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              <span>Village: <strong>{customer.village.name}</strong> ({customer.village.code})</span>
+            <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Village: <strong>{customer.village.name}</strong> ({customer.village.code})</span>
+              </span>
+              {customer.email && (
+                <span className="flex items-center gap-1 font-mono text-slate-400">
+                  <Mail className="w-3 h-3" />
+                  <span>{customer.email}</span>
+                </span>
+              )}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {customer.email && (
+            <button
+              onClick={handleSendCredentials}
+              disabled={sendingEmail}
+              className="kb-btn-secondary text-xs py-2 px-3 flex items-center gap-1.5"
+              title="Send Account Credentials and Portal Link to Customer Email"
+            >
+              <Send className="w-3.5 h-3.5 text-indigo-600" />
+              <span>{sendingEmail ? "Sending..." : "Email Portal Link"}</span>
+            </button>
+          )}
+
+          <Link
+            href={`/portal/${customer.id}`}
+            target="_blank"
+            className="kb-btn-secondary text-xs py-2 px-3 border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
+            title="Open customer self-service view"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Open Portal</span>
+          </Link>
+
           <button
             onClick={() => window.print()}
-            className="kb-btn-secondary text-xs sm:text-sm py-2 px-3"
+            className="kb-btn-secondary text-xs py-2 px-3"
           >
             <Printer className="w-4 h-4 text-slate-600" />
             <span>Print Khata</span>
@@ -217,7 +280,7 @@ export default function CustomerDetailPage() {
               setPayAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : "");
               setIsPayModalOpen(true);
             }}
-            className="kb-btn-secondary text-xs sm:text-sm py-2 px-3 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+            className="kb-btn-secondary text-xs py-2 px-3 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
           >
             <IndianRupee className="w-4 h-4 text-emerald-600" />
             <span>Record Payment (Jama)</span>
@@ -225,10 +288,10 @@ export default function CustomerDetailPage() {
 
           <Link
             href={`/orders/new?customerId=${customer.id}&villageId=${customer.villageId}`}
-            className="kb-btn-primary text-xs sm:text-sm py-2 px-3"
+            className="kb-btn-primary text-xs py-2 px-3"
           >
             <Plus className="w-4 h-4" />
-            <span>New Counter Bill</span>
+            <span>New Bill</span>
           </Link>
         </div>
       </div>

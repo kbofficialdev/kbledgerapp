@@ -21,6 +21,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
+import { CustomerAvatar, PaymentTypeBadge } from "@/components/common/Avatars";
 
 interface OrderRecord {
   id: string;
@@ -350,9 +352,10 @@ function OrdersContent() {
                 <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] font-semibold bg-slate-50/50">
                   <th className="py-2.5 px-3">Bill Number</th>
                   <th className="py-2.5 px-3">Customer &amp; Village</th>
+                  <th className="py-2.5 px-3 text-center">Telugu Voice</th>
                   <th className="py-2.5 px-3">Date &amp; Time</th>
                   <th className="py-2.5 px-3">Items Summary</th>
-                  <th className="py-2.5 px-3 text-center">Settlement</th>
+                  <th className="py-2.5 px-3 text-center">Settlement Mode</th>
                   <th className="py-2.5 px-3 text-right">Total (₹)</th>
                   <th className="py-2.5 px-3 text-right">Paid (₹)</th>
                   <th className="py-2.5 px-3 text-right">Udhaar (₹)</th>
@@ -366,16 +369,32 @@ function OrdersContent() {
                       <span className="font-bold text-slate-900">{ord.orderNumber}</span>
                     </td>
                     <td className="py-3 px-3 font-sans">
-                      <Link
-                        href={`/customers/${ord.customerId}`}
-                        className="font-semibold text-slate-900 hover:text-emerald-700 hover:underline block"
-                      >
-                        {ord.customerName}
-                      </Link>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-2">
-                        <span>{ord.villageName}</span>
-                        {ord.customerMobile && <span>• {ord.customerMobile}</span>}
+                      <div className="flex items-center gap-2.5">
+                        <CustomerAvatar name={ord.customerName} size="sm" />
+                        <div>
+                          <Link
+                            href={`/customers/${ord.customerId}`}
+                            className="font-bold text-slate-900 hover:text-emerald-700 hover:underline block"
+                          >
+                            {ord.customerName}
+                          </Link>
+                          <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                            <span>{ord.villageName}</span>
+                            {ord.customerMobile && <span>• {ord.customerMobile}</span>}
+                          </div>
+                        </div>
                       </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-sans">
+                      <VoiceCalloutButton
+                        payload={{
+                          customerName: ord.customerName,
+                          villageName: ord.villageName,
+                          amount: ord.totalAmount,
+                          paymentType: ord.paymentType,
+                        }}
+                        variant="badge"
+                      />
                     </td>
                     <td className="py-3 px-3 font-sans text-slate-500 whitespace-nowrap">
                       {formatDateTime(ord.orderDate)}
@@ -384,21 +403,7 @@ function OrdersContent() {
                       {ord.items.map((i) => i.name).join(", ")}
                     </td>
                     <td className="py-3 px-3 text-center font-sans">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                          ord.paymentType === "DEBIT"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : ord.paymentType === "PARTIAL"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-rose-50 text-rose-700 border border-rose-200"
-                        }`}
-                      >
-                        {ord.paymentType === "DEBIT"
-                          ? "Paid (Debit)"
-                          : ord.paymentType === "PARTIAL"
-                          ? "Partial Paid"
-                          : "Udhaar (Credit)"}
-                      </span>
+                      <PaymentTypeBadge type={ord.paymentType} size="sm" />
                     </td>
                     <td className="py-3 px-3 text-right font-bold text-slate-900 text-sm">
                       {formatCurrency(ord.totalAmount)}
