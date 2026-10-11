@@ -1,0 +1,398 @@
+{
+  "timestamp": "2026-10-11T14:42:46.603Z",
+  "systemName": "KB Khata & Fashions Bahi-Khata ERP",
+  "version": "1.0.0-PROD-CERTIFIED",
+  "environment": "Linux Production Stack (PostgreSQL 16 + Next.js 14)",
+  "totalSuites": 7,
+  "totalTests": 39,
+  "passedTests": 39,
+  "failedTests": 0,
+  "passRate": 100,
+  "totalDurationMs": 775.44,
+  "suites": [
+    {
+      "suite": "Payment Security Policies",
+      "category": "UNIT",
+      "tests": [
+        {
+          "name": "Validate positive amount (₹500.00)",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.22683499939739704,
+          "details": "Passed strict positive float check and normalized to 2 decimals."
+        },
+        {
+          "name": "Reject zero and negative payment amounts",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.021934999153017998,
+          "details": "Blocked non-positive amounts with policy error codes."
+        },
+        {
+          "name": "Enforce NPCI UPI retail ceiling (₹1,00,000)",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.008479001000523567,
+          "details": "Blocked ₹1,00,001 transaction exceeding statutory NPCI limit."
+        },
+        {
+          "name": "Enforce strict 12-digit numeric Bank RRN regex",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.3110770005732775,
+          "details": "Regex ^\\d{12}$ successfully blocked alphabetic and truncated inputs."
+        },
+        {
+          "name": "Verify transaction freshness TTL (300s window)",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.3162460010498762,
+          "details": "Enforced anti-replay window: 30s accepted, 400s rejected."
+        },
+        {
+          "name": "HMAC-SHA256 timing-safe webhook signature verification",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 1.1939720008522272,
+          "details": "crypto.timingSafeEqual verified genuine digest and repelled byte tampering."
+        },
+        {
+          "name": "Verify official Google Pay VPA (kbfashions.eazypay@icici)",
+          "suite": "Payment Security Policies",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.20200899988412857,
+          "details": "Verified production UPI VPA and Merchant Name: 'KB Fashions'."
+        }
+      ],
+      "passed": 7,
+      "failed": 0,
+      "totalDurationMs": 2.437686000019312
+    },
+    {
+      "suite": "Biometric Authentication Engine",
+      "category": "UNIT",
+      "tests": [
+        {
+          "name": "Identical 128-d face vector yields unit similarity (1.000)",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 1.8102810010313988,
+          "details": "Cosine similarity precisely matched 1.0000 on identical vectors."
+        },
+        {
+          "name": "Slight perturbation (lighting/angle) accepts with similarity >= 0.80",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 1.0168160013854504,
+          "details": "Live similarity 0.9927 exceeded strict 0.80 threshold."
+        },
+        {
+          "name": "Intruder / distinct face vector rejected (similarity < 0.80 & distance > 0.45)",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.291941000148654,
+          "details": "Properly repelled with similarity -0.0007 and distance 1.4147."
+        },
+        {
+          "name": "Euclidean L2 distance calculation mathematically verified",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.033500999212265015,
+          "details": "L2 norm verified: exact zero for identical, sqrt(9)=3.0 for test vectors."
+        },
+        {
+          "name": "Reject descriptor dimensionality mismatch (64-d vs 128-d)",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.14090700075030327,
+          "details": "Blocked vector size mismatch with structured exception."
+        },
+        {
+          "name": "Anti-spoofing: Reject degenerate all-zero descriptor (black frame / covered lens)",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.08913799934089184,
+          "details": "Detected and rejected black frame occlusion vector with norm < 0.001."
+        },
+        {
+          "name": "Input sanitization: Guard against NaN and Infinity floating-point poisoning",
+          "suite": "Biometric Authentication Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.13139799982309341,
+          "details": "Safely sanitized NaN and Inf vectors to safe failure states (sim=0, dist=999)."
+        }
+      ],
+      "passed": 7,
+      "failed": 0,
+      "totalDurationMs": 3.9951129984110594
+    },
+    {
+      "suite": "Telugu Voice Synthesis Engine",
+      "category": "UNIT",
+      "tests": [
+        {
+          "name": "Construct Telugu Debit / నగదు (Nagathu) voice callout with village & amount",
+          "suite": "Telugu Voice Synthesis Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.446195999160409,
+          "details": "Generated: \"గౌరవనీయులు శివ రావు గారు. గ్రామం: వేములవాడ. బిల్లు మొత్తం: 1450 రూపాయలు. విధానం: నగదు చెల్లింపు (Nagathu / Debit).\""
+        },
+        {
+          "name": "Construct Telugu Credit / ఉద్ధార (Udhaar) debt warning callout",
+          "suite": "Telugu Voice Synthesis Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.017402000725269318,
+          "details": "Generated: \"గౌరవనీయులు రమేష్ రెడ్డి గారు. గ్రామం: సిరిసిల్ల. బిల్లు మొత్తం: 3200 రూపాయలు. విధానం: ఉద్ధార బకాయి (Udhaar / Credit).\""
+        },
+        {
+          "name": "Construct Telugu Partial / పాక్షిక mixed-settlement callout",
+          "suite": "Telugu Voice Synthesis Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.03276499919593334,
+          "details": "Generated: \"గౌరవనీయులు లక్ష్మి నారాయణ గారు. గ్రామం: బోయిన్‌పల్లి. బిల్లు మొత్తం: 850 రూపాయలు. విధానం: పాక్షిక చెల్లింపు మరియు ఉద్ధార (Partial).\""
+        },
+        {
+          "name": "Handle omitted optional attributes without syntax or placeholder defects",
+          "suite": "Telugu Voice Synthesis Engine",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.021064000204205513,
+          "details": "Clean minimal sentence: \"గౌరవనీయులు వెంకటేష్ గారు.\""
+        }
+      ],
+      "passed": 4,
+      "failed": 0,
+      "totalDurationMs": 0.6300849989056587
+    },
+    {
+      "suite": "Bahi-Khata Ledger Mathematics",
+      "category": "UNIT",
+      "tests": [
+        {
+          "name": "DEBIT (నగదు / Nagathu) settlement leaves zero outstanding balance",
+          "suite": "Bahi-Khata Ledger Mathematics",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.4843429997563362,
+          "details": "Total ₹3,850.00 fully paid, resulting balance: ₹0.00."
+        },
+        {
+          "name": "CREDIT (ఉద్ధార / Udhaar) transfers full transaction value to customer ledger debit",
+          "suite": "Bahi-Khata Ledger Mathematics",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.03928999975323677,
+          "details": "Total ₹3,500.00 unpaid, resulting balance: ₹3,500.00."
+        },
+        {
+          "name": "PARTIAL (పాక్షిక) correctly splits cash paid vs remaining Udhaar ledger",
+          "suite": "Bahi-Khata Ledger Mathematics",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.029784001410007477,
+          "details": "Total ₹5,000.00, Paid: ₹2,000.00, Balance: ₹3,000.00."
+        },
+        {
+          "name": "Floating-point paise precision (prevents IEEE-754 currency drift)",
+          "suite": "Bahi-Khata Ledger Mathematics",
+          "category": "UNIT",
+          "passed": true,
+          "durationMs": 0.11157300136983395,
+          "details": "Verified exact cents/paise arithmetic on fractional values without float leaks."
+        }
+      ],
+      "passed": 4,
+      "failed": 0,
+      "totalDurationMs": 0.8332770001143217
+    },
+    {
+      "suite": "API Integration & Contracts",
+      "category": "INTEGRATION",
+      "tests": [
+        {
+          "name": "GET /api/villages contract verification (HTTP 200 & array schema)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 117.71738900057971,
+          "details": "Loaded 1 villages with strict ID & code fields."
+        },
+        {
+          "name": "GET /api/customers contract verification (HTTP 200 & village foreign relation)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 13.929538998752832,
+          "details": "Retrieved 1 customer records with associated ledger balance."
+        },
+        {
+          "name": "POST /api/payments/gpay/intent generation (Deep link + Dynamic QR)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 40.76668499968946,
+          "details": "Generated valid UPI URI: upi://pay?pa=kbfashions.eazypay%40icici&pn=KB+Khata+Store&mc..."
+        },
+        {
+          "name": "POST /api/payments/gpay/intent negative amount rejection (HTTP 400)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 6.684341000393033,
+          "details": "Blocked non-positive amount with proper HTTP 400 validation response."
+        },
+        {
+          "name": "POST /api/portal/auth/send-otp unknown customer handling (HTTP 404)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 10.915582999587059,
+          "details": "Properly returns 404 when unregistered phone number attempts authentication."
+        },
+        {
+          "name": "POST /api/auth/admin/verify-mfa rejects invalid OTP code (HTTP 401)",
+          "suite": "API Integration & Contracts",
+          "category": "INTEGRATION",
+          "passed": true,
+          "durationMs": 15.487794000655413,
+          "details": "Enforces cryptographic OTP match before issuing admin session token."
+        }
+      ],
+      "passed": 6,
+      "failed": 0,
+      "totalDurationMs": 205.66352500021458
+    },
+    {
+      "suite": "Security & Penetration Assessment",
+      "category": "SECURITY",
+      "tests": [
+        {
+          "name": "SQL Injection immunity on search filters (' OR '1'='1 --)",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 8.99524699896574,
+          "details": "Prisma ORM parameterized AST safely neutralized SQL meta-characters."
+        },
+        {
+          "name": "Destructive DDL SQLi defense ('; DROP TABLE Customer; --)",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 17.25438099913299,
+          "details": "Database engine treated multi-statement injection as literal search string."
+        },
+        {
+          "name": "Anti-Replay Attack protection: Rejects stale payment tokens (>300s window)",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 0.04402399994432926,
+          "details": "Stale transaction token was immediately flagged and rejected with code ERR_PAYMENT_EXPIRED."
+        },
+        {
+          "name": "Cryptographic signature validation with timing-safe comparison",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 0.14671500027179718,
+          "details": "crypto.timingSafeEqual prevents side-channel timing analysis attacks on payment webhooks."
+        },
+        {
+          "name": "Biometric sensor spoofing mitigation (All-zero covered-camera payload)",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 14.48097899928689,
+          "details": "L2 norm threshold and cosine similarity properly denied false authentication."
+        },
+        {
+          "name": "MFA OTP brute-force & boundary fuzzing protection (Lengths != 6 rejected)",
+          "suite": "Security & Penetration Assessment",
+          "category": "SECURITY",
+          "passed": true,
+          "durationMs": 32.62575300037861,
+          "details": "Strict regex and length bounds repelled fuzzing payloads with HTTP 400/401."
+        }
+      ],
+      "passed": 6,
+      "failed": 0,
+      "totalDurationMs": 73.70582300052047
+    },
+    {
+      "suite": "Performance & Stress Benchmarking",
+      "category": "PERFORMANCE",
+      "tests": [
+        {
+          "name": "API Latency GET /api/villages (P50: 7.83ms, P95: 10.43ms, Avg: 7.53ms)",
+          "suite": "Performance & Stress Benchmarking",
+          "category": "PERFORMANCE",
+          "passed": true,
+          "durationMs": 151.10660899989307,
+          "details": "Sampled 20 requests. Fast response under production PostgreSQL SLA."
+        },
+        {
+          "name": "Dynamic GPay Intent & QR Code Generation (P50: 24.88ms, P95: 41.27ms)",
+          "suite": "Performance & Stress Benchmarking",
+          "category": "PERFORMANCE",
+          "passed": true,
+          "durationMs": 263.4874840006232,
+          "details": "Delivers counter checkout QR code in median 24.88ms."
+        },
+        {
+          "name": "Ledger Arithmetic Throughput (393,934 ops/sec)",
+          "suite": "Performance & Stress Benchmarking",
+          "category": "PERFORMANCE",
+          "passed": true,
+          "durationMs": 42.942722000181675,
+          "details": "Computed 10,000 multi-item invoices with paise precision in 25.38ms."
+        },
+        {
+          "name": "Biometric 128-d Vector Cosine Similarity (1000 comparisons in 5.21ms)",
+          "suite": "Performance & Stress Benchmarking",
+          "category": "PERFORMANCE",
+          "passed": true,
+          "durationMs": 5.260035999119282,
+          "details": "Near-instantaneous biometric matching (0.0052ms per face match)."
+        },
+        {
+          "name": "HMAC-SHA256 Timing-Safe Signature Verification (1000 ops in 13.47ms)",
+          "suite": "Performance & Stress Benchmarking",
+          "category": "PERFORMANCE",
+          "passed": true,
+          "durationMs": 13.582138000056148,
+          "details": "Throughput: 74,252 signatures/sec."
+        }
+      ],
+      "passed": 5,
+      "failed": 0,
+      "totalDurationMs": 476.64868799969554
+    }
+  ],
+  "metrics": {
+    "unitTestsPassed": 22,
+    "integrationTestsPassed": 6,
+    "securityTestsPassed": 6,
+    "performanceP50Ms": 7.83,
+    "performanceP95Ms": 10.43,
+    "vulnerabilitiesDetected": 0,
+    "criticalFailures": 0
+  }
+}

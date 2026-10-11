@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { identifier } = await req.json();
+    const body = await req.json();
+    const identifier = body.identifier || body.phone || body.mobile;
 
     if (!identifier || typeof identifier !== "string") {
       return NextResponse.json({ error: "Mobile number or email is required." }, { status: 400 });
@@ -74,3 +75,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message || "Failed to send OTP." }, { status: 500 });
   }
 }
+

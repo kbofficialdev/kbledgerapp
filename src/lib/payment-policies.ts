@@ -3,6 +3,8 @@
  * Compliant with NPCI Unified Payments Interface (UPI) & Google Pay Merchant Specifications
  */
 
+import crypto from "crypto";
+
 export interface PaymentPolicyResult {
   valid: boolean;
   code: string;
@@ -156,6 +158,35 @@ export class PaymentSecurityPolicyEngine {
       message: "Transaction session is active.",
       sanitizedValue: { elapsedSeconds: Math.round(elapsedSeconds), remainingSeconds: Math.round(ttlSeconds - elapsedSeconds) },
     };
+  }
+
+  /**
+   * Alias for validateFreshness adhering to standard verification naming
+   */
+  static verifyFreshness(initiatedAt: Date | string | number, ttlSeconds = 300): PaymentPolicyResult {
+    return this.validateFreshness(initiatedAt, ttlSeconds);
+  }
+
+  /**
+   * Policy 6: HMAC-SHA256 Webhook Digest Signature Generation
+   */
+  static generateHmacSignature(payload: string, secret: string): string {
+    return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  }
+
+  /**
+   * Policy 7: Timing-Attack Safe HMAC Verification
+   */
+  static verifyHmacSignature(payload: string, signature: string, secret: string): boolean {
+    try {
+      const expected = this.generateHmacSignature(payload, secret);
+      const expectedBuf = Buffer.from(expected, "hex");
+      const actualBuf = Buffer.from(signature, "hex");
+      if (expectedBuf.length !== actualBuf.length) return false;
+      return crypto.timingSafeEqual(expectedBuf, actualBuf);
+    } catch {
+      return false;
+    }
   }
 }
 

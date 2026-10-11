@@ -106,3 +106,4 @@ ${dbContextSummary || "No extra context provided."}
 
   throw lastError || new Error("Failed to get response from Gemini AI models.");
 }
+

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Wifi,
   Sparkles,
+  Presentation,
 } from "lucide-react";
 import KbLogo from "../brand/KbLogo";
 
@@ -42,6 +43,7 @@ const mainNavItems: NavItem[] = [
 const secondaryNavItems: NavItem[] = [
   { label: "KB AI Advisor", href: "/admin/ai", icon: Sparkles, badge: "Gemini", badgeColor: "bg-violet-100 text-violet-800" },
   { label: "Customer Portal", href: "/portal/login", icon: Smartphone, badge: "Self-Pay", badgeColor: "bg-indigo-100 text-indigo-800" },
+  { label: "Testing & QA Deck", href: "/presentation", icon: Presentation, badge: "IEEE 829", badgeColor: "bg-emerald-100 text-emerald-800" },
   { label: "Admin Face ID", href: "/admin/login", icon: Shield, badge: "MFA", badgeColor: "bg-emerald-100 text-emerald-800" },
 ];
 

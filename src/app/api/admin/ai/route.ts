@@ -132,3 +132,4 @@ ${recentPaymentSummary.join("\n") || "No recent payments."}
     );
   }
 }
+
