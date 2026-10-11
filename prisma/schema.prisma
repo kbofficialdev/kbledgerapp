@@ -1,0 +1,197 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+}
+
+enum PaymentType {
+  CREDIT       // Unpaid Udhaar
+  DEBIT        // Full payment paid
+  PARTIAL      // Partial paid + partial credit
+}
+
+enum PaymentMethod {
+  CASH
+  PHONEPE_UPI
+  PHONEPE_QR
+  NETBANKING
+  MANUAL_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum LedgerType {
+  BILL_DEBIT      // Bill charged to customer
+  PAYMENT_CREDIT  // Cash/Gateway received from customer (Jama)
+  ADJUSTMENT
+}
+
+model Village {
+  id          String     @id @default(cuid())
+  code        String     @unique // e.g. "VIL-001"
+  name        String
+  taluk       String?
+  district    String?
+  pincode     String?
+  notes       String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  customers   Customer[]
+  orders      Order[]
+
+  @@index([name])
+  @@index([code])
+}
+
+model Customer {
+  id              String        @id @default(cuid())
+  customerCode    String        @unique // e.g. "CUST-RAM-001"
+  name            String
+  mobile          String
+  altMobile       String?
+  email           String?
+  address         String?
+  villageId       String
+  village         Village       @relation(fields: [villageId], references: [id], onDelete: Restrict)
+  creditLimit     Decimal       @default(0.00) @db.Decimal(12, 2)
+  currentBalance  Decimal       @default(0.00) @db.Decimal(12, 2) // Outstanding Udhaar owed
+  notes           String?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  orders          Order[]
+  payments        Payment[]
+  ledgerEntries   LedgerEntry[]
+
+  @@index([villageId, name])
+  @@index([mobile])
+  @@index([email])
+}
+
+model Order {
+  id                  String        @id @default(cuid())
+  orderNumber         String        @unique // e.g. "KB-202610-0001"
+  villageId           String
+  village             Village       @relation(fields: [villageId], references: [id], onDelete: Restrict)
+  customerId          String
+  customer            Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  
+  orderDate           DateTime      @default(now())
+  totalAmount         Decimal       @db.Decimal(12, 2)
+  paidAmount          Decimal       @default(0.00) @db.Decimal(12, 2)
+  creditAmount        Decimal       @default(0.00) @db.Decimal(12, 2)
+  paymentType         PaymentType
+  paymentStatus       PaymentStatus @default(SUCCESS)
+  
+  notes               String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  items               OrderItem[]
+  payments            Payment[]
+  ledgerEntries       LedgerEntry[]
+
+  @@index([customerId, orderDate])
+  @@index([villageId, orderDate])
+  @@index([paymentType])
+}
+
+model OrderItem {
+  id            String    @id @default(cuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  customItemId  String    // Unique customized item code generated at creation (e.g. "ITM-98421")
+  name          String
+  quantity      Decimal   @db.Decimal(10, 3)
+  unit          String    @default("pcs") // kg, bag, pkt, liter, pcs, box
+  pricePerUnit  Decimal   @db.Decimal(10, 2)
+  lineTotal     Decimal   @db.Decimal(12, 2)
+
+  @@index([orderId])
+  @@index([customItemId])
+}
+
+model Payment {
+  id                    String         @id @default(cuid())
+  paymentRef            String         @unique
+  orderId               String?
+  order                 Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customerId            String
+  customer              Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  
+  amount                Decimal        @db.Decimal(12, 2)
+  method                PaymentMethod  @default(CASH)
+  status                PaymentStatus  @default(SUCCESS)
+  
+  phonePeTransactionId String?        @unique
+  merchantTxnId         String?        @unique
+  phonePeResponseCode   String?
+  rawGatewayResponse    Json?
+  
+  paidAt                DateTime       @default(now())
+  notes                 String?
+
+  @@index([customerId, paidAt])
+  @@index([merchantTxnId])
+}
+
+model LedgerEntry {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  orderId         String?
+  order           Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
+  entryDate       DateTime    @default(now())
+  entryType       LedgerType
+  debitAmount     Decimal     @default(0.00) @db.Decimal(12, 2)  // Bill added
+  creditAmount    Decimal     @default(0.00) @db.Decimal(12, 2) // Payment received
+  runningBalance  Decimal     @db.Decimal(12, 2)                // Cumulative outstanding
+  description     String
+  
+  createdAt       DateTime    @default(now())
+
+  @@index([customerId, entryDate])
+}
+
+model AdminProfile {
+  id              String      @id @default(cuid())
+  username        String      @unique
+  email           String?     @unique
+  role            Role        @default(ADMIN)
+  isFaceEnrolled  Boolean     @default(false)
+  
+  faceDescriptor  Json?       // 128-d biometric facial descriptor float array
+  fallbackPinHash String?
+  
+  lastLoginAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model SystemAuditLog {
+  id          String    @id @default(cuid())
+  actor       String
+  action      String
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+}
