@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, Bot, X, ExternalLink, MessageSquare } from "lucide-react";
-import ChatGptInterface from "./ChatGptInterface";
+import dynamic from "next/dynamic";
+import { Sparkles, Bot, X } from "lucide-react";
+
+const ChatGptInterface = dynamic(() => import("./ChatGptInterface"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
+      Loading AI Workspace...
+    </div>
+  ),
+});
 
 export const FloatingAiAdvisor: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,8 +35,8 @@ export const FloatingAiAdvisor: React.FC = () => {
       <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
         {/* Subtle Welcome Tooltip Banner on First Load */}
         {!isOpen && !hasPrompted && (
-          <div className="mb-2 mr-1 px-3 py-1.5 rounded-xl bg-slate-900/95 text-white text-xs shadow-xl border border-slate-700 flex items-center gap-2 animate-bounce">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <div className="mb-2 mr-1 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs shadow-lg border border-slate-700 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="font-semibold">Ask KB AI Advisor</span>
             <button
               onClick={() => setHasPrompted(true)}
@@ -72,3 +81,4 @@ export const FloatingAiAdvisor: React.FC = () => {
 };
 
 export default FloatingAiAdvisor;
+

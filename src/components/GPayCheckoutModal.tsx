@@ -260,11 +260,11 @@ export default function GPayCheckoutModal({
                   </div>
                 </div>
 
-                {/* VPA and Timer Info */}
+                {/* Merchant Verified and Timer Info */}
                 <div className="mt-3 flex items-center justify-between w-full text-xs text-slate-500 px-2">
-                  <div className="flex items-center gap-1.5 font-mono">
+                  <div className="flex items-center gap-1.5 font-sans font-medium text-slate-700">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{intentData.merchantVpa}</span>
+                    <span>Verified Store Merchant</span>
                   </div>
 
                   <div className="flex items-center gap-1 font-mono font-semibold text-slate-700">

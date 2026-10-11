@@ -2,8 +2,17 @@
 
 import React from "react";
 import Link from "next/link";
-import { ChevronLeft, ArrowLeft } from "lucide-react";
-import ChatGptInterface from "@/components/ai/ChatGptInterface";
+import dynamic from "next/dynamic";
+import { ArrowLeft } from "lucide-react";
+
+const ChatGptInterface = dynamic(() => import("@/components/ai/ChatGptInterface"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
+      Loading AI Workspace...
+    </div>
+  ),
+});
 
 export default function AdminAIAssistantPage() {
   return (

@@ -266,7 +266,7 @@ export default function PresentationPage() {
                 <h4 className="text-sm font-bold text-slate-900">Google Pay Business UPI</h4>
                 <div className="text-[11px] font-mono font-semibold text-emerald-600 mb-2">UPI 2.0 Dynamic Intent QR</div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Merchant VPA (kbfashions.eazypay@icici), NPCI limits (₹1,00,000), 12-digit Bank RRN, 300s TTL anti-replay window.
+                  Merchant UPI integration, NPCI limits (₹1,00,000), 12-digit Bank RRN, 300s TTL anti-replay window.
                 </p>
               </div>
 

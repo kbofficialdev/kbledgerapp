@@ -42,7 +42,7 @@ export default function AdminFaceLoginPage() {
           }
         }
       })
-      .catch(console.error);
+      .catch((e) => console.warn("Admin status fetch:", e));
   }, []);
 
   // Fallback PIN modal
@@ -77,7 +77,7 @@ export default function AdminFaceLoginPage() {
         setStatusMessage("Face detected. Align within the biometric reticle...");
       }
     } catch (err: any) {
-      console.error("Camera access error:", err);
+      console.warn("Camera access fallback:", err?.message || err);
       setCameraError(
         err.name === "NotAllowedError"
           ? "Camera permission denied. Please allow camera access in browser settings or use Emergency PIN."

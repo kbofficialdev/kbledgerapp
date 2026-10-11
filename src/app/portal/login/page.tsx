@@ -250,7 +250,7 @@ export default function CustomerPortalLoginPage() {
             <Lock className="w-3.5 h-3.5 text-emerald-600" />
             End-to-End Encrypted
           </span>
-          <span className="font-mono text-[10px]">Google Pay VPA Ready</span>
+          <span className="font-mono text-[10px]">Google Pay UPI Ready</span>
         </div>
       </div>
     </div>

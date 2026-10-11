@@ -92,6 +92,7 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
   onClose,
   isModal = false,
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [input, setInput] = useState("");
@@ -106,8 +107,13 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Initialize from LocalStorage
   useEffect(() => {
+    if (!mounted) return;
     try {
       const stored = localStorage.getItem("kb_ai_chat_sessions");
       if (stored) {
@@ -331,6 +337,14 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
   const filteredSessions = selectedTagFilter
     ? sessions.filter((s) => s.tags.includes(selectedTagFilter))
     : sessions;
+
+  if (!mounted) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
+        Loading KB AI Advisor Workspace...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full bg-slate-900 text-slate-100 rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
@@ -746,3 +760,4 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
 };
 
 export default ChatGptInterface;
+

@@ -6,28 +6,17 @@ import {
   Receipt,
   Users,
   MapPin,
-  IndianRupee,
-  PlusCircle,
-  FileText,
-  Printer,
-  ChevronRight,
   TrendingUp,
   CreditCard,
-  QrCode,
   ShieldCheck,
-  ArrowUpRight,
-  Clock,
   Sparkles,
   Smartphone,
-  Shield,
-  Bot,
-  UserCheck,
   BookOpen,
-  ArrowRight,
-  Search,
+  ChevronRight,
+  Printer,
+  Bot,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import KbLogo from "@/components/brand/KbLogo";
 import { CustomerAvatar, VillageBadge, PaymentTypeBadge } from "@/components/common/Avatars";
 import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
 
@@ -56,7 +45,7 @@ export default function StoreHomePage() {
   const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
-    // Check local draft
+    // Check local counter draft
     try {
       const draft = localStorage.getItem("kb_draft_slip_active");
       if (draft) {
@@ -90,287 +79,348 @@ export default function StoreHomePage() {
           recentOrders: orders.slice(0, 8),
         });
       })
-      .catch(console.error)
+      .catch((e) => console.warn("Dashboard fetch error:", e))
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       {/* Draft Restored Notification Alert */}
       {hasDraft && (
-        <div className="p-4 bg-amber-50 border border-amber-200/90 rounded-2xl flex items-center justify-between text-xs text-amber-900 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 animate-pulse" />
-            <div>
-              <span className="font-bold">Uncommitted Counter Bill Draft Found:</span> You have an active bill draft saved from your last counter entry.
-            </div>
+        <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span className="font-medium">
+              <strong className="font-semibold">Unsaved Bill Draft Found:</strong> You have an active counter slip saved from your last session.
+            </span>
           </div>
           <Link
             href="/orders/new"
-            className="kb-btn-primary text-xs py-1.5 px-3 bg-amber-600 hover:bg-amber-700"
+            className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1 rounded-lg transition-colors"
           >
-            Resume Slip
+            Resume Slip →
           </Link>
         </div>
       )}
 
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white p-6 sm:p-10 shadow-xl border border-slate-800">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 backdrop-blur-md border border-white/20 text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                Google Pay Business: kbfashions.eazypay@icici
+      {/* Clean Compact Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-5 sm:p-7 shadow-sm border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/10 border border-white/15 text-emerald-300">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                Verified Google Pay Merchant Desk
               </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                UPI v2.8 Live
+              <span className="text-[10px] font-mono text-slate-300 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                UPI v2.8
               </span>
             </div>
-
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
               KB Khata &amp; Fashions
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-              Village commerce ledger &amp; digital counter desk. Bahi-Khata ledger management, offline counter billing with instant Google Pay QR settlement.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+              Village commerce ledger &amp; digital counter billing with instant Google Pay QR settlement.
             </p>
           </div>
 
-          {/* Quick Counter Action */}
-          <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             <Link
               href="/orders/new"
-              className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+              className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-1.5"
             >
-              <Receipt className="w-4 h-4" />
+              <Receipt className="w-3.5 h-3.5" />
               <span>New Bill (F2)</span>
             </Link>
 
             <Link
               href="/admin/ai"
-              className="py-3.5 px-5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+              className="py-2.5 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-xs transition-all flex items-center gap-1.5"
             >
-              <Bot className="w-4 h-4 text-violet-400" />
+              <Bot className="w-3.5 h-3.5 text-violet-300" />
               <span>AI Advisor</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Two Master Gateway Portals: Customer vs Admin */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Gateway 1: Customer Khata Portal */}
-        <div className="bg-gradient-to-br from-white to-indigo-50/50 border border-indigo-200/80 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
-            <Smartphone className="w-6 h-6" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full">
-                For Customers
-              </span>
-              <span className="text-xs text-slate-400 font-medium">Self-Service</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1">
-              Customer Khata Portal
-            </h2>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Customers can view itemized slips, historical orders, existing credit balances, and settle instantly with Google Pay.
-            </p>
-          </div>
-
-          <div className="space-y-2 pt-2 border-t border-indigo-100/80">
-            <Link
-              href="/portal/login"
-              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Customer Login with Mobile OTP</span>
-              </div>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/portal"
-              className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-slate-400" />
-                <span>Find My Account / Directory</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Gateway 2: Store Admin & Counter Desk */}
-        <div className="bg-gradient-to-br from-white to-emerald-50/50 border border-emerald-200/80 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden group">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
-            <Shield className="w-6 h-6" />
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">
-                For Shop Owner / Admin
-              </span>
-              <span className="text-xs text-slate-400 font-medium">Biometric Protected</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1">
-              Admin &amp; Counter Desk
-            </h2>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Store administration desk: Webcam face recognition, email OTP verification, and PIN protection for ledger management.
-            </p>
-          </div>
-
-          <div className="space-y-2 pt-2 border-t border-emerald-100/80">
-            <Link
-              href="/admin/login"
-              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-4 h-4" />
-                <span>Admin Login (Face ID + OTP + PIN)</span>
-              </div>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/orders"
-              className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Receipt className="w-3.5 h-3.5 text-slate-400" />
-                <span>Open Counter Register &amp; Orders Archive</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Financial Health Bento Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+      {/* Compact Financial Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Active Village Territories
+              Active Villages
             </span>
-            <p className="text-2xl font-black font-mono text-slate-900 mt-1">
+            <p className="text-lg font-black font-mono text-slate-900 mt-0.5">
               {loading ? "..." : data?.villageCount || 0}
             </p>
-            <span className="text-xs text-slate-500 font-medium">Mapped route territories</span>
+            <span className="text-[11px] text-slate-500">Route areas</span>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700">
-            <MapPin className="w-5 h-5 text-emerald-600" />
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+            <MapPin className="w-4 h-4" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Registered Khata Accounts
+              Khata Accounts
             </span>
-            <p className="text-2xl font-black font-mono text-slate-900 mt-1">
+            <p className="text-lg font-black font-mono text-slate-900 mt-0.5">
               {loading ? "..." : data?.customerCount || 0}
             </p>
-            <span className="text-xs text-slate-500 font-medium">Village retail buyers</span>
+            <span className="text-[11px] text-slate-500">Buyers registered</span>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700">
-            <Users className="w-5 h-5 text-indigo-600" />
+          <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
+            <Users className="w-4 h-4" />
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs flex items-center justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500 block">
-              Total Outstanding Udhaar Debt
+              Total Udhaar Debt
             </span>
-            <p className="text-2xl font-black font-mono text-rose-600 mt-1">
+            <p className="text-lg font-black font-mono text-rose-600 mt-0.5">
               {loading ? "..." : formatCurrency(data?.totalOutstanding || 0)}
             </p>
-            <span className="text-xs text-slate-500 font-medium">Cumulative village baki</span>
+            <span className="text-[11px] text-slate-500">Cumulative baki</span>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Terminology Clarity Banner */}
-      <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-2 text-slate-700 font-bold">
-          <BookOpen className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span>Khata Ledger Accounting Definitions:</span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span className="font-bold text-emerald-800">Debit (Nagathu / Cash):</span>
-            <span className="text-slate-500">Total payment paid right now</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="font-bold text-amber-800">Partial Settlement:</span>
-            <span className="text-slate-500">Part cash paid + remainder to Udhaar</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-rose-600" />
-            <span className="font-bold text-rose-800">Credit (Udhaar / Debt):</span>
-            <span className="text-slate-500">Unpaid balance owed</span>
+          <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+            <TrendingUp className="w-4 h-4" />
           </div>
         </div>
-      </div>
 
-      {/* Recent Counter Bills Table with Voice Callout */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Total Orders
+            </span>
+            <p className="text-lg font-black font-mono text-slate-900 mt-0.5">
+              {loading ? "..." : data?.recentOrders.length || 0}
+            </p>
+            <span className="text-[11px] text-slate-500">Counter slips</span>
+          </div>
+          <div className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700">
+            <Receipt className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Online Services (Design strictly matching reference image) */}
+      <div className="space-y-4">
+        {/* Section Header with Pill Badge */}
+        <div className="text-center max-w-lg mx-auto space-y-1 pt-1 pb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-[10px] font-bold tracking-wide">
+            <span>✦</span>
+            <span className="uppercase">NEWLY LAUNCHED</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            Online Services
+          </h2>
+          <p className="text-xs text-slate-500 font-normal">
+            The latest services now live on the Hub — sign in to get started.
+          </p>
+        </div>
+
+        {/* 4 Cards Grid - Exact Design from Reference Image */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: Warm Amber (Online No-Due Certificate & Billing) */}
+          <div className="relative bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all duration-200 p-5 overflow-hidden flex flex-col justify-between group">
+            {/* Left accent vertical pill */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-amber-500 rounded-l-2xl" />
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <Receipt className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
+                  Online No-Due Certificate
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Apply for your SNDC fully online — no desk visits.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <Link
+                href="/orders/new"
+                className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1 transition-colors"
+              >
+                <span>Sign in to access</span>
+                <span className="text-sm font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
+            </div>
+
+            {/* Faint watermark icon */}
+            <Receipt className="absolute -right-3 -bottom-3 w-20 h-20 text-slate-900/[0.03] pointer-events-none transform -rotate-12" />
+          </div>
+
+          {/* Card 2: Teal / Emerald (Certificate Requests OCR & Ledger) */}
+          <div className="relative bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all duration-200 p-5 overflow-hidden flex flex-col justify-between group">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-teal-600 rounded-l-2xl" />
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-teal-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
+                  Certificate Requests (OCR)
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Request transcripts, bonafides &amp; more; track status live.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <Link
+                href="/ledger"
+                className="text-xs font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1 transition-colors"
+              >
+                <span>Sign in to access</span>
+                <span className="text-sm font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
+            </div>
+
+            <BookOpen className="absolute -right-3 -bottom-3 w-20 h-20 text-slate-900/[0.03] pointer-events-none transform -rotate-12" />
+          </div>
+
+          {/* Card 3: Blue (Online Fee Payment) */}
+          <div className="relative bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all duration-200 p-5 overflow-hidden flex flex-col justify-between group">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 rounded-l-2xl" />
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
+                  Online Fee Payment
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Pay fees securely and download receipts instantly.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <Link
+                href="/payments"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+              >
+                <span>Sign in to access</span>
+                <span className="text-sm font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
+            </div>
+
+            <CreditCard className="absolute -right-3 -bottom-3 w-20 h-20 text-slate-900/[0.03] pointer-events-none transform -rotate-12" />
+          </div>
+
+          {/* Card 4: Ruby / Crimson (Results & 360 Profile) */}
+          <div className="relative bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all duration-200 p-5 overflow-hidden flex flex-col justify-between group">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-600 rounded-l-2xl" />
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-slate-800">
+                  Results &amp; 360° Profile
+                </h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  View SGPA/CGPA, attendance and your academic record.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <Link
+                href="/portal/login"
+                className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 transition-colors"
+              >
+                <span>Sign in to access</span>
+                <span className="text-sm font-bold group-hover:translate-x-0.5 transition-transform">→</span>
+              </Link>
+            </div>
+
+            <Smartphone className="absolute -right-3 -bottom-3 w-20 h-20 text-slate-900/[0.03] pointer-events-none transform -rotate-12" />
+          </div>
+        </div>
+      </div>
+
+      {/* Accounting Clarity Definition Chips */}
+      <div className="bg-white border border-slate-200/90 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+        <div className="flex items-center gap-1.5 text-slate-700 font-semibold text-[11px]">
+          <BookOpen className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+          <span>Khata Accounting Modes:</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+            <strong className="text-emerald-800">Debit (Cash):</strong>
+            <span className="text-slate-500">Paid in full</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <strong className="text-amber-800">Partial:</strong>
+            <span className="text-slate-500">Cash + Udhaar balance</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+            <strong className="text-rose-800">Credit (Udhaar):</strong>
+            <span className="text-slate-500">Unpaid debt</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Counter Bills Table with Telugu Voice Callout */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
               Recent Counter Bills &amp; Slips
             </h3>
-            <p className="text-xs text-slate-500">Latest recorded transactions with Telugu voice callout</p>
+            <p className="text-[11px] text-slate-500">Latest recorded transactions with Telugu voice callout</p>
           </div>
 
           <Link
             href="/orders"
-            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1"
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1"
           >
-            <span>View All Bills</span>
+            <span>View All</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="py-12 text-center text-xs text-slate-400">Loading counter slips...</div>
+            <div className="py-10 text-center text-xs text-slate-400">Loading counter slips...</div>
           ) : !data || data.recentOrders.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">No orders recorded yet.</div>
+            <div className="py-10 text-center text-xs text-slate-400">No orders recorded yet.</div>
           ) : (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[11px] font-semibold bg-slate-50/50">
-                  <th className="py-3 px-4">Order #</th>
-                  <th className="py-3 px-4">Customer &amp; Route</th>
-                  <th className="py-3 px-4 text-center">Telugu Voice</th>
-                  <th className="py-3 px-4">Settlement Mode</th>
-                  <th className="py-3 px-4 text-right">Bill Total (₹)</th>
-                  <th className="py-3 px-4 text-center">Receipt</th>
+                <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider text-[10px] font-semibold bg-slate-50/60">
+                  <th className="py-2.5 px-3.5">Order #</th>
+                  <th className="py-2.5 px-3.5">Customer &amp; Village</th>
+                  <th className="py-2.5 px-3.5 text-center">Voice</th>
+                  <th className="py-2.5 px-3.5">Settlement</th>
+                  <th className="py-2.5 px-3.5 text-right">Total (₹)</th>
+                  <th className="py-2.5 px-3.5 text-center">Slip</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-sans">
                 {data.recentOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3.5">
                       <span className="font-mono font-bold text-slate-900 block">
                         {ord.orderNumber}
                       </span>
@@ -379,11 +429,11 @@ export default function StoreHomePage() {
                       </span>
                     </td>
 
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2.5">
+                    <td className="py-2.5 px-3.5">
+                      <div className="flex items-center gap-2">
                         <CustomerAvatar name={ord.customerName} size="sm" />
                         <div>
-                          <div className="font-bold text-slate-900">{ord.customerName}</div>
+                          <div className="font-semibold text-slate-900 text-xs">{ord.customerName}</div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <VillageBadge name={ord.villageName} size="sm" />
                             <span className="text-[10px] font-mono text-slate-400">
@@ -394,7 +444,7 @@ export default function StoreHomePage() {
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-2.5 px-3.5 text-center">
                       <VoiceCalloutButton
                         payload={{
                           customerName: ord.customerName,
@@ -406,12 +456,12 @@ export default function StoreHomePage() {
                       />
                     </td>
 
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3.5">
                       <PaymentTypeBadge type={ord.paymentType} />
                     </td>
 
-                    <td className="py-3 px-4 text-right font-mono">
-                      <span className="font-black text-slate-900 text-sm block">
+                    <td className="py-2.5 px-3.5 text-right font-mono">
+                      <span className="font-bold text-slate-900 text-xs block">
                         {formatCurrency(ord.totalAmount)}
                       </span>
                       {ord.paymentType === "PARTIAL" && (
@@ -421,11 +471,11 @@ export default function StoreHomePage() {
                       )}
                     </td>
 
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-2.5 px-3.5 text-center">
                       <Link
                         href={`/reports/print/${ord.id}`}
                         target="_blank"
-                        className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 inline-flex transition-all"
+                        className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 inline-flex transition-all"
                         title="Print Carbon Slip (80mm)"
                       >
                         <Printer className="w-3.5 h-3.5" />
