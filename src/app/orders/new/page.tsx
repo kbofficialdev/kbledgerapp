@@ -195,6 +195,11 @@ function NewOrderContent() {
 
   // Discard Draft
   const handleDiscardDraft = () => {
+    if (items.some((i) => i.name.trim() || i.pricePerUnit.trim()) || paidAmount || notes) {
+      if (!window.confirm("Are you sure you want to discard this draft bill? All entered items and totals will be cleared.")) {
+        return;
+      }
+    }
     localStorage.removeItem(DRAFT_STORAGE_KEY);
     setDraftRestored(false);
     setItems([
@@ -262,6 +267,7 @@ function NewOrderContent() {
   // Submit Order
   const handleRecordOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     if (!selectedVillageId || !selectedCustomerId) {
       setFeedback({ type: "error", message: "Please select both Village and Customer." });
       return;

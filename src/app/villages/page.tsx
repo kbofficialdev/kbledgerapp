@@ -73,6 +73,7 @@ export default function VillagesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     if (!formData.name.trim()) return;
 
     try {

@@ -30,6 +30,7 @@ export default function CustomerPortalLoginPage() {
   // 1. Request OTP
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!identifier.trim()) {
       setError("Please enter your registered mobile number or email.");
       return;
@@ -64,6 +65,7 @@ export default function CustomerPortalLoginPage() {
   // 2. Verify OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!otp.trim() || otp.trim().length !== 6) {
       setError("Please enter the complete 6-digit OTP.");
       return;

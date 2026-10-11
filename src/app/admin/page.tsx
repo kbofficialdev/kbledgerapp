@@ -102,6 +102,7 @@ function AdminContent() {
   }, []);
 
   const handleEnrollFace = async () => {
+    if (enrolling) return;
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;

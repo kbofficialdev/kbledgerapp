@@ -121,6 +121,7 @@ function CustomersContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     if (!formData.name.trim() || !formData.mobile.trim() || !formData.villageId) return;
 
     try {

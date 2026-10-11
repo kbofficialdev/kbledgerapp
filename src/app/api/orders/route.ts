@@ -13,13 +13,21 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get("startDate")?.trim();
     const endDate = searchParams.get("endDate")?.trim();
     const search = searchParams.get("search")?.trim();
+    const id = searchParams.get("id")?.trim();
 
     const whereClause: any = {};
 
-    if (villageId) whereClause.villageId = villageId;
-    if (customerId) whereClause.customerId = customerId;
-    if (paymentType && ["CREDIT", "DEBIT", "PARTIAL"].includes(paymentType)) {
-      whereClause.paymentType = paymentType;
+    if (id) {
+      whereClause.OR = [
+        { id },
+        { orderNumber: id },
+      ];
+    } else {
+      if (villageId) whereClause.villageId = villageId;
+      if (customerId) whereClause.customerId = customerId;
+      if (paymentType && ["CREDIT", "DEBIT", "PARTIAL"].includes(paymentType)) {
+        whereClause.paymentType = paymentType;
+      }
     }
 
     if (startDate || endDate) {

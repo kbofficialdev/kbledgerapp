@@ -111,6 +111,9 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
   // Initialize from LocalStorage
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setSidebarOpen(false);
+    }
     try {
       const stored = localStorage.getItem("kb_ai_chat_sessions");
       if (stored) {
@@ -185,6 +188,9 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
 
   const handleDeleteSession = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this AI analysis session?")) {
+      return;
+    }
     if (sessions.length <= 1) {
       handleNewChat();
       return;

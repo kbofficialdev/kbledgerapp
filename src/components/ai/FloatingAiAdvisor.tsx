@@ -35,8 +35,8 @@ export const FloatingAiAdvisor: React.FC = () => {
 
   return (
     <>
-      {/* Floating Action Button in Bottom-Right Corner */}
-      <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
+      {/* Floating Action Button in Bottom-Right Corner (offset on mobile to avoid MobileBottomNav overlap) */}
+      <div className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-50 no-print flex flex-col items-end">
         {/* Subtle Welcome Tooltip Banner on First Load */}
         {!isOpen && !hasPrompted && (
           <div className="mb-2 mr-1 px-3 py-1.5 rounded-xl bg-slate-900/95 text-white text-xs shadow-xl border border-slate-700 flex items-center gap-2 animate-bounce">

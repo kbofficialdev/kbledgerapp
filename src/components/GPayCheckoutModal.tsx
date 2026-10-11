@@ -126,7 +126,7 @@ export default function GPayCheckoutModal({
 
   // 3. Confirm & Verify Payment Handler
   const handleVerifyPayment = async () => {
-    if (!intentData) return;
+    if (!intentData || verifying) return;
 
     // If RRN provided, check 12-digit format
     if (bankRrn && !/^\d{12}$/.test(bankRrn.trim())) {

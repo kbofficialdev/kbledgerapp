@@ -22,6 +22,7 @@ import {
   QrCode,
   Smartphone,
   Send,
+  Archive,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { CustomerAvatar } from "@/components/common/Avatars";
@@ -100,11 +101,34 @@ export default function CustomerDetailPage() {
   // Payment Modal
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [payAmount, setPayAmount] = useState("");
-  const [payMethod, setPayMethod] = useState<"CASH" | "PHONEPE_UPI" | "PHONEPE_QR">("CASH");
+  const [payMethod, setPayMethod] = useState<"CASH" | "GOOGLE_PAY_UPI" | "GOOGLE_PAY_QR">("CASH");
   const [payNotes, setPayNotes] = useState("");
   const [submittingPay, setSubmittingPay] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [payFeedback, setPayFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  const handleArchiveCustomer = async () => {
+    if (!customer || archiving) return;
+    if (!window.confirm(`Are you sure you want to archive customer "${customer.name}"? This action requires zero pending balance.`)) {
+      return;
+    }
+    try {
+      setArchiving(true);
+      const res = await fetch(`/api/customers/${customer.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setPayFeedback({ type: "success", message: data.message || "Customer archived successfully." });
+        setTimeout(() => router.push("/customers"), 1200);
+      } else {
+        setPayFeedback({ type: "error", message: data.error || "Failed to archive customer." });
+      }
+    } catch (err: any) {
+      setPayFeedback({ type: "error", message: err.message || "Network error" });
+    } finally {
+      setArchiving(false);
+    }
+  };
 
   const handleSendCredentials = async () => {
     if (!customer) return;
@@ -145,6 +169,7 @@ export default function CustomerDetailPage() {
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingPay) return;
     const amountNum = parseFloat(payAmount);
     if (!amountNum || amountNum <= 0) return;
 
@@ -284,6 +309,17 @@ export default function CustomerDetailPage() {
           >
             <IndianRupee className="w-4 h-4 text-emerald-600" />
             <span>Record Payment (Jama)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleArchiveCustomer}
+            disabled={archiving}
+            className="kb-btn-secondary text-xs py-2 px-3 border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-1.5"
+            title="Archive customer account (must have zero balance)"
+          >
+            <Archive className="w-3.5 h-3.5 text-rose-600" />
+            <span>{archiving ? "Archiving..." : "Archive"}</span>
           </button>
 
           <Link
@@ -646,28 +682,28 @@ export default function CustomerDetailPage() {
 
                   <button
                     type="button"
-                    onClick={() => setPayMethod("PHONEPE_UPI")}
+                    onClick={() => setPayMethod("GOOGLE_PAY_UPI")}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                      payMethod === "PHONEPE_UPI"
+                      payMethod === "GOOGLE_PAY_UPI"
                         ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs"
                         : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    <QrCode className="w-4 h-4 text-purple-600" />
-                    <span>PhonePe UPI</span>
+                    <QrCode className="w-4 h-4 text-blue-600" />
+                    <span>Google Pay UPI</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setPayMethod("PHONEPE_QR")}
+                    onClick={() => setPayMethod("GOOGLE_PAY_QR")}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                      payMethod === "PHONEPE_QR"
+                      payMethod === "GOOGLE_PAY_QR"
                         ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs"
                         : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    <CreditCard className="w-4 h-4 text-sky-600" />
-                    <span>Store QR</span>
+                    <CreditCard className="w-4 h-4 text-indigo-600" />
+                    <span>G-Pay QR</span>
                   </button>
                 </div>
               </div>

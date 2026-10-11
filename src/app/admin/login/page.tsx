@@ -60,6 +60,7 @@ function AdminFaceLoginPageContent() {
   const [showPinModal, setShowPinModal] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [pinSubmitting, setPinSubmitting] = useState(false);
 
   // MFA OTP Modal (Face/PIN + Email OTP)
   const [showMfaModal, setShowMfaModal] = useState(false);
@@ -214,6 +215,7 @@ function AdminFaceLoginPageContent() {
 
   // Direct Email OTP Handler
   const handleSendEmailOtp = async () => {
+    if (sendingEmailOtp) return;
     try {
       setSendingEmailOtp(true);
       setStatusMessage("Dispatching login OTP to registered admin email...");
@@ -236,7 +238,9 @@ function AdminFaceLoginPageContent() {
   // Emergency PIN handler
   const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (pinSubmitting) return;
     try {
+      setPinSubmitting(true);
       setPinError(null);
       const res = await fetch("/api/auth/admin/verify-pin", {
         method: "POST",
@@ -262,12 +266,15 @@ function AdminFaceLoginPageContent() {
       }
     } catch (err: any) {
       setPinError("Verification error");
+    } finally {
+      setPinSubmitting(false);
     }
   };
 
   // MFA OTP submit handler
   const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mfaLoading) return;
     if (mfaOtp.trim().length !== 6) {
       setMfaError("Please enter the complete 6-digit OTP");
       return;

@@ -44,7 +44,7 @@ export default function CarbonPrintReceiptPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/orders`)
+    fetch(`/api/orders?id=${encodeURIComponent(orderId)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
