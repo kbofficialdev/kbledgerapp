@@ -153,7 +153,7 @@ export default function VillagesPage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
               <MapPin className="w-5 h-5 text-emerald-600" />
@@ -165,7 +165,7 @@ export default function VillagesPage() {
           </div>
         </div>
 
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
               <Users className="w-5 h-5 text-sky-600" />
@@ -177,7 +177,7 @@ export default function VillagesPage() {
           </div>
         </div>
 
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
               <IndianRupee className="w-5 h-5" />
@@ -191,7 +191,7 @@ export default function VillagesPage() {
       </div>
 
       {/* Search Filter Bar */}
-      <div className="kb-card p-4 flex flex-col sm:flex-row items-center gap-3">
+      <div className="kb-card-elevated p-4 flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -243,7 +243,7 @@ export default function VillagesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {villages.map((v) => (
-            <div key={v.id} className="kb-card p-5 flex flex-col justify-between hover:border-emerald-300 transition-all">
+            <div key={v.id} className="kb-card-elevated p-5 flex flex-col justify-between hover:border-emerald-300 transition-all">
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <div>

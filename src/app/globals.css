@@ -68,9 +68,14 @@ body {
 }
 
 @layer components {
-  /* White theme card */
+  /* Modern white theme card with subtle border & depth */
   .kb-card {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)] transition-all;
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_6px_20px_rgba(15,23,42,0.06)] transition-all duration-200;
+  }
+
+  /* Elevated Glass Card */
+  .kb-card-elevated {
+    @apply bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-[0_4px_24px_rgba(15,23,42,0.05),0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all duration-200;
   }
 
   /* Custom input */
@@ -78,14 +83,24 @@ body {
     @apply w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm;
   }
 
-  /* Primary action button */
+  /* Primary action button with smooth gradient */
   .kb-btn-primary {
-    @apply bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+  }
+
+  /* Google Pay Brand Gradient Action Button */
+  .kb-btn-gpay {
+    @apply bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
   }
 
   /* Secondary action button */
   .kb-btn-secondary {
-    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-2.5 rounded-xl shadow-sm transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+  }
+
+  /* Solid-like interactive pill */
+  .kb-pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border transition-all;
   }
 }
 

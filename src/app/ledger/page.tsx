@@ -151,29 +151,29 @@ export default function LedgerPage() {
 
       {/* Aggregate KPI Banner for the active filter */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Transactions</p>
           <p className="text-xl font-bold text-slate-900 font-mono mt-1">{summary.count}</p>
         </div>
 
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-rose-500">Total Debit (Bills / Udhaar)</p>
           <p className="text-xl font-bold text-rose-600 font-mono mt-1">{formatCurrency(summary.totalDebit)}</p>
         </div>
 
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Total Credit (Collections / Jama)</p>
           <p className="text-xl font-bold text-emerald-600 font-mono mt-1">{formatCurrency(summary.totalCredit)}</p>
         </div>
 
-        <div className="kb-card p-4">
+        <div className="kb-card-elevated p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Net Period Balance</p>
           <p className="text-xl font-bold text-slate-800 font-mono mt-1">{formatCurrency(summary.netDifference)}</p>
         </div>
       </div>
 
       {/* Multi-Dimensional Filter Bar */}
-      <div className="kb-card p-5 space-y-4 no-print">
+      <div className="kb-card-elevated p-5 space-y-4 no-print">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Universal Search (Name, Mobile, Code, Email) */}
           <div className="relative">
@@ -276,7 +276,7 @@ export default function LedgerPage() {
       </div>
 
       {/* Ledger Journal Table */}
-      <div className="kb-card overflow-hidden">
+      <div className="kb-card-elevated overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900">Khata Journal Entries</h3>
           <span className="text-xs text-slate-400 font-mono">{entries.length} records shown</span>

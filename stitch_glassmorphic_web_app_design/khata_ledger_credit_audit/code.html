@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}@keyframes float-slow{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20px,25px) scale(1.05);}}@keyframes float-reverse{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-25px,-20px) scale(0.95);}}.animate-mesh-1{animation:float-slow 18s ease-in-out infinite;}.animate-mesh-2{animation:float-reverse 22s ease-in-out infinite;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "outline-variant": "#bccac0",
+          "surface-container-highest": "#dae2fd",
+          "on-error": "#ffffff",
+          "inverse-on-surface": "#eef0ff",
+          "tertiary": "#ba0035",
+          "background": "#faf8ff",
+          "tertiary-fixed": "#ffdada",
+          "on-tertiary": "#ffffff",
+          "on-primary-container": "#f5fff7",
+          "on-primary-fixed": "#002114",
+          "surface-container-lowest": "#ffffff",
+          "primary": "#006948",
+          "error": "#ba1a1a",
+          "primary-fixed-dim": "#68dba9",
+          "inverse-primary": "#68dba9",
+          "on-primary-fixed-variant": "#005137",
+          "tertiary-container": "#e21e49",
+          "on-tertiary-fixed-variant": "#920028",
+          "error-container": "#ffdad6",
+          "on-primary": "#ffffff",
+          "surface-container-low": "#f2f3ff",
+          "on-surface": "#131b2e",
+          "surface-container-high": "#e2e7ff",
+          "surface-tint": "#006c4a",
+          "on-background": "#131b2e",
+          "secondary-container": "#645efb",
+          "on-secondary-fixed": "#0f0069",
+          "on-secondary": "#ffffff",
+          "secondary": "#4b41e1",
+          "surface-variant": "#dae2fd",
+          "surface-dim": "#d2d9f4",
+          "surface-bright": "#faf8ff",
+          "on-tertiary-container": "#fffbff",
+          "inverse-surface": "#283044",
+          "on-secondary-container": "#fffbff",
+          "secondary-fixed": "#e2dfff",
+          "on-error-container": "#93000a",
+          "primary-container": "#00855d",
+          "surface-container": "#eaedff",
+          "on-secondary-fixed-variant": "#3323cc",
+          "tertiary-fixed-dim": "#ffb3b6",
+          "secondary-fixed-dim": "#c3c0ff",
+          "outline": "#6d7a72",
+          "on-tertiary-fixed": "#40000c",
+          "primary-fixed": "#85f8c4",
+          "surface": "#faf8ff",
+          "on-surface-variant": "#3d4a42"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-lg": "1.5rem",
+          "margin-desktop": "2.5rem",
+          "space-xl": "2.25rem",
+          "space-md": "1rem",
+          "space-sm": "0.5rem",
+          "margin": "1rem",
+          "gutter": "1.25rem",
+          "gutter-desktop": "1.75rem",
+          "space-xs": "0.25rem"
+        },
+        "fontFamily": {
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "currency-stat": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Plus Jakarta Sans"
+          ],
+          "body-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "title-md": [
+            "Plus Jakarta Sans"
+          ],
+          "label-xs": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-lg-mobile": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "body-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "display": [
+            "Plus Jakarta Sans"
+          ],
+          "label-code": [
+            "JetBrains Mono"
+          ]
+        },
+        "fontSize": {
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ],
+          "currency-stat": [
+            "30px",
+            {
+              "lineHeight": "36px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "800"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-xs": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.05em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg-mobile": [
+            "26px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "-0.02em",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "600"
+            }
+          ],
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "display": [
+            "48px",
+            {
+              "lineHeight": "56px",
+              "letterSpacing": "-0.03em",
+              "fontWeight": "800"
+            }
+          ],
+          "label-code": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.04em",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  };</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased min-h-screen relative overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed"><div class="fixed inset-0 pointer-events-none z-0 overflow-hidden"><div class="absolute -top-[12%] -left-[8%] w-[650px] h-[650px] rounded-full bg-primary/10 blur-[130px] animate-mesh-1"></div><div class="absolute top-[28%] -right-[10%] w-[580px] h-[580px] rounded-full bg-secondary/10 blur-[140px] animate-mesh-2"></div><div class="absolute -bottom-[15%] left-[24%] w-[620px] h-[620px] rounded-full bg-tertiary/5 blur-[150px] animate-mesh-1"></div><div class="absolute top-[45%] left-[12%] w-[420px] h-[420px] rounded-full bg-surface-container-highest/60 blur-[110px]"></div></div><aside class="fixed left-6 top-6 bottom-6 w-64 z-50 flex flex-col rounded-3xl bg-surface-container-lowest/70 backdrop-blur-2xl shadow-[0_20px_50px_rgba(19,27,46,0.06)] p-space-md"><div class="flex items-center gap-space-sm px-space-xs py-space-sm mb-space-md"><div class="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-lg shadow-primary/20"><span class="material-symbols-outlined text-[22px]">storefront</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-tight tracking-tight">KB Khata</span><span class="font-label-code text-label-code text-primary uppercase tracking-widest font-semibold">Village Hub</span></div></div><div class="px-space-xs mb-space-sm"><span class="font-label-xs text-label-xs text-outline uppercase tracking-wider block">Operations &amp; Ledger</span></div><nav class="flex-1 flex flex-col gap-space-xs" data-active-classes="bg-primary text-on-primary shadow-lg shadow-primary/25 font-semibold"><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">grid_view</span><span>Overview</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="new-bill" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">receipt_long</span><span>New Bill</span></div><span class="font-label-code text-label-code px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">F2</span></a><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="villages" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">holiday_village</span><span>Villages</span></a><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="customers" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">group</span><span>Customers</span></a><a aria-current="page" class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl transition-all duration-200 bg-primary text-on-primary shadow-lg shadow-primary/25 font-semibold" data-path="khata-ledger" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">menu_book</span><span>Khata Ledger</span></a><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="phonepe-pay" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">qr_code_scanner</span><span>PhonePe Pay</span></a><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="carbon-reports" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">energy_savings_leaf</span><span>Carbon Reports</span></a><a class="group flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl font-title-md text-title-md text-on-surface-variant hover:bg-surface-container-high/60 hover:text-on-surface transition-all duration-200" data-path="admin-face-id" href="#"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:scale-110">face</span><span>Admin Face ID</span></a></nav><div class="mt-auto p-space-sm rounded-2xl bg-surface-container-high/50 flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span></span><span class="font-body-sm text-body-sm text-on-surface font-semibold">Offline Sync</span></div><span class="font-label-code text-label-code text-on-surface-variant">v4.8</span></div></aside><div class="pl-[19rem] pr-6 relative z-10"><header class="sticky top-6 z-40 h-20 mb-6 rounded-2xl bg-surface-container-lowest/70 backdrop-blur-2xl shadow-[0_12px_36px_rgba(19,27,46,0.05)] px-space-lg flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="KB Khata Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UDS3HLSyWaS2oP4zGDyGXtut0HuQnL4wY4aBz5DI1G3txd3bCqHxaeS1KOkfdBKPGR_v5SeABoRBJrqMaFnGaJIGQS-_gjGVgvKz3FytYwd__7TzHsUfmwcRus9vH6tJxOv7PeXIpAPjuAFHymsQY_S7gMiWRogzhdoQnMaUa0sNanXnSU0VwzWDUXxHBEEzxE5VtRsx9Wr0OQTx5bruwfG9uBhjtgIVnkqiR4C_M8xUXNlCA3Xbdw81o"/><div class="h-6 w-px bg-outline-variant/40 hidden md:block"></div><div class="hidden lg:flex items-center gap-space-xs px-space-md py-1.5 rounded-full bg-primary-fixed/30"><span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span><span class="font-label-xs text-label-xs text-on-primary-fixed font-bold tracking-wide uppercase">Live Counter Mode • Production Ready</span></div></div><div class="flex items-center gap-space-md"><a class="inline-flex items-center gap-space-xs px-space-md py-2 rounded-full bg-primary text-on-primary font-title-md text-title-md shadow-md shadow-primary/20 hover:bg-primary-container hover:text-on-primary-container transition-all" data-path="new-bill" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>+ New Counter Bill (F2)</span></a><div class="flex items-center gap-space-sm px-space-md py-1.5 rounded-full bg-surface-container-high/70"><span class="material-symbols-outlined text-secondary text-[18px]">verified_user</span><span class="font-label-xs text-label-xs text-on-surface font-semibold uppercase tracking-wider hidden sm:inline">Admin Face Active</span></div><div class="flex items-center gap-space-xs pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvPGoCPF_19NT1C7zj5cCU_213GxeAgHQdAgr2dNJNLbihsYcoi3sP6J7xAx7R2nW7JlIV7SBmJ9Pma9m0Zj67yaaRE4l9jWu3sw5hEyDkZz6Mv4-Kexn-qgpwlZUJLhy4UDRRU92DmXZWYrs4hnSwDzMvGx2KvXWPgXsNvqbBIrpsxYRlvRr9fgCJhrTMTITS4xCYSg3a1ka6jbRQBQHcTUSIPnSakb0KdMdLZ71Ndho4KiHVnb5O"/></div></div></header><main class="w-full min-h-[calc(100vh-8.5rem)] pb-space-xl"><div class="flex flex-col w-full gap-space-lg">
+<!-- Operational Header Context -->
+<div class="relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-tertiary/10 blur-[100px] pointer-events-none"></div>
+<div class="absolute -left-16 -bottom-16 w-72 h-72 rounded-full bg-primary/10 blur-[90px] pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-xs max-w-2xl">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-xs text-label-xs tracking-wider uppercase shadow-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-ping"></span>
+          Credit Risk Audit Active
+        </span>
+<span class="font-label-code text-label-code text-outline px-2 py-0.5 rounded-md bg-surface-container-high/60">SYNC: 14s AGO</span>
+<span class="font-label-code text-label-code text-primary px-2 py-0.5 rounded-md bg-primary-fixed/40">KB-KHATA-CORE #804</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">
+        Khata Ledger &amp; Credit Audit
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+        Master digital ledger for credit accounts, offline slips, repayment reminders, and settlement history across verified village clusters.
+      </p>
+<!-- Quick Filter Chips -->
+<div class="flex items-center gap-space-xs flex-wrap pt-2" id="quick-filter-group">
+<button class="ledger-filter active-filter px-3.5 py-1.5 rounded-full font-title-md text-body-sm bg-primary text-on-primary shadow-sm shadow-primary/20 transition-all" onclick="setLedgerFilter(this, 'all')">
+          All Udhaar (28)
+        </button>
+<button class="ledger-filter px-3.5 py-1.5 rounded-full font-title-md text-body-sm bg-surface-container-high/70 hover:bg-tertiary-fixed hover:text-on-tertiary-fixed text-on-surface-variant transition-all" onclick="setLedgerFilter(this, 'overdue')">
+          Overdue &gt;30 Days (3)
+        </button>
+<button class="ledger-filter px-3.5 py-1.5 rounded-full font-title-md text-body-sm bg-surface-container-high/70 hover:bg-secondary-fixed hover:text-on-secondary-fixed text-on-surface-variant transition-all" onclick="setLedgerFilter(this, 'phonepe')">
+          PhonePe Settled (14)
+        </button>
+<button class="ledger-filter px-3.5 py-1.5 rounded-full font-title-md text-body-sm bg-surface-container-high/70 hover:bg-surface-container-highest text-on-surface-variant transition-all" onclick="setLedgerFilter(this, 'slips')">
+          Pending Receipts (5)
+        </button>
+</div>
+</div>
+<!-- Action Group CTA -->
+<div class="relative z-10 flex flex-wrap xl:flex-col sm:flex-row items-stretch sm:items-center xl:items-end gap-space-xs self-start xl:self-center">
+<button class="flex items-center justify-center gap-space-xs px-5 py-2.5 rounded-full bg-gradient-to-r from-tertiary to-tertiary-container text-on-tertiary font-title-md text-title-md shadow-lg shadow-tertiary/25 hover:shadow-tertiary/40 hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[19px]">account_balance_wallet</span>
+<span>Audit Udhaar (₹90,000.00)</span>
+</button>
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-lowest/90 hover:bg-surface-container-high text-on-surface font-title-md text-body-sm shadow-sm transition-all">
+<span class="material-symbols-outlined text-primary text-[18px]">picture_as_pdf</span>
+<span>Export Carbon PDF</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-fixed hover:bg-primary-fixed-dim text-on-primary-fixed font-title-md text-body-sm shadow-sm transition-all">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>WhatsApp Reminders</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Outstanding Summary Glass Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Card 1: Total Udhaar (Credit) -->
+<div class="relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col justify-between group hover:shadow-2xl hover:shadow-tertiary/10 transition-all duration-300">
+<div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-tertiary/15 blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-start justify-between relative z-10">
+<div>
+<span class="font-label-xs text-label-xs text-tertiary uppercase tracking-wider font-bold block mb-1">
+            Total Udhaar Exposure
+          </span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Unsettled Credit</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shadow-md shadow-tertiary/20">
+<span class="material-symbols-outlined text-[24px]">crisis_alert</span>
+</div>
+</div>
+<div class="my-space-md relative z-10">
+<div class="flex items-baseline gap-1">
+<span class="font-currency-stat text-currency-stat text-tertiary tracking-tight">₹90,000.00</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-1 font-label-code text-label-code px-2 py-0.5 rounded-md bg-tertiary-fixed/60 text-on-tertiary-fixed font-semibold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +8.4% this week
+          </span>
+<span class="font-body-sm text-body-sm text-outline">Across 18 khata slips</span>
+</div>
+</div>
+<div class="pt-space-sm bg-surface-container-low/60 -mx-space-lg -mb-space-lg px-space-lg pb-space-md flex items-center justify-between relative z-10">
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Pending Village Recovery</span>
+<a class="font-title-md text-body-sm text-tertiary hover:text-on-tertiary-container flex items-center gap-1" href="#table-section">
+<span>Inspect Slips</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 2: Recovered this Month -->
+<div class="relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col justify-between group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300">
+<div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-primary/15 blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-start justify-between relative z-10">
+<div>
+<span class="font-label-xs text-label-xs text-primary uppercase tracking-wider font-bold block mb-1">
+            Collections MTD
+          </span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Recovered This Month</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+</div>
+<div class="my-space-md relative z-10">
+<div class="flex items-baseline gap-1">
+<span class="font-currency-stat text-currency-stat text-primary tracking-tight">₹1,45,200.00</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-1 font-label-code text-label-code px-2 py-0.5 rounded-md bg-primary-fixed/60 text-on-primary-fixed font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 62% via PhonePe QR
+          </span>
+<span class="font-body-sm text-body-sm text-outline">49 Receipts cleared</span>
+</div>
+</div>
+<div class="pt-space-sm bg-surface-container-low/60 -mx-space-lg -mb-space-lg px-space-lg pb-space-md flex items-center justify-between relative z-10">
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Digital vs Counter Cash</span>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-code text-label-code text-on-surface-variant">PhonePe: ₹90,024</span>
+</div>
+</div>
+</div>
+<!-- Card 3: High Risk Accounts -->
+<div class="relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col justify-between group hover:shadow-2xl hover:shadow-secondary/10 transition-all duration-300">
+<div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-secondary/15 blur-2xl group-hover:scale-125 transition-transform duration-500"></div>
+<div class="flex items-start justify-between relative z-10">
+<div>
+<span class="font-label-xs text-label-xs text-secondary uppercase tracking-wider font-bold block mb-1">
+            Overdue Warning
+          </span>
+<span class="font-headline-sm text-headline-sm text-on-surface">High Risk Accounts</span>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shadow-md shadow-secondary/20">
+<span class="material-symbols-outlined text-[24px]">gshield</span>
+</div>
+</div>
+<div class="my-space-md relative z-10">
+<div class="flex items-baseline gap-2">
+<span class="font-currency-stat text-currency-stat text-on-surface tracking-tight">3 Buyers</span>
+<span class="font-title-md text-headline-sm text-tertiary font-bold">&gt;45 Days</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="inline-flex items-center gap-1 font-label-code text-label-code px-2 py-0.5 rounded-md bg-error-container text-on-error-container font-semibold">
+            ₹46,200.00 Locked
+          </span>
+<span class="font-body-sm text-body-sm text-outline">Action Required</span>
+</div>
+</div>
+<div class="pt-space-sm bg-surface-container-low/60 -mx-space-lg -mb-space-lg px-space-lg pb-space-md flex items-center justify-between relative z-10">
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Auto WhatsApp Reminder</span>
+<button class="font-title-md text-body-sm text-primary hover:underline flex items-center gap-1" onclick="dispatchBatchWhatsApp()">
+<span>Ping All (3)</span>
+<span class="material-symbols-outlined text-[16px]">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Dual Visual Insight Row: Village Risk Dispersion & Instant Settlement Strip -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- PhonePe Instant Webhook Sync Gateway Banner -->
+<div class="lg:col-span-8 relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="absolute -top-12 -left-12 w-48 h-48 bg-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-center gap-space-md z-10">
+<div class="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-on-secondary shadow-lg shadow-secondary/30 shrink-0">
+<span class="material-symbols-outlined text-[28px]">qr_code_scanner</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-headline-sm text-headline-sm text-on-surface">PhonePe Smart Dynamic QR Collection</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-xs text-label-xs uppercase tracking-wide">Live Webhook</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl">
+            Buyers scan their personal slip QR code. Payment automatically updates the offline carbon ledger and issues an SMS repayment proof instantly.
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs z-10 w-full md:w-auto shrink-0 justify-end">
+<button class="w-full md:w-auto px-5 py-2.5 rounded-full bg-secondary hover:bg-secondary-container text-on-secondary font-title-md text-body-sm shadow-md shadow-secondary/25 transition-all flex items-center justify-center gap-2" onclick="openQrModal()">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+<span>Generate Customer QR</span>
+</button>
+</div>
+</div>
+<!-- Cluster Breakdown Visual Metric Ring -->
+<div class="lg:col-span-4 relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl p-space-lg shadow-xl shadow-on-surface/5 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-xs text-label-xs text-outline uppercase tracking-wider font-bold">Ledger Recovery Ratio</span>
+<span class="font-label-code text-label-code text-primary font-bold">61.7% Clr</span>
+</div>
+<div class="flex items-center gap-space-md my-auto">
+<!-- SVG Progress Ring Chart -->
+<div class="relative w-20 h-20 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<path class="text-primary stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="62, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="font-title-md text-body-md font-bold text-on-surface">62%</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 text-on-surface">
+<div class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span> Recovered</span>
+<span class="font-label-code text-label-code font-bold">₹1.45L</span>
+</div>
+<div class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span> Udhaar Risk</span>
+<span class="font-label-code text-label-code font-bold">₹90.0K</span>
+</div>
+<div class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-outline-variant"></span> In Review</span>
+<span class="font-label-code text-label-code font-bold">₹12.4K</span>
+</div>
+</div>
+</div>
+<div class="mt-2 text-right">
+<span class="font-label-code text-label-code text-outline">Target Cycle: 100% by 31st Mar</span>
+</div>
+</div>
+</div>
+<!-- Master Khata Customer Ledger Table Section -->
+<div class="relative overflow-hidden rounded-3xl bg-surface-container-lowest/80 backdrop-blur-2xl shadow-xl shadow-on-surface/5 flex flex-col" id="table-section">
+<!-- Ambient Table Glow Orbs -->
+<div class="absolute -top-24 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[110px] pointer-events-none"></div>
+<div class="absolute -bottom-24 left-1/3 w-96 h-96 bg-secondary/5 rounded-full blur-[110px] pointer-events-none"></div>
+<!-- Table Interactive Toolbar -->
+<div class="p-space-lg pb-space-md flex flex-col lg:flex-row lg:items-center justify-between gap-space-md border-b-0 relative z-10">
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[22px]">menu_book</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Customer Ledger Balances</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Real-time balances synched with Counter Slips</span>
+</div>
+</div>
+<!-- Search & Filters Container -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<!-- Translucent Search Input -->
+<div class="relative min-w-[260px]">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full bg-surface-container-low/70 hover:bg-surface-container-high/60 focus:bg-surface-container-lowest text-on-surface placeholder:text-outline text-body-sm font-body-md pl-10 pr-4 py-2 rounded-2xl focus:outline-none transition-all" id="khataSearch" oninput="filterLedgerTable()" placeholder="Search Buyer name, phone, village..." type="text"/>
+</div>
+<!-- Village Dropdown Filter -->
+<select class="bg-surface-container-low/70 hover:bg-surface-container-high/60 text-on-surface text-body-sm font-title-md px-3.5 py-2 rounded-2xl focus:outline-none cursor-pointer" id="villageSelect" onchange="filterLedgerTable()">
+<option value="all">All Villages (Territory)</option>
+<option value="Rampur Kalan">Rampur Kalan</option>
+<option value="Shivpur Diara">Shivpur Diara</option>
+<option value="Belauri Haat">Belauri Haat</option>
+<option value="Manjhi Patti">Manjhi Patti</option>
+</select>
+<!-- Status Filter -->
+<select class="bg-surface-container-low/70 hover:bg-surface-container-high/60 text-on-surface text-body-sm font-title-md px-3.5 py-2 rounded-2xl focus:outline-none cursor-pointer" id="statusSelect" onchange="filterLedgerTable()">
+<option value="all">Balance Status (All)</option>
+<option value="due">Net Balance Due</option>
+<option value="cleared">Zero / Cleared (₹0.00)</option>
+<option value="high-risk">High Risk (&gt;₹20,000)</option>
+</select>
+<button class="p-2 rounded-2xl bg-surface-container-low/70 hover:bg-surface-container-high text-on-surface-variant transition-all" onclick="resetLedgerFilters()" title="Reset Filters">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+</div>
+<!-- Responsive Translucent Glass Data Table -->
+<div class="w-full overflow-x-auto relative z-10">
+<table class="w-full text-left border-collapse" id="khataTable">
+<thead>
+<tr class="bg-surface-container-high/40 text-on-surface-variant font-label-xs text-label-xs uppercase tracking-wider">
+<th class="py-3.5 px-space-lg">Customer / Village</th>
+<th class="py-3.5 px-space-md">Contact</th>
+<th class="py-3.5 px-space-md">Last Slip Date</th>
+<th class="py-3.5 px-space-md text-right">Total Credit</th>
+<th class="py-3.5 px-space-md text-right">Repaid</th>
+<th class="py-3.5 px-space-md text-right">Net Balance Due</th>
+<th class="py-3.5 px-space-md text-center">Pref. Mode</th>
+<th class="py-3.5 px-space-lg text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-body-md font-body-md text-on-surface" id="ledgerTableBody">
+<!-- Row 1: High Risk Overdue -->
+<tr class="ledger-row hover:bg-surface-container-high/40 transition-colors" data-due="42000" data-name="Rameshwar Prasad Yadav" data-status="high-risk" data-village="Rampur Kalan">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-tertiary-fixed text-on-tertiary-fixed font-title-md flex items-center justify-center font-bold">
+                  RY
+                </div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">Rameshwar Prasad Yadav</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="inline-flex items-center px-2 py-0.2 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-code text-label-code">
+                      Rampur Kalan
+                    </span>
+<span class="text-tertiary font-label-code text-label-code font-bold">47 Days Overdue</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md font-label-code text-label-code text-on-surface-variant">
+              +91 98350 41209
+            </td>
+<td class="py-4 px-space-md">
+<span class="font-body-sm text-body-sm text-on-surface block">12 Feb 2025</span>
+<span class="font-label-code text-label-code text-outline">Slip #KB-4902</span>
+</td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-on-surface">
+              ₹68,500.00
+            </td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-primary">
+              ₹26,500.00
+            </td>
+<td class="py-4 px-space-md text-right">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-code text-title-md font-bold shadow-sm">
+                ₹42,000.00
+              </span>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed/40 text-on-secondary-fixed font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]">qr_code_scanner</span> PhonePe
+              </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-full bg-primary text-on-primary font-title-md text-body-sm shadow-sm shadow-primary/20 hover:scale-105 active:scale-95 transition-all" onclick="quickPayModal('Rameshwar Prasad', '42,000.00', '+91 98350 41209')">
+                  Record Pay
+                </button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="sendDirectReminder('Rameshwar Prasad', '42,000.00')" title="WhatsApp Reminder">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="viewSlips('KB-4902')" title="View Slips">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Moderate Udhaar -->
+<tr class="ledger-row hover:bg-surface-container-high/40 transition-colors" data-due="24500" data-name="Maheshwar Soren" data-status="due" data-village="Shivpur Diara">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-secondary-fixed text-on-secondary-fixed font-title-md flex items-center justify-center font-bold">
+                  MS
+                </div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">Maheshwar Soren (Kisan Store)</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="inline-flex items-center px-2 py-0.2 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-code text-label-code">
+                      Shivpur Diara
+                    </span>
+<span class="text-on-surface-variant font-label-code text-label-code">18 Days Active</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md font-label-code text-label-code text-on-surface-variant">
+              +91 94702 88311
+            </td>
+<td class="py-4 px-space-md">
+<span class="font-body-sm text-body-sm text-on-surface block">03 Mar 2025</span>
+<span class="font-label-code text-label-code text-outline">Slip #KB-5120</span>
+</td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-on-surface">
+              ₹45,000.00
+            </td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-primary">
+              ₹20,500.00
+            </td>
+<td class="py-4 px-space-md text-right">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-code text-title-md font-bold">
+                ₹24,500.00
+              </span>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]">payments</span> Counter Cash
+              </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-full bg-primary text-on-primary font-title-md text-body-sm shadow-sm shadow-primary/20 hover:scale-105 active:scale-95 transition-all" onclick="quickPayModal('Maheshwar Soren', '24,500.00', '+91 94702 88311')">
+                  Record Pay
+                </button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="sendDirectReminder('Maheshwar Soren', '24,500.00')" title="WhatsApp Reminder">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="viewSlips('KB-5120')" title="View Slips">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Active Small Udhaar -->
+<tr class="ledger-row hover:bg-surface-container-high/40 transition-colors" data-due="23500" data-name="Brijesh Kumar Gupta" data-status="due" data-village="Belauri Haat">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-primary-fixed text-on-primary-fixed font-title-md flex items-center justify-center font-bold">
+                  BG
+                </div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">Brijesh Kumar Gupta</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="inline-flex items-center px-2 py-0.2 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-code text-label-code">
+                      Belauri Haat
+                    </span>
+<span class="text-on-surface-variant font-label-code text-label-code">11 Days Active</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md font-label-code text-label-code text-on-surface-variant">
+              +91 91223 90445
+            </td>
+<td class="py-4 px-space-md">
+<span class="font-body-sm text-body-sm text-on-surface block">10 Mar 2025</span>
+<span class="font-label-code text-label-code text-outline">Slip #KB-5284</span>
+</td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-on-surface">
+              ₹38,000.00
+            </td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-primary">
+              ₹14,500.00
+            </td>
+<td class="py-4 px-space-md text-right">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-code text-title-md font-bold">
+                ₹23,500.00
+              </span>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed/40 text-on-secondary-fixed font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]">qr_code_scanner</span> PhonePe
+              </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-full bg-primary text-on-primary font-title-md text-body-sm shadow-sm shadow-primary/20 hover:scale-105 active:scale-95 transition-all" onclick="quickPayModal('Brijesh Kumar', '23,500.00', '+91 91223 90445')">
+                  Record Pay
+                </button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="sendDirectReminder('Brijesh Kumar', '23,500.00')" title="WhatsApp Reminder">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="viewSlips('KB-5284')" title="View Slips">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Fully Settled / Cleared Zero Balance -->
+<tr class="ledger-row hover:bg-surface-container-high/40 transition-colors" data-due="0" data-name="Sunita Devi (Self Help Group)" data-status="cleared" data-village="Manjhi Patti">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-2xl bg-surface-container-high text-on-surface font-title-md flex items-center justify-center font-bold">
+                  SD
+                </div>
+<div>
+<div class="font-title-md text-title-md text-on-surface">Sunita Devi (SHG Federation)</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="inline-flex items-center px-2 py-0.2 rounded-md bg-secondary-fixed/50 text-on-secondary-fixed font-label-code text-label-code">
+                      Manjhi Patti
+                    </span>
+<span class="text-primary font-label-code text-label-code font-bold">Ledger Cleared</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md font-label-code text-label-code text-on-surface-variant">
+              +91 88771 20034
+            </td>
+<td class="py-4 px-space-md">
+<span class="font-body-sm text-body-sm text-on-surface block">14 Mar 2025</span>
+<span class="font-label-code text-label-code text-outline">Slip #KB-5311</span>
+</td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-on-surface">
+              ₹52,000.00
+            </td>
+<td class="py-4 px-space-md text-right font-label-code text-body-sm text-primary">
+              ₹52,000.00
+            </td>
+<td class="py-4 px-space-md text-right">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-code text-title-md font-bold">
+                ₹0.00
+              </span>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed/40 text-on-secondary-fixed font-label-xs text-label-xs font-semibold">
+<span class="material-symbols-outlined text-[14px]">qr_code_scanner</span> PhonePe
+              </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-1.5">
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-title-md text-body-sm">
+                  Settled
+                </span>
+<button class="p-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface transition-all" onclick="viewSlips('KB-5311')" title="View Full Khata Statement">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination & Ledger Summary Footer -->
+<div class="p-space-lg pt-space-md bg-surface-container-low/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm relative z-10">
+<div class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+<span>Showing 4 of 28 Verified Khata Holders</span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span class="text-tertiary font-semibold">3 Requiring Audit</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-3 py-1.5 rounded-xl bg-surface-container-high/80 text-on-surface-variant text-body-sm font-title-md hover:bg-surface-container-highest transition-all flex items-center gap-1 disabled:opacity-50">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+<span>Previous</span>
+</button>
+<span class="font-label-code text-label-code px-3 py-1 rounded-xl bg-primary text-on-primary font-bold">1</span>
+<button class="px-3 py-1.5 rounded-xl bg-surface-container-high/80 text-on-surface-variant text-body-sm font-title-md hover:bg-surface-container-highest transition-all flex items-center gap-1">
+<span>Next</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Real-time Slips & Settlement Floating Bar -->
+<div class="rounded-3xl bg-surface-container-high/60 backdrop-blur-xl p-space-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-2xl bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</div>
+<div>
+<span class="font-title-md text-title-md text-on-surface block">Thermal Slip Printer Connected (BT: KB-58mm-01)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ready to batch print carbon receipts for morning village delivery route.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs shrink-0">
+<button class="px-4 py-2 rounded-full bg-surface-container-lowest text-on-surface hover:bg-surface-container-high font-title-md text-body-sm shadow-sm transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Paper Format: 3-Inch Slip</span>
+</button>
+<button class="px-5 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container font-title-md text-body-sm shadow-md shadow-primary/20 transition-all flex items-center gap-1.5" onclick="triggerBatchPrint()">
+<span class="material-symbols-outlined text-[18px]">print_connect</span>
+<span>Batch Print Route Slips</span>
+</button>
+</div>
+</div>
+<!-- Interactive Modal / Slide-over Template: Record Payment (Initially Hidden) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-md hidden items-center justify-center p-4" id="paymentModal">
+<div class="relative w-full max-w-lg rounded-3xl bg-surface-container-lowest/95 backdrop-blur-2xl shadow-2xl p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b-0">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-2xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Record Khata Repayment</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Update offline ledger slip immediately</span>
+</div>
+</div>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-all" onclick="closeModal('paymentModal')">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Customer Summary Well -->
+<div class="p-space-md rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div>
+<span class="font-label-xs text-label-xs text-outline uppercase font-bold block">Selected Buyer</span>
+<span class="font-title-md text-title-md text-on-surface font-bold" id="modalBuyerName">Rameshwar Prasad</span>
+<span class="font-label-code text-label-code text-on-surface-variant block" id="modalBuyerPhone">+91 98350 41209</span>
+</div>
+<div class="text-right">
+<span class="font-label-xs text-label-xs text-tertiary uppercase font-bold block">Net Outstanding</span>
+<span class="font-currency-stat text-currency-stat text-tertiary font-bold" id="modalBuyerDue">₹42,000.00</span>
+</div>
+</div>
+<!-- Payment Amount Form -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-title-md text-body-sm text-on-surface font-semibold">Repayment Amount (₹)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 font-headline-sm text-headline-sm text-outline">₹</span>
+<input class="w-full bg-surface-container-low focus:bg-surface-container-lowest text-on-surface font-currency-stat text-currency-stat pl-10 pr-4 py-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all" id="repayAmountInput" type="number" value="10000"/>
+</div>
+</div>
+<!-- Settlement Gateway Options -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-title-md text-body-sm text-on-surface font-semibold">Settlement Mode</label>
+<div class="grid grid-cols-2 gap-space-xs">
+<label class="flex items-center gap-2 p-3 rounded-2xl bg-surface-container-high/60 cursor-pointer hover:bg-secondary-fixed/30 transition-all">
+<input checked="" class="accent-secondary" name="payMode" type="radio" value="phonepe"/>
+<div class="flex flex-col">
+<span class="font-title-md text-body-sm text-on-surface font-bold">PhonePe UPI</span>
+<span class="font-label-code text-label-code text-outline">Webhook Auto-Sync</span>
+</div>
+</label>
+<label class="flex items-center gap-2 p-3 rounded-2xl bg-surface-container-high/60 cursor-pointer hover:bg-primary-fixed/30 transition-all">
+<input class="accent-primary" name="payMode" type="radio" value="cash"/>
+<div class="flex flex-col">
+<span class="font-title-md text-body-sm text-on-surface font-bold">Counter Cash</span>
+<span class="font-label-code text-label-code text-outline">Paper Slip Proof</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="pt-space-sm flex items-center justify-end gap-space-xs">
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-title-md text-body-sm transition-all" onclick="closeModal('paymentModal')">
+          Cancel
+        </button>
+<button class="px-6 py-2.5 rounded-full bg-primary hover:bg-primary-container text-on-primary font-title-md text-body-sm shadow-lg shadow-primary/25 transition-all flex items-center gap-2" onclick="submitRepayment()">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Confirm &amp; Issue Receipt</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Interactive Dynamic QR Modal (PhonePe) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-md hidden items-center justify-center p-4" id="qrModal">
+<div class="relative w-full max-w-sm rounded-3xl bg-surface-container-lowest/95 backdrop-blur-2xl shadow-2xl p-space-lg flex flex-col items-center text-center gap-space-md">
+<div class="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-on-secondary shadow-lg shadow-secondary/30">
+<span class="material-symbols-outlined text-[26px]">qr_code_scanner</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Scan &amp; Settle Khata</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">PhonePe QR linked directly to Master Ledger</p>
+</div>
+<!-- Crisp SVG Dynamic QR Mockup -->
+<div class="p-4 rounded-2xl bg-surface-container-lowest shadow-inner flex items-center justify-center">
+<svg class="w-48 h-48" fill="currentColor" viewbox="0 0 100 100">
+<!-- Stylized QR Code Paths -->
+<rect fill="#4b41e1" height="24" rx="4" width="24" x="10" y="10"></rect>
+<rect fill="#ffffff" height="16" rx="2" width="16" x="14" y="14"></rect>
+<rect fill="#4b41e1" height="8" rx="1" width="8" x="18" y="18"></rect>
+<rect fill="#4b41e1" height="24" rx="4" width="24" x="66" y="10"></rect>
+<rect fill="#ffffff" height="16" rx="2" width="16" x="70" y="14"></rect>
+<rect fill="#4b41e1" height="8" rx="1" width="8" x="74" y="18"></rect>
+<rect fill="#4b41e1" height="24" rx="4" width="24" x="10" y="66"></rect>
+<rect fill="#ffffff" height="16" rx="2" width="16" x="14" y="70"></rect>
+<rect fill="#4b41e1" height="8" rx="1" width="8" x="18" y="74"></rect>
+<!-- Data dots pattern -->
+<rect fill="#131b2e" height="6" rx="1" width="6" x="42" y="12"></rect>
+<rect fill="#131b2e" height="6" rx="1" width="6" x="52" y="12"></rect>
+<rect fill="#131b2e" height="10" rx="1" width="6" x="42" y="24"></rect>
+<rect fill="#006948" height="6" rx="1" width="6" x="52" y="22"></rect>
+<rect fill="#131b2e" height="6" rx="1" width="8" x="12" y="42"></rect>
+<rect fill="#131b2e" height="12" rx="1" width="6" x="24" y="42"></rect>
+<rect fill="#006948" height="6" rx="1" width="6" x="12" y="52"></rect>
+<rect fill="#645efb" height="20" rx="4" width="20" x="40" y="40"></rect>
+<rect fill="#ffffff" height="10" rx="2" width="10" x="45" y="45"></rect>
+<rect fill="#131b2e" height="6" rx="1" width="8" x="68" y="44"></rect>
+<rect fill="#131b2e" height="8" rx="1" width="8" x="80" y="44"></rect>
+<rect fill="#131b2e" height="6" rx="1" width="14" x="72" y="54"></rect>
+<rect fill="#131b2e" height="8" rx="1" width="8" x="42" y="68"></rect>
+<rect fill="#006948" height="14" rx="1" width="6" x="54" y="68"></rect>
+<rect fill="#131b2e" height="8" rx="1" width="8" x="42" y="80"></rect>
+<rect fill="#131b2e" height="6" rx="1" width="10" x="68" y="68"></rect>
+<rect fill="#131b2e" height="10" rx="1" width="6" x="82" y="68"></rect>
+<rect fill="#4b41e1" height="10" rx="2" width="20" x="68" y="78"></rect>
+</svg>
+</div>
+<div class="w-full flex items-center justify-between px-2">
+<span class="font-label-code text-label-code text-outline">UPI ID: kbkhata.hub@ybl</span>
+<span class="font-label-code text-label-code text-primary font-bold">Auto-Verifying...</span>
+</div>
+<button class="w-full py-2.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-title-md text-body-sm transition-all" onclick="closeModal('qrModal')">
+        Close QR Dialog
+      </button>
+</div>
+</div>
+</div>
+<!-- Client-side Interactive Engine -->
+<script>
+  function setLedgerFilter(buttonElement, filterType) {
+    document.querySelectorAll('#quick-filter-group .ledger-filter').forEach(btn => {
+      btn.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm', 'shadow-primary/20');
+      btn.classList.add('bg-surface-container-high/70', 'text-on-surface-variant');
+    });
+
+    buttonElement.classList.remove('bg-surface-container-high/70', 'text-on-surface-variant');
+    buttonElement.classList.add('bg-primary', 'text-on-primary', 'shadow-sm', 'shadow-primary/20');
+
+    const rows = document.querySelectorAll('.ledger-row');
+    rows.forEach(row => {
+      const status = row.getAttribute('data-status');
+      const due = parseFloat(row.getAttribute('data-due') || '0');
+      
+      if (filterType === 'all') {
+        row.style.display = '';
+      } else if (filterType === 'overdue') {
+        row.style.display = (status === 'high-risk') ? '' : 'none';
+      } else if (filterType === 'phonepe') {
+        row.style.display = row.innerText.includes('PhonePe') ? '' : 'none';
+      } else if (filterType === 'slips') {
+        row.style.display = (due > 0) ? '' : 'none';
+      }
+    });
+  }
+
+  function filterLedgerTable() {
+    const searchVal = (document.getElementById('khataSearch').value || '').toLowerCase();
+    const villageVal = document.getElementById('villageSelect').value;
+    const statusVal = document.getElementById('statusSelect').value;
+    
+    const rows = document.querySelectorAll('.ledger-row');
+    rows.forEach(row => {
+      const name = (row.getAttribute('data-name') || '').toLowerCase();
+      const village = row.getAttribute('data-village');
+      const status = row.getAttribute('data-status');
+      const due = parseFloat(row.getAttribute('data-due') || '0');
+
+      const matchesSearch = name.includes(searchVal) || village.toLowerCase().includes(searchVal);
+      const matchesVillage = (villageVal === 'all') || (village === villageVal);
+      
+      let matchesStatus = true;
+      if (statusVal === 'due') {
+        matchesStatus = due > 0;
+      } else if (statusVal === 'cleared') {
+        matchesStatus = due === 0;
+      } else if (statusVal === 'high-risk') {
+        matchesStatus = status === 'high-risk';
+      }
+
+      if (matchesSearch && matchesVillage && matchesStatus) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  function resetLedgerFilters() {
+    document.getElementById('khataSearch').value = '';
+    document.getElementById('villageSelect').value = 'all';
+    document.getElementById('statusSelect').value = 'all';
+    filterLedgerTable();
+  }
+
+  function quickPayModal(buyerName, dueAmount, phone) {
+    document.getElementById('modalBuyerName').innerText = buyerName;
+    document.getElementById('modalBuyerDue').innerText = '₹' + dueAmount;
+    document.getElementById('modalBuyerPhone').innerText = phone;
+    document.getElementById('paymentModal').classList.remove('hidden');
+    document.getElementById('paymentModal').classList.add('flex');
+  }
+
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  function openQrModal() {
+    document.getElementById('qrModal').classList.remove('hidden');
+    document.getElementById('qrModal').classList.add('flex');
+  }
+
+  function submitRepayment() {
+    const amount = document.getElementById('repayAmountInput').value;
+    alert('Repayment slip of ₹' + amount + ' recorded. Printing confirmation receipt on thermal printer...');
+    closeModal('paymentModal');
+  }
+
+  function sendDirectReminder(buyer, amount) {
+    alert('WhatsApp payment reminder link prepared for ' + buyer + ' with pending balance of ₹' + amount);
+  }
+
+  function dispatchBatchWhatsApp() {
+    alert('Dispatching WhatsApp notifications to all 3 High Risk accounts with dynamic UPI settlement links.');
+  }
+
+  function viewSlips(slipId) {
+    alert('Opening archived thermal counter slip: #' + slipId);
+  }
+
+  function triggerBatchPrint() {
+    alert('Sending batch print command to Bluetooth Thermal Slip Printer KB-58mm-01...');
+  }
+</script></main></div></body></html>

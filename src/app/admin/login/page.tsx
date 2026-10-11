@@ -158,9 +158,9 @@ export default function AdminFaceLoginPage() {
       const data = await res.json();
 
       if (data.needsEnrollment) {
-        setStatusMessage("Admin face is not enrolled yet. Redirecting to enrollment...");
+        setStatusMessage("Admin face is not enrolled yet. Redirecting to initial enrollment...");
         setTimeout(() => {
-          router.push("/admin?action=enroll");
+          router.push("/admin/register");
         }, 1500);
         return;
       }

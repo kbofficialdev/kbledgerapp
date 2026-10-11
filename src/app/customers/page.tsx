@@ -210,7 +210,7 @@ function CustomersContent() {
       )}
 
       {/* Multi-Dimensional Filters Bar */}
-      <div className="kb-card p-4 space-y-3">
+      <div className="kb-card-elevated p-4 space-y-3">
         <div className="flex flex-col md:flex-row items-center gap-3">
           {/* Search Input */}
           <div className="relative flex-1 w-full">
@@ -320,7 +320,7 @@ function CustomersContent() {
           {customers.map((c) => (
             <div
               key={c.id}
-              className="kb-card p-5 flex flex-col justify-between hover:border-slate-300 transition-all"
+              className="kb-card-elevated p-5 flex flex-col justify-between hover:border-slate-300 transition-all"
             >
               <div>
                 {/* Header: Name & Code */}

@@ -117,7 +117,7 @@ export default function DashboardPage() {
             KB Khata — Counter &amp; Village Commerce Hub
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Streamlined offline slip recording, village profiles, PhonePe payments, and carbon print receipts.
+            Streamlined offline slip recording, village profiles, Google Pay UPI Dynamic QR, and carbon print receipts.
           </p>
         </div>
 
@@ -152,7 +152,7 @@ export default function DashboardPage() {
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Villages */}
-        <div className="kb-card p-5">
+        <div className="kb-card-elevated p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Villages Covered
@@ -173,7 +173,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Customers */}
-        <div className="kb-card p-5">
+        <div className="kb-card-elevated p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Khata Buyers
@@ -194,7 +194,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Total Outstanding Udhaar */}
-        <div className="kb-card p-5">
+        <div className="kb-card-elevated p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-rose-500">
               Total Udhaar (Credit)
@@ -215,25 +215,30 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Settlement & PhonePe Status Pill */}
-      <div className="kb-card p-5 bg-gradient-to-r from-purple-50/50 to-white border-purple-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Quick Settlement & Google Pay Status Pill */}
+      <div className="kb-card-elevated p-5 bg-gradient-to-r from-blue-50/60 via-indigo-50/30 to-white border-blue-200/70 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0">
-            <QrCode className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
+            G
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">PhonePe Gateway &amp; Instant UPI QR Collection</h3>
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+              <span>Google Pay for Business Hub &amp; UPI Dynamic QR</span>
+              <span className="text-[10px] bg-blue-100 text-blue-800 font-mono px-1.5 py-0.2 rounded font-semibold">
+                NPCI Standard
+              </span>
+            </h3>
             <p className="text-xs text-slate-500">
-              Collect digital payments from offline buyers with webhook ledger settlement.
+              Real-time payment gateway attached to orders with 15-minute Dynamic QR and automated bahi-khata ledger crediting.
             </p>
           </div>
         </div>
 
         <Link
           href="/payments"
-          className="kb-btn-secondary text-xs py-2 px-3.5 border-purple-300 text-purple-800 hover:bg-purple-100 self-stretch sm:self-auto text-center"
+          className="kb-btn-gpay text-xs py-2 px-4 self-stretch sm:self-auto text-center shadow-xs hover:shadow-md"
         >
-          <span>Open PhonePe Hub</span>
+          <span>Open Google Pay Hub</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>

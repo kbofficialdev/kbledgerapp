@@ -6,7 +6,18 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { customerId, orderId, amount, method, notes } = body;
+    const {
+      customerId,
+      orderId,
+      amount,
+      method,
+      notes,
+      merchantTxnId,
+      gpayTransactionId,
+      upiRefId,
+      bankRrn,
+      payerVpa,
+    } = body;
 
     if (!customerId) {
       return NextResponse.json(
@@ -47,6 +58,11 @@ export async function POST(req: NextRequest) {
           amount: payAmount,
           method: method || "CASH",
           status: "SUCCESS",
+          merchantTxnId: merchantTxnId || null,
+          gpayTransactionId: gpayTransactionId || null,
+          upiRefId: upiRefId || null,
+          bankRrn: bankRrn || null,
+          payerVpa: payerVpa || null,
           notes: notes || null,
         },
       });
@@ -70,7 +86,7 @@ export async function POST(req: NextRequest) {
           debitAmount: 0,
           creditAmount: payAmount,
           runningBalance: updatedCustomer.currentBalance,
-          description: `Payment received (${payment.method}) - Ref #${paymentRef}${notes ? `: ${notes}` : ""}`,
+          description: `Payment received (${payment.method}) - Ref #${paymentRef}${bankRrn ? ` [RRN: ${bankRrn}]` : ""}${notes ? `: ${notes}` : ""}`,
         },
       });
 
@@ -119,7 +135,11 @@ export async function GET(req: NextRequest) {
       status: p.status,
       paidAt: p.paidAt,
       notes: p.notes,
-      phonePeTransactionId: p.phonePeTransactionId,
+      merchantTxnId: p.merchantTxnId,
+      gpayTransactionId: p.gpayTransactionId,
+      upiRefId: p.upiRefId,
+      bankRrn: p.bankRrn,
+      payerVpa: p.payerVpa,
     }));
 
     return NextResponse.json({ success: true, payments: formatted });

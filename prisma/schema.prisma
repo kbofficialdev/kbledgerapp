@@ -20,8 +20,9 @@ enum PaymentType {
 
 enum PaymentMethod {
   CASH
-  PHONEPE_UPI
-  PHONEPE_QR
+  GOOGLE_PAY_UPI
+  GOOGLE_PAY_QR
+  UPI_INTENT
   NETBANKING
   MANUAL_TRANSFER
 }
@@ -129,27 +130,32 @@ model OrderItem {
 }
 
 model Payment {
-  id                    String         @id @default(cuid())
-  paymentRef            String         @unique
-  orderId               String?
-  order                 Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  customerId            String
-  customer              Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  id                  String         @id @default(cuid())
+  paymentRef          String         @unique
+  orderId             String?
+  order               Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customerId          String
+  customer            Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
   
-  amount                Decimal        @db.Decimal(12, 2)
-  method                PaymentMethod  @default(CASH)
-  status                PaymentStatus  @default(SUCCESS)
+  amount              Decimal        @db.Decimal(12, 2)
+  method              PaymentMethod  @default(CASH)
+  status              PaymentStatus  @default(SUCCESS)
   
-  phonePeTransactionId String?        @unique
-  merchantTxnId         String?        @unique
-  phonePeResponseCode   String?
-  rawGatewayResponse    Json?
+  // Google Pay Business India & UPI Specific Transaction Fields
+  merchantTxnId       String?        @unique // Merchant Transaction Identifier
+  gpayTransactionId   String?        @unique // Google Pay Gateway Reference
+  upiRefId            String?        @unique // NPCI / UPI Transaction Reference (tr)
+  bankRrn             String?        // 12-digit Bank Retrieval Reference Number
+  payerVpa            String?        // Payer UPI Virtual Payment Address (e.g. user@okhdfcbank)
+  gatewayResponseCode String?        // SUCCESS, FAILED, U30, etc.
+  rawGatewayResponse  Json?
   
-  paidAt                DateTime       @default(now())
-  notes                 String?
+  paidAt              DateTime       @default(now())
+  notes               String?
 
   @@index([customerId, paidAt])
   @@index([merchantTxnId])
+  @@index([upiRefId])
 }
 
 model LedgerEntry {
@@ -178,8 +184,11 @@ model AdminProfile {
   role            Role        @default(ADMIN)
   isFaceEnrolled  Boolean     @default(false)
   
-  faceDescriptor  Json?       // 128-d biometric facial descriptor float array
+  faceDescriptor  Json?       // Multi-frame calibrated 128-d biometric facial vector
   fallbackPinHash String?
+  
+  failedAttempts  Int         @default(0)
+  lockedUntil     DateTime?
   
   lastLoginAt     DateTime?
   createdAt       DateTime    @default(now())
@@ -189,10 +198,9 @@ model AdminProfile {
 model SystemAuditLog {
   id          String    @id @default(cuid())
   actor       String
-  action      String
+  action      String    // e.g. "GPAY_PAYMENT_VERIFIED", "FACE_LOGIN_SUCCESS", "SECURITY_POLICY_ENFORCED"
   metadata    Json?
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime  @default(now())
 }
-

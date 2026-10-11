@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatCurrency, generateCustomItemId } from "@/lib/utils";
+import GPayCheckoutModal from "@/components/GPayCheckoutModal";
 
 interface LineItem {
   id: string; // local key
@@ -80,8 +81,17 @@ function NewOrderContent() {
   // Settlement Mode: "CREDIT" | "DEBIT" | "PARTIAL"
   const [paymentType, setPaymentType] = useState<"CREDIT" | "DEBIT" | "PARTIAL">("DEBIT");
   const [paidAmount, setPaidAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "PHONEPE_UPI" | "PHONEPE_QR">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "GOOGLE_PAY_UPI" | "GOOGLE_PAY_QR">("CASH");
   const [notes, setNotes] = useState("");
+  const [isGPayModalOpen, setIsGPayModalOpen] = useState(false);
+  const [gpayPaymentData, setGpayPaymentData] = useState<{
+    method: string;
+    merchantTxnId: string;
+    upiRefId?: string;
+    bankRrn?: string;
+    payerVpa?: string;
+    gpayTransactionId?: string;
+  } | null>(null);
 
   // UI state
   const [submitting, setSubmitting] = useState(false);
@@ -276,6 +286,11 @@ function NewOrderContent() {
           paidAmount: computedPaid,
           paymentMethod,
           notes,
+          merchantTxnId: gpayPaymentData?.merchantTxnId,
+          gpayTransactionId: gpayPaymentData?.gpayTransactionId,
+          upiRefId: gpayPaymentData?.upiRefId,
+          bankRrn: gpayPaymentData?.bankRrn,
+          payerVpa: gpayPaymentData?.payerVpa,
         }),
       });
 
@@ -694,43 +709,86 @@ function NewOrderContent() {
             )}
 
             {paymentType !== "CREDIT" && (
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                  Payment Method
-                </label>
-                <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    Payment Method
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("CASH")}
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
+                        paymentMethod === "CASH"
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      Cash (Counter)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("GOOGLE_PAY_UPI")}
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
+                        paymentMethod === "GOOGLE_PAY_UPI"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      Google Pay (UPI)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("GOOGLE_PAY_QR")}
+                      className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
+                        paymentMethod === "GOOGLE_PAY_QR"
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      G-Pay Dynamic QR
+                    </button>
+                  </div>
+                </div>
+
+                {/* Google Pay Direct Counter Integration */}
+                <div className="p-3.5 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-sky-50/80 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                      G
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Google Pay Business India</span>
+                        <span className="text-[10px] bg-blue-100 text-blue-800 font-mono px-1.5 py-0.2 rounded font-semibold">
+                          UPI
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {gpayPaymentData ? (
+                          <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            Verified: {gpayPaymentData.bankRrn ? `RRN ${gpayPaymentData.bankRrn}` : gpayPaymentData.merchantTxnId}
+                          </span>
+                        ) : (
+                          <span>Generate Dynamic QR with 15-min TTL &amp; NPCI auto-reconciliation</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod("CASH")}
-                    className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
-                      paymentMethod === "CASH"
-                        ? "bg-emerald-600 text-white border-emerald-600"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
+                    onClick={() => setIsGPayModalOpen(true)}
+                    disabled={computedPaid <= 0}
+                    className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
                   >
-                    Cash
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("PHONEPE_UPI")}
-                    className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
-                      paymentMethod === "PHONEPE_UPI"
-                        ? "bg-purple-600 text-white border-purple-600"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    PhonePe UPI
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("PHONEPE_QR")}
-                    className={`py-2 px-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
-                      paymentMethod === "PHONEPE_QR"
-                        ? "bg-sky-600 text-white border-sky-600"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    Counter QR
+                    <QrCode className="w-3.5 h-3.5" />
+                    <span>
+                      {gpayPaymentData
+                        ? "View / Re-verify QR"
+                        : `Collect ${formatCurrency(computedPaid)} via G-Pay`}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -863,6 +921,24 @@ function NewOrderContent() {
           </div>
         </div>
       )}
+
+      {/* Google Pay Dynamic QR & Intent Modal */}
+      <GPayCheckoutModal
+        isOpen={isGPayModalOpen}
+        onClose={() => setIsGPayModalOpen(false)}
+        amount={computedPaid}
+        customerName={selectedCustomer?.name || "Counter Customer"}
+        customerMobile={selectedCustomer?.mobile}
+        customerId={selectedCustomerId}
+        onPaymentSuccess={(data) => {
+          setGpayPaymentData(data);
+          setPaymentMethod("GOOGLE_PAY_UPI");
+          setFeedback({
+            type: "success",
+            message: `Google Pay UPI payment verified! (Ref: ${data.merchantTxnId}${data.bankRrn ? `, RRN: ${data.bankRrn}` : ""})`,
+          });
+        }}
+      />
     </div>
   );
 }

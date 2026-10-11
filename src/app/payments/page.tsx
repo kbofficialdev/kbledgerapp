@@ -13,8 +13,13 @@ import {
   Send,
   ArrowRight,
   IndianRupee,
+  Smartphone,
+  Lock,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import GPayCheckoutModal from "@/components/GPayCheckoutModal";
 
 interface PaymentTransaction {
   id: string;
@@ -27,7 +32,9 @@ interface PaymentTransaction {
   status: "SUCCESS" | "PENDING" | "FAILED";
   paidAt: string;
   merchantTxnId?: string;
-  phonePeTransactionId?: string;
+  upiRefId?: string;
+  bankRrn?: string;
+  payerVpa?: string;
 }
 
 interface CustomerOption {
@@ -46,8 +53,10 @@ export default function PaymentsPage() {
   // Quick Collection Form
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [amount, setAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Google Pay Modal trigger
+  const [isGPayModalOpen, setIsGPayModalOpen] = useState(false);
 
   const fetchPayments = async () => {
     try {
@@ -80,50 +89,51 @@ export default function PaymentsPage() {
       .catch(console.error);
   }, []);
 
-  const handleInitiatePayment = async (e: React.FormEvent) => {
+  const selectedCustomerObj = customers.find((c) => c.id === selectedCustomerId);
+
+  const handleLaunchGPayCollection = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCustomerId || !amount) return;
+    const numAmount = parseFloat(amount);
+    if (!selectedCustomerId || !numAmount || numAmount <= 0) {
+      setFeedback({ type: "error", message: "Please select customer and enter valid collection amount." });
+      return;
+    }
+    setFeedback(null);
+    setIsGPayModalOpen(true);
+  };
+
+  const handleManualRrnVerification = async (payment: PaymentTransaction) => {
+    const rrn = prompt(`Enter 12-digit Bank RRN / UTR for Payment ${payment.paymentRef}:`);
+    if (!rrn) return;
+
+    if (!/^\d{12}$/.test(rrn.trim())) {
+      alert("Invalid RRN. Must be exactly 12 numeric digits.");
+      return;
+    }
 
     try {
-      setSubmitting(true);
-      setFeedback(null);
-      const res = await fetch("/api/payments/phonepe/initiate", {
+      const res = await fetch("/api/payments/gpay/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: selectedCustomerId,
-          amount: parseFloat(amount),
+          paymentRef: payment.paymentRef,
+          merchantTxnId: payment.merchantTxnId,
+          bankRrn: rrn.trim(),
         }),
       });
 
       const data = await res.json();
-      if (data.success && data.redirectUrl) {
+      if (data.success) {
         setFeedback({
           type: "success",
-          message: `PhonePe Checkout initiated (Txn #${data.merchantTxnId})! Redirecting...`,
+          message: `Payment ${payment.paymentRef} successfully confirmed with Bank RRN: ${rrn}!`,
         });
-        // Open redirect URL in new tab or navigate
-        window.open(data.redirectUrl, "_blank");
         fetchPayments();
       } else {
-        setFeedback({ type: "error", message: data.error || "Failed to initiate payment" });
+        alert(data.error || "Verification failed");
       }
     } catch (err: any) {
-      setFeedback({ type: "error", message: err.message || "Network error" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const syncStatus = async (merchantTxnId: string) => {
-    try {
-      const res = await fetch(`/api/payments/phonepe/status/${merchantTxnId}`);
-      const data = await res.json();
-      if (data.success) {
-        fetchPayments();
-      }
-    } catch (err) {
-      console.error(err);
+      alert(err.message || "Failed to verify payment");
     }
   };
 
@@ -132,41 +142,43 @@ export default function PaymentsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-purple-600" />
-            <span>PhonePe Payment Gateway &amp; Webhook Hub</span>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+              G
+            </div>
+            <span>Google Pay for Business India Hub</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            UPI QR, Standard Checkout website integration, and real-time webhook settlement.
+            NPCI UPI Intent, Dynamic QR generation with 15-min TTL, Bank RRN verification, and Bahi-Khata ledger credit.
           </p>
         </div>
 
         <button
           onClick={fetchPayments}
-          className="kb-btn-secondary text-xs py-2 px-3 self-start sm:self-auto"
+          className="kb-btn-secondary text-xs py-2 px-3 self-start sm:self-auto hover:bg-slate-100"
         >
           <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-          <span>Refresh Transactions</span>
+          <span>Refresh Journal</span>
         </button>
       </div>
 
       {feedback && (
         <div
-          className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+          className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-xs animate-in fade-in duration-150 ${
             feedback.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-800"
               : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
-          <div className="flex items-center gap-2 text-sm font-medium">
+          <div className="flex items-center gap-2.5 text-sm font-medium">
             {feedback.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-600" />
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             )}
             <span>{feedback.message}</span>
           </div>
-          <button onClick={() => setFeedback(null)} className="text-slate-400">
+          <button onClick={() => setFeedback(null)} className="text-slate-400 hover:text-slate-600">
             ×
           </button>
         </div>
@@ -174,49 +186,63 @@ export default function PaymentsPage() {
 
       {/* Gateway Configuration & Quick Initiate */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gateway Specification Card */}
-        <div className="kb-card p-5 lg:col-span-1 space-y-4">
+        {/* Merchant VPA & Security Policy Card */}
+        <div className="kb-card-elevated p-5 lg:col-span-1 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-purple-600" />
-            <span>Gateway Credentials &amp; Webhook Setup</span>
+            <ShieldCheck className="w-4 h-4 text-blue-600" />
+            <span>Google Pay Merchant Profile</span>
           </div>
 
-          <div className="space-y-2 text-xs">
-            <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">Client / Merchant ID</div>
-              <div className="font-bold text-slate-900 break-all">KBFASHIONSONLINE_2601171</div>
+          <div className="space-y-2.5 text-xs">
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
+              <div className="text-slate-500 font-sans text-[11px]">Merchant UPI VPA (pa)</div>
+              <div className="font-bold text-blue-600 text-sm">kbfashions@okaxis</div>
             </div>
 
-            <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">API Key (Salt Key) &amp; Version</div>
-              <div className="font-bold text-slate-900 break-all text-[11px]">NjM0Y2VhOGEtNjBhOC... (v1)</div>
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
+              <div className="text-slate-500 font-sans text-[11px]">Merchant Name &amp; MCC Code</div>
+              <div className="font-bold text-slate-900">KB Khata Store (MCC: 5411)</div>
             </div>
 
-            <div className="p-2.5 bg-purple-50/60 border border-purple-200 rounded-xl space-y-1.5 font-mono">
-              <div className="text-purple-900 font-sans font-bold text-xs">PhonePe Dashboard Webhook Fields</div>
+            <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl space-y-2 font-mono">
+              <div className="text-blue-900 font-sans font-bold text-xs flex items-center justify-between">
+                <span>Webhook &amp; Verification Policies</span>
+                <span className="text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.2 rounded font-semibold">
+                  HMAC-SHA256
+                </span>
+              </div>
               <div className="text-[11px] text-slate-700 font-sans space-y-1">
-                <div>• <strong>Webhook URL:</strong> <code className="text-purple-700 bg-white px-1 py-0.5 rounded border border-purple-200">https://&lt;domain&gt;/api/payments/phonepe/webhook</code></div>
-                <div>• <strong>Auth Type:</strong> Select <span className="font-semibold text-slate-900">SHA</span></div>
-                <div>• <strong>Username:</strong> <code className="bg-white px-1 py-0.5 rounded border border-purple-200">kbadmin</code></div>
-                <div>• <strong>Password:</strong> <code className="bg-white px-1 py-0.5 rounded border border-purple-200">kbkhata2026</code></div>
-                <div>• <strong>Events:</strong> <span className="font-semibold text-slate-900">PAYMENT.SUCCESS</span></div>
+                <div>
+                  • <strong>Endpoint:</strong>{" "}
+                  <code className="text-blue-700 bg-white px-1 py-0.5 rounded border border-blue-200">
+                    /api/payments/gpay/webhook
+                  </code>
+                </div>
+                <div>• <strong>Request Freshness:</strong> 300s TTL (Replay Protection)</div>
+                <div>• <strong>Bank RRN Format:</strong> 12-Digit Numeric Regex Checked</div>
+                <div>• <strong>Double-Entry Ledger:</strong> Auto-credited upon SUCCESS</div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Live Dynamic QR Generator Form */}
+        <div className="kb-card-elevated p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <QrCode className="w-5 h-5 text-blue-600" />
+              <span>Counter Dynamic QR &amp; Instant UPI Collector</span>
+            </h3>
+            <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+              Ready for Billing
+            </span>
+          </div>
 
-        {/* Live Initiate Form */}
-        <div className="kb-card p-5 lg:col-span-2">
-          <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-emerald-600" />
-            <span>Generate PhonePe Online Payment Link / UPI Request</span>
-          </h3>
           <p className="text-xs text-slate-500 mb-4">
-            Initiates an official PhonePe Standard Checkout session and dispatches payment request to customer.
+            Select customer account to collect Jama against outstanding balance. Generates a live QR code with instant reconciliation.
           </p>
 
-          <form onSubmit={handleInitiatePayment} className="space-y-4">
+          <form onSubmit={handleLaunchGPayCollection} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
@@ -225,7 +251,13 @@ export default function PaymentsPage() {
                 <select
                   required
                   value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedCustomerId(e.target.value);
+                    const cust = customers.find((c) => c.id === e.target.value);
+                    if (cust && cust.currentBalance > 0) {
+                      setAmount(cust.currentBalance.toString());
+                    }
+                  }}
                   className="kb-input"
                 >
                   {customers.map((c) => (
@@ -247,19 +279,30 @@ export default function PaymentsPage() {
                   placeholder="e.g. 500"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="kb-input font-mono font-bold"
+                  className="kb-input font-mono font-bold text-base"
                 />
               </div>
             </div>
 
+            {selectedCustomerObj && (
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs">
+                <span className="text-slate-500">
+                  Current Udhaar for <strong>{selectedCustomerObj.name}</strong>:
+                </span>
+                <span className="font-mono font-bold text-sm text-rose-600">
+                  {formatCurrency(selectedCustomerObj.currentBalance)}
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="submit"
-                disabled={submitting || !amount}
-                className="kb-btn-primary"
+                disabled={!amount || parseFloat(amount) <= 0}
+                className="kb-btn-gpay w-full sm:w-auto px-6 py-3 text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50"
               >
-                <Send className="w-4 h-4" />
-                <span>{submitting ? "Initiating Checkout..." : "Launch PhonePe Checkout"}</span>
+                <QrCode className="w-4 h-4" />
+                <span>Generate Google Pay Dynamic QR</span>
               </button>
             </div>
           </form>
@@ -267,30 +310,39 @@ export default function PaymentsPage() {
       </div>
 
       {/* Transactions History */}
-      <div className="kb-card overflow-hidden">
+      <div className="kb-card-elevated overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900">Recent Gateway &amp; Counter Payments</h3>
-          <span className="text-xs text-slate-500 font-mono">{payments.length} transactions</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Google Pay &amp; Counter UPI Transactions Journal</h3>
+            <p className="text-xs text-slate-500">Live payment settlements recorded into Bahi-Khata ledger.</p>
+          </div>
+          <span className="text-xs text-slate-500 font-mono font-bold bg-slate-100 px-2.5 py-1 rounded-full">
+            {payments.length} Records
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-xs">Loading transactions...</div>
+            <div className="p-10 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+              <div className="w-6 h-6 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+              <span>Loading transaction journal...</span>
+            </div>
           ) : payments.length === 0 ? (
             <div className="p-10 text-center text-slate-400 text-xs">
-              No gateway transactions found yet.
+              No transactions recorded in database yet.
             </div>
           ) : (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] font-semibold bg-slate-50/50">
-                  <th className="py-2.5 px-3">Date</th>
-                  <th className="py-2.5 px-3">Receipt Ref / Merchant Txn</th>
-                  <th className="py-2.5 px-3">Customer</th>
+                  <th className="py-2.5 px-3">Date &amp; Time</th>
+                  <th className="py-2.5 px-3">Receipt / Txn ID</th>
+                  <th className="py-2.5 px-3">Customer &amp; Village</th>
                   <th className="py-2.5 px-3">Method</th>
-                  <th className="py-2.5 px-3 text-center">Gateway Status</th>
+                  <th className="py-2.5 px-3">Bank RRN / UTR</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
                   <th className="py-2.5 px-3 text-right">Amount (₹)</th>
-                  <th className="py-2.5 px-3 text-center">Reconcile</th>
+                  <th className="py-2.5 px-3 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
@@ -302,7 +354,7 @@ export default function PaymentsPage() {
                     <td className="py-3 px-3">
                       <div className="font-bold text-slate-900">{p.paymentRef}</div>
                       {p.merchantTxnId && (
-                        <div className="text-[10px] text-slate-400 truncate max-w-[150px]">
+                        <div className="text-[10px] text-slate-400 truncate max-w-[140px]" title={p.merchantTxnId}>
                           {p.merchantTxnId}
                         </div>
                       )}
@@ -314,9 +366,16 @@ export default function PaymentsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-3">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-semibold text-slate-700">
+                      <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[10px] font-semibold text-blue-700">
                         {p.method}
                       </span>
+                    </td>
+                    <td className="py-3 px-3 text-slate-600 font-mono">
+                      {p.bankRrn ? (
+                        <span className="text-emerald-700 font-bold">{p.bankRrn}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-center">
                       <span
@@ -335,14 +394,16 @@ export default function PaymentsPage() {
                       {formatCurrency(p.amount)}
                     </td>
                     <td className="py-3 px-3 text-center">
-                      {p.merchantTxnId && (
+                      {p.status === "PENDING" ? (
                         <button
-                          onClick={() => syncStatus(p.merchantTxnId!)}
-                          className="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-800"
-                          title="Check status with PhonePe"
+                          onClick={() => handleManualRrnVerification(p)}
+                          className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[11px] font-semibold transition-all"
+                          title="Enter Bank RRN to reconcile"
                         >
-                          <RefreshCw className="w-3.5 h-3.5" />
+                          Verify RRN
                         </button>
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 mx-auto" />
                       )}
                     </td>
                   </tr>
@@ -352,7 +413,24 @@ export default function PaymentsPage() {
           )}
         </div>
       </div>
+
+      {/* Google Pay Checkout Modal */}
+      <GPayCheckoutModal
+        isOpen={isGPayModalOpen}
+        onClose={() => setIsGPayModalOpen(false)}
+        amount={parseFloat(amount) || 0}
+        customerName={selectedCustomerObj?.name || "Counter Customer"}
+        customerMobile={selectedCustomerObj?.mobile}
+        customerId={selectedCustomerId}
+        onPaymentSuccess={(data) => {
+          setFeedback({
+            type: "success",
+            message: `Payment of ${formatCurrency(parseFloat(amount))} successfully verified and credited to ${selectedCustomerObj?.name}'s ledger! (RRN: ${data.bankRrn || "Instant"})`,
+          });
+          setAmount("");
+          fetchPayments();
+        }}
+      />
     </div>
   );
 }
-

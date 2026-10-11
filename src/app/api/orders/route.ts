@@ -103,6 +103,11 @@ export async function POST(req: NextRequest) {
       paidAmount: rawPaidAmount,
       paymentMethod = "CASH",
       notes,
+      merchantTxnId,
+      gpayTransactionId,
+      upiRefId,
+      bankRrn,
+      payerVpa,
     } = body;
 
     if (!villageId || !customerId) {
@@ -215,7 +220,12 @@ export async function POST(req: NextRequest) {
             amount: finalPaidAmount,
             method: paymentMethod,
             status: "SUCCESS",
-            notes: `Counter bill payment for ${orderNumber}`,
+            merchantTxnId: merchantTxnId || null,
+            gpayTransactionId: gpayTransactionId || null,
+            upiRefId: upiRefId || null,
+            bankRrn: bankRrn || null,
+            payerVpa: payerVpa || null,
+            notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
           },
         });
       }

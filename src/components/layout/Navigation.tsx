@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   { label: "Villages", href: "/villages", icon: MapPin },
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Khata Ledger", href: "/ledger", icon: BookOpen },
-  { label: "PhonePe Pay", href: "/payments", icon: CreditCard },
+  { label: "Google Pay Hub", href: "/payments", icon: CreditCard },
   { label: "Carbon Reports", href: "/reports", icon: Printer },
   { label: "Admin Face ID", href: "/admin", icon: Shield },
 ];

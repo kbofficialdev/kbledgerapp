@@ -250,7 +250,7 @@ function AdminContent() {
       </div>
 
       {/* Biometric Enrollment Station */}
-      <div className="kb-card p-6">
+      <div className="kb-card-elevated p-6">
         <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
           <Camera className="w-5 h-5 text-emerald-600" />
           <span>Webcam Face Enrollment Station</span>
@@ -259,42 +259,55 @@ function AdminContent() {
           Capture and register your baseline facial descriptor vector. Ensure proper lighting and look directly into the camera.
         </p>
 
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          {/* Live Video Preview Box */}
-          <div className="relative w-56 h-56 rounded-2xl overflow-hidden border-2 border-slate-300 bg-slate-950 flex items-center justify-center shadow-soft">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover transform -scale-x-100"
-            />
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-40 h-40 rounded-full border-2 border-emerald-400/70 border-dashed" />
+        {adminStatus?.hasEnrolledAdmin ? (
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">Registration Permanently Locked</p>
+              <p className="text-xs text-slate-500">
+                Primary administrator face profile is active and securely locked. Subsequent public enrollments are strictly blocked by the authentication policy.
+              </p>
             </div>
           </div>
-
-          {/* Action & Instructions */}
-          <div className="space-y-4 flex-1">
-            <div className="space-y-1 text-xs text-slate-600">
-              <p className="font-semibold text-slate-800">Instructions:</p>
-              <ul className="list-disc list-inside space-y-1 text-slate-500">
-                <li>Center face inside the circle aperture</li>
-                <li>Hold steady with neutral expression for 2 seconds</li>
-                <li>Click &quot;Capture &amp; Enroll Face&quot; to write vector to database</li>
-              </ul>
+        ) : (
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            {/* Live Video Preview Box */}
+            <div className="relative w-56 h-56 rounded-2xl overflow-hidden border-2 border-slate-300 bg-slate-950 flex items-center justify-center shadow-soft">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover transform -scale-x-100"
+              />
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-40 h-40 rounded-full border-2 border-emerald-400/70 border-dashed" />
+              </div>
             </div>
 
-            <button
-              onClick={handleEnrollFace}
-              disabled={enrolling || !streamActive}
-              className="kb-btn-primary"
-            >
-              <Scan className="w-4 h-4" />
-              <span>{enrolling ? "Extracting & Enrolling..." : "Capture & Enroll Face Profile"}</span>
-            </button>
+            {/* Action & Instructions */}
+            <div className="space-y-4 flex-1">
+              <div className="space-y-1 text-xs text-slate-600">
+                <p className="font-semibold text-slate-800">Initial Setup Instructions:</p>
+                <ul className="list-disc list-inside space-y-1 text-slate-500">
+                  <li>Center face inside the circle aperture</li>
+                  <li>Hold steady with neutral expression for 2 seconds</li>
+                  <li>Click &quot;Capture &amp; Enroll Face&quot; to write vector to database</li>
+                </ul>
+              </div>
+
+              <Link
+                href="/admin/register"
+                className="kb-btn-primary inline-flex"
+              >
+                <Scan className="w-4 h-4" />
+                <span>Go to One-Time Registration Wizard →</span>
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
