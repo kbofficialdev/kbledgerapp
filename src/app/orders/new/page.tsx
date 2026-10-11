@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -49,7 +49,7 @@ interface Customer {
 
 const DRAFT_STORAGE_KEY = "kb_draft_slip_active";
 
-export default function NewOrderPage() {
+function NewOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryVillageId = searchParams.get("villageId") || "";
@@ -864,5 +864,13 @@ export default function NewOrderPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewOrderPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-mono text-xs">Loading counter bill slip...</div>}>
+      <NewOrderContent />
+    </Suspense>
   );
 }

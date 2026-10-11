@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -25,7 +25,7 @@ interface AuditLog {
   createdAt: string;
 }
 
-export default function AdminPage() {
+function AdminContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialAction = searchParams.get("action");
@@ -297,5 +297,13 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-mono text-xs">Loading admin center...</div>}>
+      <AdminContent />
+    </Suspense>
   );
 }

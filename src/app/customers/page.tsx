@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+
 import {
   Users,
   Plus,
@@ -46,7 +47,7 @@ interface VillageOption {
   code: string;
 }
 
-export default function CustomersPage() {
+function CustomersContent() {
   const searchParams = useSearchParams();
   const initialVillageId = searchParams.get("villageId") || "";
 
@@ -571,5 +572,13 @@ export default function CustomersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-mono text-xs">Loading customer directory...</div>}>
+      <CustomersContent />
+    </Suspense>
   );
 }
