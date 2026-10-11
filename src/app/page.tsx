@@ -132,6 +132,14 @@ export default function DashboardPage() {
           </Link>
 
           <Link
+            href="/portal"
+            className="kb-btn-secondary text-xs sm:text-sm py-2.5 px-3.5 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/50"
+          >
+            <Users className="w-4 h-4 text-indigo-600" />
+            <span>Customer Portal</span>
+          </Link>
+
+          <Link
             href="/customers"
             className="kb-btn-secondary text-xs sm:text-sm py-2.5 px-3.5"
           >
@@ -236,7 +244,7 @@ export default function DashboardPage() {
 
         <Link
           href="/payments"
-          className="kb-btn-gpay text-xs py-2 px-4 self-stretch sm:self-auto text-center shadow-xs hover:shadow-md"
+          className="kb-btn-gpay text-xs py-2 px-4 self-stretch sm:self-auto text-center shadow-sm hover:shadow-md"
         >
           <span>Open Google Pay Hub</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -244,7 +252,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Counter Bills Table */}
-      <div className="kb-card overflow-hidden">
+      <div className="kb-card-elevated overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-600" />

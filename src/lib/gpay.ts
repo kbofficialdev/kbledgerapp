@@ -13,7 +13,7 @@ export interface GPayConfig {
 
 export function getGPayConfig(): GPayConfig {
   return {
-    merchantVpa: process.env.GPAY_MERCHANT_VPA || "kbfashions@okaxis",
+    merchantVpa: process.env.GPAY_MERCHANT_VPA || "kbfashions.eazypay@icici",
     merchantName: process.env.GPAY_MERCHANT_NAME || "KB Khata Store",
     merchantCode: process.env.GPAY_MERCHANT_CODE || "5411", // Retail / Grocery MCC
     webhookSecret: process.env.GPAY_WEBHOOK_SECRET || "kb_gpay_webhook_secret_2026",

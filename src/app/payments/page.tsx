@@ -196,7 +196,7 @@ export default function PaymentsPage() {
           <div className="space-y-2.5 text-xs">
             <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
               <div className="text-slate-500 font-sans text-[11px]">Merchant UPI VPA (pa)</div>
-              <div className="font-bold text-blue-600 text-sm">kbfashions@okaxis</div>
+              <div className="font-bold text-blue-600 text-sm">kbfashions.eazypay@icici</div>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
