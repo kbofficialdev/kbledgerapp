@@ -25,6 +25,7 @@ enum PaymentMethod {
   UPI_INTENT
   NETBANKING
   MANUAL_TRANSFER
+  CASHFREE_PG
 }
 
 enum PaymentStatus {
@@ -204,3 +205,25 @@ model SystemAuditLog {
   userAgent   String?
   createdAt   DateTime  @default(now())
 }
+
+model AssistantConversation {
+  id        String             @id @default(cuid())
+  title     String             @default("New Conversation")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  messages  AssistantMessage[]
+
+  @@index([updatedAt])
+}
+
+model AssistantMessage {
+  id             String                @id @default(cuid())
+  conversationId String
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String                // "user" | "assistant"
+  content        String                @db.Text
+  createdAt      DateTime              @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
