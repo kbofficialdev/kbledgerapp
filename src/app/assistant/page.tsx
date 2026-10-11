@@ -41,6 +41,29 @@ interface MessageItem {
 const ACTIVE_CONV_STORAGE_KEY = "kb_ai_assistant_active_conv";
 const THEME_STORAGE_KEY = "kb_ai_assistant_theme";
 
+const QUICK_PROMPT_CHIPS = [
+  {
+    icon: "📊",
+    title: "Sales & Cash Summary",
+    prompt: "Give me an executive summary of our total sales, cash collected (Nagathu), and pending credit (Udhaar).",
+  },
+  {
+    icon: "⚠️",
+    title: "Top Udhaar Debtors",
+    prompt: "Who are our top customers with unpaid Udhaar, and what are their exact balances and villages?",
+  },
+  {
+    icon: "🏘️",
+    title: "Village Performance",
+    prompt: "Break down customer count, orders, and total debt for each village in our database.",
+  },
+  {
+    icon: "💡",
+    title: "Debt Recovery Plan",
+    prompt: "What strategic action plan do you recommend to recover our pending Udhaar without harming customer relationships?",
+  },
+];
+
 export default function AssistantPage() {
   // Theme state
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -303,9 +326,9 @@ export default function AssistantPage() {
   }, [messages, isGenerating, scrollToBottom]);
 
   // Send Message / Stream Handling
-  const handleSubmitPrompt = async (e?: React.FormEvent) => {
+  const handleSubmitPrompt = async (e?: React.FormEvent, overridePrompt?: string) => {
     if (e) e.preventDefault();
-    const promptText = input.trim();
+    const promptText = (overridePrompt || input).trim();
     if (!promptText || isGenerating) return;
 
     setErrorBanner(null);
@@ -732,10 +755,16 @@ export default function AssistantPage() {
               <PanelLeft className="w-4 h-4" />
             </button>
 
-            {/* Assistant Name */}
-            <h1 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 tracking-tight select-none">
-              KB AI Assistant
-            </h1>
+            {/* Assistant Name & Live DB Indicator */}
+            <div className="flex items-center gap-2">
+              <h1 className="font-semibold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 tracking-tight select-none">
+                KB AI Assistant
+              </h1>
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[10px] font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live DB
+              </span>
+            </div>
           </div>
 
           {/* Header Actions */}
@@ -796,7 +825,7 @@ export default function AssistantPage() {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 pb-36 relative"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 pt-4 pb-48 relative"
         >
           {loadingMessages ? (
             <div className="h-full flex items-center justify-center text-xs text-zinc-400 dark:text-zinc-500 font-mono">
@@ -804,16 +833,41 @@ export default function AssistantPage() {
             </div>
           ) : messages.length === 0 ? (
             /* Empty State / Initial Greeting */
-            <div className="h-full min-h-[50vh] flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-3 animate-in fade-in duration-200">
+            <div className="h-full min-h-[50vh] flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4 animate-in fade-in duration-200 py-6">
               <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center shadow-xs">
                 <Bot className="w-6 h-6 stroke-[1.8]" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                How can I help you today?
-              </h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Ask questions, explore ideas, draft content, or analyze logic.
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                  How can I help you today?
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-sm mx-auto">
+                  Connected to your live shop database. Ask any question about sales, debts, customers, villages, or business decisions.
+                </p>
+              </div>
+
+              {/* Quick Business Decision Prompt Chips */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-3 text-left">
+                {QUICK_PROMPT_CHIPS.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setInput(chip.prompt);
+                      handleSubmitPrompt(undefined, chip.prompt);
+                    }}
+                    className="flex flex-col gap-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all text-left shadow-2xs group"
+                  >
+                    <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                      <span>{chip.icon}</span>
+                      <span>{chip.title}</span>
+                    </span>
+                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
+                      {chip.prompt}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             /* Conversation Stream */
@@ -856,7 +910,7 @@ export default function AssistantPage() {
                           ) : (
                             <>
                               {msg.content ? (
-                                <MarkdownView content={msg.content} />
+                                <MarkdownView content={msg.content} isStreaming={msg.isStreaming} />
                               ) : msg.isStreaming ? (
                                 /* Subtle Pulse Loading Indicator */
                                 <div className="flex items-center gap-1.5 py-2 text-zinc-400">
@@ -909,20 +963,20 @@ export default function AssistantPage() {
           <button
             onClick={() => scrollToBottom(true)}
             aria-label="Scroll to bottom"
-            className="absolute bottom-28 right-6 z-20 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all"
+            className="fixed bottom-28 right-6 z-40 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all"
           >
             <ArrowDown className="w-4 h-4" />
           </button>
         )}
 
         {/* --------------------------------------------------------------------- */}
-        {/* Prompt Input Composer (Persistent at viewport bottom) */}
+        {/* Floating Input Prompt That Sits at the Viewport Bottom */}
         {/* --------------------------------------------------------------------- */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white dark:from-zinc-950 dark:via-zinc-950 to-transparent pt-6 pb-4 sm:pb-6 px-4">
-          <div className="max-w-3xl mx-auto w-full">
+        <div className="fixed bottom-6 left-0 right-0 z-30 px-4 sm:px-6 pointer-events-none">
+          <div className="max-w-3xl mx-auto w-full pointer-events-auto">
             <form
-              onSubmit={handleSubmitPrompt}
-              className="relative flex items-end bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-sm focus-within:border-zinc-400 dark:focus-within:border-zinc-600 transition-colors px-3 py-2 sm:px-4 sm:py-2.5"
+              onSubmit={(e) => handleSubmitPrompt(e)}
+              className="relative flex items-end bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800 rounded-3xl shadow-xl shadow-zinc-950/10 focus-within:ring-2 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600 focus-within:border-zinc-400 transition-all px-3.5 py-2 sm:px-4 sm:py-2.5"
             >
               <textarea
                 ref={textareaRef}
@@ -956,10 +1010,14 @@ export default function AssistantPage() {
               )}
             </form>
 
-            {/* Restrained Disclaimer Footer */}
-            <p className="text-[11px] text-center text-zinc-400 dark:text-zinc-600 mt-2 select-none">
-              KB AI Assistant can make mistakes. Verify important information.
-            </p>
+            {/* Floating Subtitle / Database indicator */}
+            <div className="flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 px-3 select-none">
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                Live Shop Database Connected
+              </span>
+              <span>KB AI Assistant</span>
+            </div>
           </div>
         </div>
       </div>

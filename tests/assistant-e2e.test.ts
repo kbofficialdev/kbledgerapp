@@ -82,6 +82,14 @@ async function runAssistantE2ETests() {
     const promptInput = await page.$("textarea[placeholder='Message KB AI Assistant...']");
     assert(promptInput !== null, "Bottom prompt composer with 'Message KB AI Assistant...' placeholder is present");
 
+    // Check Live DB indicators
+    const liveDbPill = await page.textContent("text=Live Shop Database Connected");
+    assert(liveDbPill !== null, "Live Shop Database Connected floating indicator is present");
+
+    // Check quick decision prompt chips
+    const quickChips = await page.$$("button:has-text('Sales & Cash Summary'), button:has-text('Top Udhaar Debtors')");
+    assert(quickChips.length > 0, "Quick business decision prompt chips are present on empty state");
+
     // Check send button is initially disabled
     const sendBtn = await page.$("button[type='submit']");
     assert(sendBtn !== null, "Send prompt button is present");
