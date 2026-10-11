@@ -250,7 +250,18 @@ export default function CustomerPortalLoginPage() {
             <Lock className="w-3.5 h-3.5 text-emerald-600" />
             End-to-End Encrypted
           </span>
-          <span className="font-mono text-[10px]">Google Pay UPI Ready</span>
+          <span className="font-mono text-[10px]">Instant UPI Settlement</span>
+        </div>
+
+        {/* Separation Link to Admin Login */}
+        <div className="pt-2 text-center">
+          <Link
+            href="/admin/login"
+            className="text-xs text-slate-500 hover:text-slate-800 font-medium inline-flex items-center gap-1"
+          >
+            <span>Store Administrator or Clerk?</span>
+            <span className="font-bold text-emerald-700 underline">Admin Login →</span>
+          </Link>
         </div>
       </div>
     </div>

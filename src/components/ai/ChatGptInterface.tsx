@@ -25,6 +25,7 @@ import {
   Minimize2,
   FileText,
   Volume2,
+  Loader2,
 } from "lucide-react";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { speakTeluguText } from "@/lib/voice";
@@ -107,13 +108,9 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Initialize from LocalStorage
   useEffect(() => {
-    if (!mounted) return;
+    setMounted(true);
     try {
       const stored = localStorage.getItem("kb_ai_chat_sessions");
       if (stored) {
@@ -340,8 +337,11 @@ export const ChatGptInterface: React.FC<ChatGptInterfaceProps> = ({
 
   if (!mounted) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
-        Loading KB AI Advisor Workspace...
+      <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 rounded-2xl border border-slate-800">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+          <span className="text-xs font-mono">Loading Advisor Interface...</span>
+        </div>
       </div>
     );
   }

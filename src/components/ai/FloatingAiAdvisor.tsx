@@ -2,20 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Sparkles, Bot, X } from "lucide-react";
+import { Sparkles, Bot, X, ExternalLink, MessageSquare } from "lucide-react";
 
 const ChatGptInterface = dynamic(() => import("./ChatGptInterface"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
-      Loading AI Workspace...
-    </div>
-  ),
 });
 
 export const FloatingAiAdvisor: React.FC = () => {
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hasPrompted, setHasPrompted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Keyboard shortcut Ctrl+/ to toggle AI window
   useEffect(() => {
@@ -29,14 +29,18 @@ export const FloatingAiAdvisor: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       {/* Floating Action Button in Bottom-Right Corner */}
       <div className="fixed bottom-6 right-6 z-50 no-print flex flex-col items-end">
         {/* Subtle Welcome Tooltip Banner on First Load */}
         {!isOpen && !hasPrompted && (
-          <div className="mb-2 mr-1 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs shadow-lg border border-slate-700 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <div className="mb-2 mr-1 px-3 py-1.5 rounded-xl bg-slate-900/95 text-white text-xs shadow-xl border border-slate-700 flex items-center gap-2 animate-bounce">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-semibold">Ask KB AI Advisor</span>
             <button
               onClick={() => setHasPrompted(true)}

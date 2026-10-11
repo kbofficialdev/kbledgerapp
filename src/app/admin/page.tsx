@@ -59,7 +59,7 @@ function AdminContent() {
         setAdminStatus(data);
       }
     } catch (err) {
-      console.warn("Status fetch warning:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }

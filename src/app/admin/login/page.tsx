@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Shield,
   Camera,
@@ -14,11 +14,15 @@ import {
   Sparkles,
   Lock,
   Unlock,
+  Mail,
+  Smartphone,
+  Loader2,
 } from "lucide-react";
 import KbLogo from "@/components/brand/KbLogo";
 
-export default function AdminFaceLoginPage() {
+function AdminFaceLoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -32,9 +36,11 @@ export default function AdminFaceLoginPage() {
 
   // Check enrollment status
   useEffect(() => {
+    let isMounted = true;
     fetch("/api/auth/admin/status")
       .then((res) => res.json())
       .then((data) => {
+        if (!isMounted) return;
         if (data.success) {
           setHasEnrolledAdmin(data.hasEnrolledAdmin);
           if (!data.hasEnrolledAdmin) {
@@ -42,7 +48,12 @@ export default function AdminFaceLoginPage() {
           }
         }
       })
-      .catch((e) => console.warn("Admin status fetch:", e));
+      .catch(() => {
+        // Handled silently during fast unmount
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Fallback PIN modal
@@ -77,7 +88,7 @@ export default function AdminFaceLoginPage() {
         setStatusMessage("Face detected. Align within the biometric reticle...");
       }
     } catch (err: any) {
-      console.warn("Camera access fallback:", err?.message || err);
+      console.warn("Camera hardware notice:", err.name);
       setCameraError(
         err.name === "NotAllowedError"
           ? "Camera permission denied. Please allow camera access in browser settings or use Emergency PIN."
@@ -184,8 +195,9 @@ export default function AdminFaceLoginPage() {
           setStatusMessage(`Identity Verified (${data.confidence}% confidence match). Unlocking...`);
           localStorage.setItem("kb_admin_session", data.sessionToken);
           setTimeout(() => {
-            router.push("/admin");
-          }, 1200);
+            const target = searchParams.get("from") || "/";
+            window.location.replace(target);
+          }, 1000);
         }
       } else {
         setMatchConfidence(data.confidence || 0);
@@ -195,6 +207,29 @@ export default function AdminFaceLoginPage() {
       setStatusMessage("Verification network error. Try again or use PIN.");
     } finally {
       setScanning(false);
+    }
+  };
+
+  const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
+
+  // Direct Email OTP Handler
+  const handleSendEmailOtp = async () => {
+    try {
+      setSendingEmailOtp(true);
+      setStatusMessage("Dispatching login OTP to registered admin email...");
+      const res = await fetch("/api/auth/admin/send-otp", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setMaskedEmail(data.maskedEmail);
+        setShowMfaModal(true);
+        setStatusMessage(`Security OTP dispatched to ${data.maskedEmail}`);
+      } else {
+        setStatusMessage(data.error || "Failed to dispatch email OTP");
+      }
+    } catch (err: any) {
+      setStatusMessage("Network error dispatching OTP");
+    } finally {
+      setSendingEmailOtp(false);
     }
   };
 
@@ -219,7 +254,8 @@ export default function AdminFaceLoginPage() {
         } else {
           localStorage.setItem("kb_admin_session", data.sessionToken);
           setLoginSuccess(true);
-          router.push("/admin");
+          const target = searchParams.get("from") || "/";
+          window.location.replace(target);
         }
       } else {
         setPinError(data.error || "Incorrect admin PIN");
@@ -251,7 +287,8 @@ export default function AdminFaceLoginPage() {
         localStorage.setItem("kb_admin_session", data.sessionToken);
         setLoginSuccess(true);
         setShowMfaModal(false);
-        router.push("/admin");
+        const target = searchParams.get("from") || "/";
+        window.location.replace(target);
       } else {
         setMfaError(data.error || "Invalid OTP code.");
       }
@@ -361,7 +398,7 @@ export default function AdminFaceLoginPage() {
             </button>
           )}
 
-          <div className="flex items-center justify-between text-xs pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-2">
             <button
               onClick={() => {
                 stopCamera();
@@ -374,11 +411,20 @@ export default function AdminFaceLoginPage() {
             </button>
 
             <button
+              onClick={handleSendEmailOtp}
+              disabled={sendingEmailOtp}
+              className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>{sendingEmailOtp ? "Sending..." : "Login via Email OTP"}</span>
+            </button>
+
+            <button
               onClick={() => setShowPinModal(true)}
               className="text-emerald-700 hover:underline flex items-center gap-1 font-medium"
             >
               <KeyRound className="w-3.5 h-3.5" />
-              <span>Emergency Backup PIN</span>
+              <span>Backup PIN</span>
             </button>
           </div>
         </div>
@@ -404,6 +450,18 @@ export default function AdminFaceLoginPage() {
               <span>Biometric Security Active • Admin Registration Locked</span>
             </div>
           )}
+        </div>
+
+        {/* Separation Link to Customer Portal */}
+        <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-1.5 text-xs">
+          <p className="text-slate-500">Are you a customer checking your ledger?</p>
+          <Link
+            href="/portal/login"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Go to Customer Khata Portal →</span>
+          </Link>
         </div>
       </div>
 
@@ -537,6 +595,23 @@ export default function AdminFaceLoginPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminFaceLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <span className="text-xs font-mono text-slate-500">Loading Biometric Security Station...</span>
+          </div>
+        </div>
+      }
+    >
+      <AdminFaceLoginPageContent />
+    </Suspense>
   );
 }
 

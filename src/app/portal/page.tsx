@@ -100,7 +100,7 @@ function CustomerPortalDirectory() {
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">Instant UPI Settlement</span>
-              <p className="text-xs font-semibold text-slate-800">Verified Google Pay Merchant Account</p>
+              <p className="text-xs font-bold text-slate-800">Official Store UPI Gateway</p>
             </div>
           </div>
         </div>

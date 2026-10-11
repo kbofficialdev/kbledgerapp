@@ -3,13 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 const ChatGptInterface = dynamic(() => import("@/components/ai/ChatGptInterface"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400 font-mono text-xs">
-      Loading AI Workspace...
+    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-400">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+        <span className="text-xs font-mono">Initializing KB AI Business Advisor...</span>
+      </div>
     </div>
   ),
 });
