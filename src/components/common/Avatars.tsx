@@ -125,30 +125,30 @@ export const PaymentTypeBadge: React.FC<{
       return (
         <span
           className={`inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/90 ${baseClasses} ${className}`}
-          title="నగదు (Nagathu): Total payment paid at counter on spot"
+          title="Debit (Nagathu): Total payment settled on spot"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-          <span>నగదు (Nagathu / Debit)</span>
+          <span>Debit (Nagathu / Paid)</span>
         </span>
       );
     case "CREDIT":
       return (
         <span
           className={`inline-flex items-center gap-1.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/90 ${baseClasses} ${className}`}
-          title="ఉద్ధార (Udhaar): Nothing paid, full amount recorded to debt"
+          title="Credit (Udhaar): Unpaid balance recorded to ledger debt"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
-          <span>ఉద్ధార (Udhaar / Credit)</span>
+          <span>Credit (Udhaar / Debt)</span>
         </span>
       );
     case "PARTIAL":
       return (
         <span
           className={`inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/90 ${baseClasses} ${className}`}
-          title="పాక్షిక: Some cash paid on counter, remainder added to Udhaar"
+          title="Partial: Split payment with remaining balance recorded to debt"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-          <span>పాక్షిక (Nagathu + Udhaar)</span>
+          <span>Partial (Cash + Debt)</span>
         </span>
       );
     default:

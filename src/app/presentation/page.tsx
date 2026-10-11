@@ -288,7 +288,7 @@ export default function PresentationPage() {
                 <h4 className="text-sm font-bold text-slate-900">Telugu Acoustic Voice Engine</h4>
                 <div className="text-[11px] font-mono font-semibold text-amber-600 mb-2">Web Speech API Synthesis</div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Vernacular voice feedback reading customer names, villages, and bill types (నగదు / ఉద్ధార / పాక్షిక) for retail clerks.
+                  Vernacular voice feedback reading customer names, villages, and bill types (Debit / Credit / Partial) for retail clerks.
                 </p>
               </div>
 

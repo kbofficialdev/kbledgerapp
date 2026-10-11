@@ -135,7 +135,7 @@ export default function StoreHomePage() {
               KB Khata &amp; Fashions
             </h1>
             <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-              గ్రామీణ వ్యాపార ఖాతా, లెడ్జర్ &amp; డిజిటల్ కౌంటర్ డెస్క్. Bahi-khata ledger management, offline counter billing with instant Google Pay QR settlement.
+              Village commerce ledger &amp; digital counter desk. Bahi-Khata ledger management, offline counter billing with instant Google Pay QR settlement.
             </p>
           </div>
 
@@ -179,7 +179,7 @@ export default function StoreHomePage() {
               Customer Khata Portal
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              కస్టమర్లు తమ బిల్లులు, వస్తువులు, పాత ఉద్ధార బకాయిలు చూసుకొని Google Pay ద్వారా నేరుగా చెల్లించవచ్చు.
+              Customers can view itemized slips, historical orders, existing credit balances, and settle instantly with Google Pay.
             </p>
           </div>
 
@@ -225,7 +225,7 @@ export default function StoreHomePage() {
               Admin &amp; Counter Desk
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              స్టోర్ అడ్మిన్ లాగిన్: ఫేస్ రికగ్నిషన్, ఈమెయిల్ OTP మరియు పిన్ భద్రతతో కొత్త గ్రామాలు, కస్టమర్లు మరియు బిల్లుల నమోదు.
+              Store administration desk: Webcam face recognition, email OTP verification, and PIN protection for ledger management.
             </p>
           </div>
 
@@ -307,25 +307,25 @@ export default function StoreHomePage() {
       <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-2 text-slate-700 font-bold">
           <BookOpen className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span>ఖాతా లెడ్జర్ నియమాలు / Khata Ledger Definitions:</span>
+          <span>Khata Ledger Accounting Definitions:</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            <span className="font-bold text-emerald-800">నగదు (Nagathu / Debit):</span>
+            <span className="font-bold text-emerald-800">Debit (Nagathu / Cash):</span>
             <span className="text-slate-500">Total payment paid right now</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="font-bold text-amber-800">పాక్షిక (Partial):</span>
+            <span className="font-bold text-amber-800">Partial Settlement:</span>
             <span className="text-slate-500">Part cash paid + remainder to Udhaar</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-rose-600" />
-            <span className="font-bold text-rose-800">ఉద్ధార (Udhaar / Credit):</span>
+            <span className="font-bold text-rose-800">Credit (Udhaar / Debt):</span>
             <span className="text-slate-500">Unpaid balance owed</span>
           </div>
         </div>

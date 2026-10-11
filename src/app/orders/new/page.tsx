@@ -472,7 +472,7 @@ function NewOrderContent() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-slate-500 font-medium">Existing Udhaar (బకాయి):</span>
+                <span className="text-slate-500 font-medium">Existing Udhaar (Outstanding Debt):</span>
                 <span
                   className={`font-mono font-black text-sm ${
                     selectedCustomer.currentBalance > 0 ? "text-rose-600" : "text-emerald-600"
@@ -653,13 +653,13 @@ function NewOrderContent() {
             >
               <div className="flex items-center justify-between mb-1">
                 <div>
-                  <span className="text-sm font-extrabold text-slate-900 block">నగదు (Nagathu / Debit)</span>
+                  <span className="text-sm font-extrabold text-slate-900 block">Debit (Nagathu)</span>
                   <span className="text-[11px] text-emerald-700 font-bold">Total Payment Paid on Spot</span>
                 </div>
                 <span className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0 shadow-xs"></span>
               </div>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                కౌంటర్ వద్ద మొత్తం నగదు లేదా UPI చెల్లించారు. కస్టమర్ ఉద్ధార బకాయి మారదు.
+                Total payment received in full via Cash or UPI at the counter. Customer outstanding debt remains unchanged.
               </p>
             </button>
 
@@ -678,13 +678,13 @@ function NewOrderContent() {
             >
               <div className="flex items-center justify-between mb-1">
                 <div>
-                  <span className="text-sm font-extrabold text-slate-900 block">పాక్షిక (Partial)</span>
-                  <span className="text-[11px] text-amber-700 font-bold">నగదు + ఉద్ధార (Split)</span>
+                  <span className="text-sm font-extrabold text-slate-900 block">Partial Settlement</span>
+                  <span className="text-[11px] text-amber-700 font-bold">Cash + Udhaar (Split)</span>
                 </div>
                 <span className="w-3 h-3 rounded-full bg-amber-500 flex-shrink-0 shadow-xs"></span>
               </div>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                కొంత నగదు చెల్లించారు + మిగిలిన బకాయి మొత్తం కస్టమర్ ఖాతాకు (Udhaar) జోడించబడుతుంది.
+                Part payment received at the counter. Remaining balance is added to customer&apos;s outstanding Udhaar ledger.
               </p>
             </button>
 
@@ -703,13 +703,13 @@ function NewOrderContent() {
             >
               <div className="flex items-center justify-between mb-1">
                 <div>
-                  <span className="text-sm font-extrabold text-slate-900 block">ఉద్ధార (Udhaar / Credit)</span>
-                  <span className="text-[11px] text-rose-700 font-bold">Not Paid Anything (Debt)</span>
+                  <span className="text-sm font-extrabold text-slate-900 block">Credit (Udhaar)</span>
+                  <span className="text-[11px] text-rose-700 font-bold">Not Paid Anything (Full Debt)</span>
                 </div>
                 <span className="w-3 h-3 rounded-full bg-rose-500 flex-shrink-0 animate-pulse shadow-xs"></span>
               </div>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                ఎలాంటి చెల్లింపు చేయలేదు. బిల్లులోని 100% మొత్తం కస్టమర్ ఉద్ధార లెడ్జర్‌కు కలుస్తుంది.
+                No payment made at counter. 100% of order total is added to customer&apos;s outstanding Udhaar ledger.
               </p>
             </button>
           </div>

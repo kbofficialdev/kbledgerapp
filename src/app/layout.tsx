@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import { DesktopSidebar, MobileBottomNav } from "@/components/layout/Navigation";
+import FloatingAiAdvisor from "@/components/ai/FloatingAiAdvisor";
 
 export const metadata: Metadata = {
   title: "KB Khata — Smart Village Ledger & Commerce Hub",
@@ -39,6 +40,9 @@ export default function RootLayout({
             </main>
           </div>
         </div>
+
+        {/* Floating Gemini AI Advisor (Bottom-Right Action Trigger) */}
+        <FloatingAiAdvisor />
 
         {/* Mobile Dock Navigation */}
         <MobileBottomNav />

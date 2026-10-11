@@ -116,7 +116,7 @@ export default function CustomerPortalLoginPage() {
             Customer Khata Portal
           </h1>
           <p className="text-xs text-slate-500 font-medium">
-            కస్టమర్ ఖాతా & బకాయిల పోర్టల్ లాగిన్
+            Instant Account Access &amp; Self-Service UPI Payments
           </p>
         </div>
 

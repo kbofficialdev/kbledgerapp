@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,13 +13,10 @@ import {
   Printer,
   Shield,
   Smartphone,
-  Store,
-  ChevronRight,
-  Wifi,
-  Sparkles,
   Presentation,
+  X,
+  ChevronRight,
 } from "lucide-react";
-import KbLogo from "../brand/KbLogo";
 
 interface NavItem {
   label: string;
@@ -41,145 +38,316 @@ const mainNavItems: NavItem[] = [
 ];
 
 const secondaryNavItems: NavItem[] = [
-  { label: "KB AI Advisor", href: "/admin/ai", icon: Sparkles, badge: "Gemini", badgeColor: "bg-violet-100 text-violet-800" },
   { label: "Customer Portal", href: "/portal/login", icon: Smartphone, badge: "Self-Pay", badgeColor: "bg-indigo-100 text-indigo-800" },
   { label: "Testing & QA Deck", href: "/presentation", icon: Presentation, badge: "IEEE 829", badgeColor: "bg-emerald-100 text-emerald-800" },
-  { label: "Admin Face ID", href: "/admin/login", icon: Shield, badge: "MFA", badgeColor: "bg-emerald-100 text-emerald-800" },
+  { label: "Admin Security & MFA", href: "/admin", icon: Shield, badge: "MFA", badgeColor: "bg-emerald-100 text-emerald-800" },
 ];
-
 
 export const DesktopSidebar: React.FC = () => {
   const pathname = usePathname();
+  const [isHovered, setIsHovered] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Listen to mobile menu trigger event from Navbar
+  useEffect(() => {
+    const handleOpenMobile = () => setMobileOpen(true);
+    window.addEventListener("kb:open-mobile-sidebar", handleOpenMobile);
+    return () => window.removeEventListener("kb:open-mobile-sidebar", handleOpenMobile);
+  }, []);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-white/90 backdrop-blur-2xl border-r border-slate-200/90 h-screen sticky top-0 no-print flex-shrink-0 z-30 shadow-[4px_0_24px_rgba(15,23,42,0.02)]">
-      {/* Brand Header */}
-      <div className="p-4 border-b border-slate-100/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 flex-shrink-0">
-          <Store className="w-5 h-5" />
+    <>
+      {/* 1. Desktop Hover Collapsible Sidebar (Hidden on mobile) */}
+      <aside
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`hidden lg:flex flex-col bg-white/95 backdrop-blur-2xl border-r border-slate-200/90 h-screen sticky top-0 no-print flex-shrink-0 z-30 shadow-[4px_0_24px_rgba(15,23,42,0.03)] transition-all duration-300 ease-in-out ${
+          isHovered ? "w-64" : "w-[72px]"
+        }`}
+      >
+        {/* Brand Header: Strictly ONLY "KB" */}
+        <div
+          className={`h-14 border-b border-slate-100/90 flex items-center transition-all duration-300 ${
+            isHovered ? "px-6 justify-start" : "px-0 justify-center"
+          }`}
+        >
+          <Link href="/" className="inline-flex items-center group">
+            <span className="font-black text-2xl tracking-tighter bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform">
+              KB
+            </span>
+          </Link>
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="font-extrabold text-base text-slate-900 tracking-tight leading-none">
-            KB Khata
-          </span>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600 mt-1">
-            Village Commerce Hub
-          </span>
-        </div>
-      </div>
 
-      {/* Main Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-        {/* Section 1: Operations */}
-        <div>
-          <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
-            Operations &amp; Billing
+        {/* Navigation Items */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-4 space-y-6">
+          {/* Main Operations Section */}
+          <div>
+            {isHovered && (
+              <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2 animate-in fade-in duration-150">
+                Operations &amp; Billing
+              </div>
+            )}
+            <nav className="space-y-1">
+              {mainNavItems.map((item) => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href ||
+                      (item.href !== "/" && pathname.startsWith(item.href) && item.href !== "/orders");
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={!isHovered ? item.label : undefined}
+                    className={`flex items-center rounded-xl text-xs font-medium transition-all group ${
+                      isHovered ? "px-3 py-2.5 justify-between" : "p-3 justify-center"
+                    } ${
+                      isActive
+                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-md shadow-emerald-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                          isActive ? "text-white" : "text-slate-500 group-hover:scale-110"
+                        }`}
+                      />
+                      {isHovered && (
+                        <span className="truncate whitespace-nowrap animate-in fade-in duration-150">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+                    {isHovered && item.badge && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded animate-in fade-in duration-150 ${
+                          isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-          <nav className="space-y-1">
-            {mainNavItems.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href) && item.href !== "/orders");
-              const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-md shadow-emerald-600/20"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon
-                      className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                        isActive ? "text-white" : "text-slate-500 group-hover:scale-110"
-                      }`}
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : item.badgeColor || "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+          {/* Secondary Portal & Security Section */}
+          <div>
+            {isHovered && (
+              <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2 animate-in fade-in duration-150">
+                Portal &amp; Security
+              </div>
+            )}
+            <nav className="space-y-1">
+              {secondaryNavItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                const Icon = item.icon;
 
-        {/* Section 2: Self-Service & Admin */}
-        <div>
-          <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
-            Portal &amp; Security
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={!isHovered ? item.label : undefined}
+                    className={`flex items-center rounded-xl text-xs font-medium transition-all group ${
+                      isHovered ? "px-3 py-2.5 justify-between" : "p-3 justify-center"
+                    } ${
+                      isActive
+                        ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-md shadow-indigo-600/20"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
+                          isActive ? "text-white" : "text-slate-500 group-hover:scale-110"
+                        }`}
+                      />
+                      {isHovered && (
+                        <span className="truncate whitespace-nowrap animate-in fade-in duration-150">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+                    {isHovered && item.badge && (
+                      <span
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded animate-in fade-in duration-150 ${
+                          isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
-          <nav className="space-y-1">
-            {secondaryNavItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-md shadow-indigo-600/20"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon
-                      className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                        isActive ? "text-white" : "text-slate-500"
-                      }`}
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : item.badgeColor || "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
-      </div>
 
-      {/* Footer System Status */}
-      <div className="p-3 border-t border-slate-100/80 bg-slate-50/60 mt-auto">
-        <div className="flex items-center justify-between text-xs">
+        {/* Footer Status Pill */}
+        <div
+          className={`p-3 border-t border-slate-100/90 bg-slate-50/60 mt-auto flex items-center transition-all ${
+            isHovered ? "justify-between" : "justify-center"
+          }`}
+        >
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
             </span>
-            <span className="font-semibold text-slate-700 text-[11px]">Live Node Active</span>
+            {isHovered && (
+              <span className="font-semibold text-slate-700 text-[11px] whitespace-nowrap animate-in fade-in duration-150">
+                Live Counter Active
+              </span>
+            )}
           </div>
-          <span className="font-mono text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-            UPI v2.8
-          </span>
+          {isHovered && (
+            <span className="font-mono text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 animate-in fade-in duration-150">
+              UPI v2.8
+            </span>
+          )}
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* 2. Mobile Slide-Over Drawer (Hidden on desktop, opened via icon) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden no-print">
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Content */}
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[80vw] bg-white shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-250">
+            {/* Header: Strictly ONLY "KB" + Close (X) Icon */}
+            <div className="h-14 px-5 border-b border-slate-200 flex items-center justify-between">
+              <Link
+                href="/"
+                onClick={() => setMobileOpen(false)}
+                className="font-black text-2xl tracking-tighter bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent"
+              >
+                KB
+              </Link>
+
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close Navigation Menu"
+                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Nav Links */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div>
+                <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
+                  Operations &amp; Billing
+                </div>
+                <nav className="space-y-1">
+                  {mainNavItems.map((item) => {
+                    const isActive =
+                      item.href === "/"
+                        ? pathname === "/"
+                        : pathname === item.href ||
+                          (item.href !== "/" && pathname.startsWith(item.href) && item.href !== "/orders");
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
+                          isActive
+                            ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-md shadow-emerald-600/20"
+                            : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              <div>
+                <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
+                  Portal &amp; Security
+                </div>
+                <nav className="space-y-1">
+                  {secondaryNavItems.map((item) => {
+                    const isActive = pathname.startsWith(item.href);
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
+                          isActive
+                            ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-md shadow-indigo-600/20"
+                            : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+
+            {/* Mobile Footer Status */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="font-semibold text-slate-700 text-[11px]">KB Live Counter</span>
+              </div>
+              <span className="font-mono text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                UPI v2.8
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -231,3 +399,4 @@ export const MobileBottomNav: React.FC = () => {
     </nav>
   );
 };
+

@@ -50,6 +50,11 @@ function AdminContent() {
       setLoading(true);
       const res = await fetch("/api/auth/admin/status");
       const data = await res.json();
+      if (!data.isAuthenticated) {
+        localStorage.removeItem("kb_admin_session");
+        window.location.replace("/admin/login");
+        return;
+      }
       if (data.success) {
         setAdminStatus(data);
       }
@@ -86,6 +91,11 @@ function AdminContent() {
   };
 
   useEffect(() => {
+    const localSession = localStorage.getItem("kb_admin_session");
+    if (!localSession) {
+      window.location.replace("/admin/login");
+      return;
+    }
     fetchStatus();
     startCamera();
     return () => stopCamera();
@@ -152,9 +162,15 @@ function AdminContent() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/admin/logout", { method: "POST" });
+    } catch (e) {
+      console.warn("Logout request failed:", e);
+    }
     localStorage.removeItem("kb_admin_session");
-    router.push("/admin/login");
+    sessionStorage.clear();
+    window.location.replace("/admin/login");
   };
 
   return (

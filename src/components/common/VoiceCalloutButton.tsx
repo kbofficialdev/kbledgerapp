@@ -17,7 +17,7 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
   customText,
   className = "",
   variant = "pill",
-  label = "చదవండి (Telugu Voice)",
+  label = "Voice Callout",
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -50,7 +50,7 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
       <button
         type="button"
         onClick={handleClick}
-        title={isPlaying ? "Stop Voice" : "Telugu Voice Callout (తెలుగు పేరు చదవండి)"}
+        title={isPlaying ? "Stop Voice" : "Telugu Voice Callout"}
         className={`p-1.5 rounded-lg border transition-all ${
           isPlaying
             ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-sm"
@@ -74,7 +74,7 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
         } ${className}`}
       >
         <Volume2 className="w-3 h-3 flex-shrink-0" />
-        <span>{isPlaying ? "వినబడుతోంది..." : "చదవండి"}</span>
+        <span>{isPlaying ? "Playing..." : "Voice"}</span>
       </button>
     );
   }
@@ -95,7 +95,7 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
       ) : (
         <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
       )}
-      <span className="text-[11px] font-sans">{isPlaying ? "ఆపండి (Stop)" : label}</span>
+      <span className="text-[11px] font-sans">{isPlaying ? "Stop" : label}</span>
     </button>
   );
 };

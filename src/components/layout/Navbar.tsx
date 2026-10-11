@@ -7,10 +7,12 @@ import {
   ShieldCheck,
   Smartphone,
   Sparkles,
-  Bot,
   RotateCcw,
   Receipt,
   UserCheck,
+  Menu,
+  LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import KbLogo from "../brand/KbLogo";
 
@@ -38,13 +40,41 @@ export const Navbar: React.FC = () => {
     checkDraft();
     const interval = setInterval(checkDraft, 3000);
 
-    const session = localStorage.getItem("kb_admin_session");
-    if (session) {
-      setIsAdminLoggedIn(true);
-    }
+    const checkAuthStatus = async () => {
+      try {
+        const res = await fetch("/api/auth/admin/status");
+        const data = await res.json();
+        if (data.isAuthenticated) {
+          setIsAdminLoggedIn(true);
+        } else {
+          setIsAdminLoggedIn(false);
+          localStorage.removeItem("kb_admin_session");
+        }
+      } catch (e) {
+        const session = localStorage.getItem("kb_admin_session");
+        setIsAdminLoggedIn(Boolean(session));
+      }
+    };
 
+    checkAuthStatus();
     return () => clearInterval(interval);
   }, []);
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch("/api/auth/admin/logout", { method: "POST" });
+    } catch (e) {
+      console.warn("Logout request failed:", e);
+    }
+    localStorage.removeItem("kb_admin_session");
+    sessionStorage.clear();
+    setIsAdminLoggedIn(false);
+    window.location.replace("/admin/login");
+  };
+
+  const handleOpenMobileMenu = () => {
+    window.dispatchEvent(new CustomEvent("kb:open-mobile-sidebar"));
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/85 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] no-print transition-all">
@@ -52,8 +82,16 @@ export const Navbar: React.FC = () => {
       <div className="h-0.5 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-indigo-500 opacity-80" />
 
       <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
-        {/* Left: Brand & Live Status */}
-        <div className="flex items-center gap-3">
+        {/* Left: Mobile Menu Toggle & Brand Logo */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <button
+            onClick={handleOpenMobileMenu}
+            aria-label="Open Navigation Menu"
+            className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <Link href="/" className="flex items-center gap-2 group">
             <KbLogo size="sm" />
           </Link>
@@ -82,7 +120,7 @@ export const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Right: Sleek Icon-Only Controls with Smart Tooltips */}
+        {/* Right: Sleek Icon-Only Controls with English Tooltips */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* 1. New Bill Button (F2) */}
           <div className="relative group">
@@ -97,14 +135,14 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Tooltip */}
+            {/* English Tooltip */}
             <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 shadow-xl z-50 flex flex-col items-center">
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
               <span className="font-bold flex items-center gap-1">
                 <Receipt className="w-3 h-3 text-emerald-400" />
                 New Bill (F2)
               </span>
-              <span className="text-[10px] text-slate-300 font-sans">కొత్త కౌంటర్ బిల్లు రాయండి</span>
+              <span className="text-[10px] text-slate-400 font-sans">Create customer counter slip</span>
             </div>
           </div>
 
@@ -118,43 +156,22 @@ export const Navbar: React.FC = () => {
               <Smartphone className="w-4 h-4" />
             </Link>
 
-            {/* Tooltip */}
+            {/* English Tooltip */}
             <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 shadow-xl z-50 flex flex-col items-center">
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
               <span className="font-bold flex items-center gap-1">
                 <Smartphone className="w-3 h-3 text-indigo-400" />
                 Customer Portal
               </span>
-              <span className="text-[10px] text-slate-300 font-sans">కస్టమర్ సెల్ఫ్-పే &amp; బిల్లులు</span>
+              <span className="text-[10px] text-slate-400 font-sans">Self-pay ledger &amp; bills</span>
             </div>
           </div>
 
-          {/* 3. KB AI Business Advisor */}
+          {/* 3. Admin Center / Biometric Login */}
           <div className="relative group">
             <Link
-              href="/admin/ai"
-              aria-label="KB AI Business Advisor"
-              className="w-9 h-9 rounded-xl bg-violet-50/80 hover:bg-violet-100/90 border border-violet-200/80 text-violet-700 flex items-center justify-center shadow-2xs hover:scale-105 active:scale-95 transition-all"
-            >
-              <Bot className="w-4 h-4" />
-            </Link>
-
-            {/* Tooltip */}
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 shadow-xl z-50 flex flex-col items-center">
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
-              <span className="font-bold flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-violet-400" />
-                KB AI Advisor
-              </span>
-              <span className="text-[10px] text-slate-300 font-sans">జెమిని AI వ్యాపార సలహాదారు</span>
-            </div>
-          </div>
-
-          {/* 4. Admin Biometric Login (Face ID + MFA) */}
-          <div className="relative group">
-            <Link
-              href="/admin/login"
-              aria-label="Admin Biometric Login"
+              href={isAdminLoggedIn ? "/admin" : "/admin/login"}
+              aria-label={isAdminLoggedIn ? "Admin Security Center" : "Admin Biometric Login"}
               className={`w-9 h-9 rounded-xl border flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xs ${
                 isAdminLoggedIn
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -166,16 +183,41 @@ export const Navbar: React.FC = () => {
               />
             </Link>
 
-            {/* Tooltip */}
+            {/* English Tooltip */}
             <div className="absolute top-full mt-2 right-0 sm:left-1/2 sm:-translate-x-1/2 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 shadow-xl z-50 flex flex-col items-center">
               <div className="absolute -top-1 right-3 sm:left-1/2 sm:-translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
               <span className="font-bold flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                {isAdminLoggedIn ? "Admin Session Active" : "Admin Face Login (MFA)"}
+                {isAdminLoggedIn ? "Admin Center (Active)" : "Admin Face Login (MFA)"}
               </span>
-              <span className="text-[10px] text-slate-300 font-sans">ఫేస్ రికగ్నిషన్ &amp; ఈమెయిల్ OTP</span>
+              <span className="text-[10px] text-slate-400 font-sans">
+                {isAdminLoggedIn ? "Manage security & audit logs" : "Biometric webcam verification"}
+              </span>
             </div>
           </div>
+
+          {/* 4. Admin Logout (Only when session active) */}
+          {isAdminLoggedIn && (
+            <div className="relative group">
+              <button
+                onClick={handleAdminLogout}
+                aria-label="Logout Admin Session"
+                className="w-9 h-9 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-2xs"
+              >
+                <LogOut className="w-4 h-4 text-rose-600" />
+              </button>
+
+              {/* English Tooltip */}
+              <div className="absolute top-full mt-2 right-0 px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-[11px] whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 shadow-xl z-50 flex flex-col items-center">
+                <div className="absolute -top-1 right-3 w-2 h-2 bg-slate-900 rotate-45" />
+                <span className="font-bold flex items-center gap-1 text-rose-300">
+                  <LogOut className="w-3 h-3 text-rose-400" />
+                  Logout Admin
+                </span>
+                <span className="text-[10px] text-slate-400 font-sans">Clear session &amp; lock admin</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -183,3 +225,4 @@ export const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+
