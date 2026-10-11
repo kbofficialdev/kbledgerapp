@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search")?.trim() || "";
+
+    const villages = await prisma.village.findMany({
+      where: {
+        isActive: true,
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: "insensitive" } },
+                { code: { contains: search, mode: "insensitive" } },
+                { taluk: { contains: search, mode: "insensitive" } },
+                { district: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        _count: {
+          select: { customers: true, orders: true },
+        },
+        customers: {
+          select: { currentBalance: true },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    const villagesWithMetrics = villages.map((v) => {
+      const totalOutstanding = v.customers.reduce(
+        (sum, c) => sum + Number(c.currentBalance || 0),
+        0
+      );
+      return {
+        id: v.id,
+        code: v.code,
+        name: v.name,
+        taluk: v.taluk,
+        district: v.district,
+        pincode: v.pincode,
+        notes: v.notes,
+        customerCount: v._count.customers,
+        orderCount: v._count.orders,
+        totalOutstanding,
+        createdAt: v.createdAt,
+      };
+    });
+
+    return NextResponse.json({ success: true, villages: villagesWithMetrics });
+  } catch (error: any) {
+    console.error("Error fetching villages:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to fetch villages" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { name, taluk, district, pincode, notes } = body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Village name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Auto-generate code if not explicitly provided
+    let code = body.code?.trim();
+    if (!code) {
+      const count = await prisma.village.count();
+      const prefix = name.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "VIL";
+      code = `VIL-${prefix}-${String(count + 1).padStart(3, "0")}`;
+    }
+
+    // Check if code already exists
+    const existing = await prisma.village.findUnique({ where: { code } });
+    if (existing) {
+      code = `${code}-${Math.floor(100 + Math.random() * 900)}`;
+    }
+
+    const village = await prisma.village.create({
+      data: {
+        code,
+        name: name.trim(),
+        taluk: taluk?.trim() || null,
+        district: district?.trim() || null,
+        pincode: pincode?.trim() || null,
+        notes: notes?.trim() || null,
+      },
+    });
+
+    return NextResponse.json({ success: true, village }, { status: 201 });
+  } catch (error: any) {
+    console.error("Error creating village:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to create village" },
+      { status: 500 }
+    );
+  }
+}
