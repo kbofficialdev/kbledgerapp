@@ -53,3 +53,4 @@ export function generateCustomerCode(villageCode?: string): string {
   const randomNum = Math.floor(100 + Math.random() * 900);
   return `CUST-${vPrefix}-${randomNum}`;
 }
+

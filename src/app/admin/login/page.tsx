@@ -28,6 +28,22 @@ export default function AdminFaceLoginPage() {
   const [matchConfidence, setMatchConfidence] = useState<number | null>(null);
   const [statusMessage, setStatusMessage] = useState("Position your face inside the target frame");
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [hasEnrolledAdmin, setHasEnrolledAdmin] = useState<boolean | null>(null);
+
+  // Check enrollment status
+  useEffect(() => {
+    fetch("/api/auth/admin/status")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setHasEnrolledAdmin(data.hasEnrolledAdmin);
+          if (!data.hasEnrolledAdmin) {
+            setStatusMessage("Initial setup: No admin registered yet. Please perform one-time face registration.");
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Fallback PIN modal
   const [showPinModal, setShowPinModal] = useState(false);
@@ -314,14 +330,30 @@ export default function AdminFaceLoginPage() {
           </div>
         </div>
 
-        {/* Link to Enroll */}
-        <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400">
-          First time setup?{" "}
-          <Link href="/admin?action=enroll" className="text-emerald-600 hover:underline font-semibold">
-            Enroll New Admin Face Profile
-          </Link>
+        {/* Dynamic Registration Status Banner */}
+        <div className="pt-3 border-t border-slate-100 text-[11px]">
+          {hasEnrolledAdmin === false ? (
+            <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-xl text-amber-900 space-y-1.5">
+              <p className="font-semibold text-xs">First-Time Setup Required</p>
+              <p className="text-[11px] text-amber-800">
+                No administrator face is currently registered. Perform one-time initial enrollment now. Once completed, registration is permanently disabled.
+              </p>
+              <Link
+                href="/admin/register"
+                className="inline-block mt-1 font-bold text-emerald-700 hover:text-emerald-900 underline text-xs"
+              >
+                Register Admin Face Profile →
+              </Link>
+            </div>
+          ) : (
+            <div className="text-slate-400 flex items-center justify-center gap-1">
+              <Lock className="w-3 h-3 text-slate-400" />
+              <span>Biometric Security Active • Admin Registration Locked</span>
+            </div>
+          )}
         </div>
       </div>
+
 
       {/* Emergency PIN Modal */}
       {showPinModal && (
@@ -379,3 +411,4 @@ export default function AdminFaceLoginPage() {
     </div>
   );
 }
+

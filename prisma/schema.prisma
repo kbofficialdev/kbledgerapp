@@ -195,3 +195,4 @@ model SystemAuditLog {
   userAgent   String?
   createdAt   DateTime  @default(now())
 }
+

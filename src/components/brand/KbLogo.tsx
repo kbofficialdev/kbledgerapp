@@ -94,3 +94,4 @@ export const KbLogo: React.FC<KbLogoProps> = ({
 };
 
 export default KbLogo;
+

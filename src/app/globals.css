@@ -88,3 +88,4 @@ body {
     @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-2.5 rounded-xl shadow-sm transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
   }
 }
+

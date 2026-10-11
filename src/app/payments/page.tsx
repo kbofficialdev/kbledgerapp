@@ -178,31 +178,33 @@ export default function PaymentsPage() {
         <div className="kb-card p-5 lg:col-span-1 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
             <ShieldCheck className="w-4 h-4 text-purple-600" />
-            <span>Gateway Integration Specs</span>
+            <span>Gateway Credentials &amp; Webhook Setup</span>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">Integration Mode</div>
-              <div className="font-bold text-slate-900">PhonePe Standard Checkout (V1)</div>
+              <div className="text-slate-500 font-sans text-[11px]">Client / Merchant ID</div>
+              <div className="font-bold text-slate-900 break-all">KBFASHIONSONLINE_2601171</div>
             </div>
 
             <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">Environment &amp; Merchant ID</div>
-              <div className="font-bold text-slate-900">UAT Sandbox (PGTESTPAYUAT)</div>
+              <div className="text-slate-500 font-sans text-[11px]">API Key (Salt Key) &amp; Version</div>
+              <div className="font-bold text-slate-900 break-all text-[11px]">NjM0Y2VhOGEtNjBhOC... (v1)</div>
             </div>
 
-            <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">Webhook Endpoint URL</div>
-              <div className="text-[11px] text-purple-700 break-all">/api/payments/phonepe/webhook</div>
-            </div>
-
-            <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 font-mono">
-              <div className="text-slate-500 font-sans text-[11px]">Checksum Protocol</div>
-              <div className="text-[11px] text-slate-700">SHA256(Base64 + Salt) + ### + Index</div>
+            <div className="p-2.5 bg-purple-50/60 border border-purple-200 rounded-xl space-y-1.5 font-mono">
+              <div className="text-purple-900 font-sans font-bold text-xs">PhonePe Dashboard Webhook Fields</div>
+              <div className="text-[11px] text-slate-700 font-sans space-y-1">
+                <div>• <strong>Webhook URL:</strong> <code className="text-purple-700 bg-white px-1 py-0.5 rounded border border-purple-200">https://&lt;domain&gt;/api/payments/phonepe/webhook</code></div>
+                <div>• <strong>Auth Type:</strong> Select <span className="font-semibold text-slate-900">SHA</span></div>
+                <div>• <strong>Username:</strong> <code className="bg-white px-1 py-0.5 rounded border border-purple-200">kbadmin</code></div>
+                <div>• <strong>Password:</strong> <code className="bg-white px-1 py-0.5 rounded border border-purple-200">kbkhata2026</code></div>
+                <div>• <strong>Events:</strong> <span className="font-semibold text-slate-900">PAYMENT.SUCCESS</span></div>
+              </div>
             </div>
           </div>
         </div>
+
 
         {/* Live Initiate Form */}
         <div className="kb-card p-5 lg:col-span-2">
@@ -353,3 +355,4 @@ export default function PaymentsPage() {
     </div>
   );
 }
+

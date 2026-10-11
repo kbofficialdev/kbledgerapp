@@ -7,18 +7,23 @@ export interface PhonePeConfig {
   env: string;
   hostUrl: string;
   appUrl: string;
+  webhookUser: string;
+  webhookPass: string;
 }
 
 export function getPhonePeConfig(): PhonePeConfig {
   return {
-    merchantId: process.env.PHONEPE_MERCHANT_ID || "PGTESTPAYUAT",
-    saltKey: process.env.PHONEPE_SALT_KEY || "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399",
+    merchantId: process.env.PHONEPE_MERCHANT_ID || "KBFASHIONSONLINE_2601171",
+    saltKey: process.env.PHONEPE_SALT_KEY || "NjM0Y2VhOGEtNjBhOC00OGY4LTljZjMtZjk2ODc4ZjkzNTcw",
     saltIndex: process.env.PHONEPE_SALT_INDEX || "1",
-    env: process.env.PHONEPE_ENV || "SANDBOX",
+    env: process.env.PHONEPE_ENV || "UAT",
     hostUrl: process.env.PHONEPE_HOST_URL || "https://api-preprod.phonepe.com/apis/pg-sandbox",
     appUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    webhookUser: process.env.PHONEPE_WEBHOOK_USER || "kbadmin",
+    webhookPass: process.env.PHONEPE_WEBHOOK_PASS || "kbkhata2026",
   };
 }
+
 
 /**
  * Calculates SHA256 X-VERIFY checksum for PhonePe Standard Checkout
@@ -151,3 +156,4 @@ export async function checkPhonePeStatus(merchantTransactionId: string) {
     };
   }
 }
+

@@ -151,3 +151,4 @@ crontab -e
 # Runs daily at 1:00 AM IST
 0 1 * * * /home/ubuntu/backup_db.sh
 ```
+

@@ -44,3 +44,4 @@ services:
 volumes:
   kb_postgres_data:
     driver: local
+
