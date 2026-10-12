@@ -20,6 +20,10 @@ enum PaymentType {
 
 enum PaymentMethod {
   CASH
+  CASHFREE_ELEMENTS
+  CASHFREE_UPI
+  CASHFREE_CARD
+  CASHFREE_NETBANKING
   GOOGLE_PAY_UPI
   GOOGLE_PAY_QR
   UPI_INTENT
@@ -64,9 +68,9 @@ model Customer {
   id              String        @id @default(cuid())
   customerCode    String        @unique // e.g. "CUST-RAM-001"
   name            String
-  mobile          String
+  mobile          String        @unique
   altMobile       String?
-  email           String?
+  email           String?       @unique
   address         String?
   villageId       String
   village         Village       @relation(fields: [villageId], references: [id], onDelete: Restrict)
@@ -80,6 +84,8 @@ model Customer {
   orders          Order[]
   payments        Payment[]
   ledgerEntries   LedgerEntry[]
+  transactions    TransactionAudit[]
+  supportTickets  SupportTicket[]
 
   @@index([villageId, name])
   @@index([mobile])
@@ -142,21 +148,27 @@ model Payment {
   method              PaymentMethod  @default(CASH)
   status              PaymentStatus  @default(SUCCESS)
   
-  // Google Pay Business India & UPI Specific Transaction Fields
-  merchantTxnId       String?        @unique // Merchant Transaction Identifier
-  gpayTransactionId   String?        @unique // Google Pay Gateway Reference
-  upiRefId            String?        @unique // NPCI / UPI Transaction Reference (tr)
+  // Cashfree Payments Gateway Transaction Fields
+  cashfreeOrderId      String?        @unique // Cashfree Order Identifier (e.g. order_1234567)
+  cashfreePaymentId    String?        @unique // Cashfree Payment Reference (cf_payment_id)
+  paymentSessionId     String?        // Cashfree Payment Session ID for Custom Web Checkout Elements
+  
+  // Legacy / UPI Reference Fields
+  merchantTxnId       String?        @unique
+  gpayTransactionId   String?        @unique
+  upiRefId            String?        @unique
   bankRrn             String?        // 12-digit Bank Retrieval Reference Number
-  payerVpa            String?        // Payer UPI Virtual Payment Address (e.g. user@okhdfcbank)
-  gatewayResponseCode String?        // SUCCESS, FAILED, U30, etc.
+  payerVpa            String?        // Payer UPI Virtual Payment Address
+  gatewayResponseCode String?        // SUCCESS, FAILED, etc.
   rawGatewayResponse  Json?
   
   paidAt              DateTime       @default(now())
   notes               String?
 
   @@index([customerId, paidAt])
+  @@index([cashfreeOrderId])
+  @@index([cashfreePaymentId])
   @@index([merchantTxnId])
-  @@index([upiRefId])
 }
 
 model LedgerEntry {
@@ -182,6 +194,7 @@ model AdminProfile {
   id              String      @id @default(cuid())
   username        String      @unique
   email           String?     @unique
+  mobile          String?     @unique
   role            Role        @default(ADMIN)
   isFaceEnrolled  Boolean     @default(false)
   
@@ -226,4 +239,109 @@ model AssistantMessage {
 
   @@index([conversationId, createdAt])
 }
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MessageSenderRole {
+  CUSTOMER
+  ADMIN
+  SYSTEM
+}
+
+model ActiveSession {
+  id               String    @id @default(cuid())
+  identifier       String    // Customer ID or Admin username
+  role             String    // "ADMIN" | "CUSTOMER"
+  ipAddress        String    // Client IP Address
+  userAgent        String?
+  tokenHash        String    @unique // SHA-256 of session token
+  lastActiveAt     DateTime  @default(now())
+  expiresAt        DateTime
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+
+  @@index([identifier, role, isActive])
+  @@index([ipAddress])
+}
+
+model TransactionAudit {
+  id                String         @id @default(cuid())
+  transactionRef    String         @unique // e.g. "TXN-202610-10492"
+  customerId        String
+  customer          Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  
+  amount            Decimal        @db.Decimal(12, 2)
+  method            PaymentMethod  @default(CASHFREE_ELEMENTS)
+  status            PaymentStatus  @default(SUCCESS)
+  
+  // Ledger balance snapshots for complete mathematical proof
+  balanceBefore     Decimal        @db.Decimal(12, 2)
+  balanceAfter      Decimal        @db.Decimal(12, 2)
+  
+  // Multi-order allocation breakdown in JSON
+  // Array of { orderId, orderNumber, amountAllocated, previousCredit, remainingCredit }
+  orderAllocations  Json?
+  
+  // Gateway references
+  cashfreeOrderId   String?
+  cashfreePaymentId String?
+  paymentSessionId  String?
+  
+  ipAddress         String?
+  userAgent         String?
+  notes             String?
+  createdAt         DateTime       @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([cashfreeOrderId])
+  @@index([transactionRef])
+}
+
+model SupportTicket {
+  id            String          @id @default(cuid())
+  ticketNumber  String          @unique // e.g. "TKT-202610-001"
+  customerId    String
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  
+  subject       String
+  category      String          // "BILLING", "LEDGER_DISCREPANCY", "PAYMENT_ISSUE", "GENERAL"
+  priority      TicketPriority  @default(MEDIUM)
+  status        TicketStatus    @default(OPEN)
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  messages      TicketMessage[]
+
+  @@index([customerId, status])
+  @@index([status, priority])
+}
+
+model TicketMessage {
+  id            String            @id @default(cuid())
+  ticketId      String
+  ticket        SupportTicket     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  senderRole    MessageSenderRole
+  senderName    String
+  content       String            @db.Text
+  attachments   Json?
+  
+  createdAt     DateTime          @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
 

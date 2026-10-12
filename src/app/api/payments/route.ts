@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession, requireCustomerSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Role-based authorization: Admin OR Customer paying their own account
+    const auth = await requireCustomerSession(req, customerId);
+    if (!auth.authorized) return auth.response!;
+
     const payAmount = Number(amount);
     if (!payAmount || payAmount <= 0) {
       return NextResponse.json(
@@ -46,38 +52,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const paymentRef = `RCP-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+    const paymentRef = `PAY-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Payment record
+      // Create payment record
       const payment = await tx.payment.create({
         data: {
           paymentRef,
           customerId,
           orderId: orderId || null,
           amount: payAmount,
-          method: method || "CASH",
+          method: method || "GOOGLE_PAY",
           status: "SUCCESS",
+          notes: notes?.trim() || null,
           merchantTxnId: merchantTxnId || null,
           gpayTransactionId: gpayTransactionId || null,
           upiRefId: upiRefId || null,
           bankRrn: bankRrn || null,
           payerVpa: payerVpa || null,
-          notes: notes || null,
         },
       });
 
-      // 2. Decrement Customer currentBalance
+      // Update customer balance (Debit payment reduces balance)
+      const currentBalance = Number(customer.currentBalance);
+      const newBalance = Math.max(0, currentBalance - payAmount);
+
       const updatedCustomer = await tx.customer.update({
         where: { id: customerId },
         data: {
-          currentBalance: {
-            decrement: payAmount,
-          },
+          currentBalance: newBalance,
         },
       });
 
-      // 3. Create LedgerEntry (PAYMENT_CREDIT / Jama)
+      // If tied to order, update order status
+      if (orderId) {
+        const order = await tx.order.findUnique({ where: { id: orderId } });
+        if (order) {
+          const currentPaid = Number(order.paidAmount);
+          const totalAmt = Number(order.totalAmount);
+          const newPaid = Math.min(totalAmt, currentPaid + payAmount);
+          const newCredit = Math.max(0, totalAmt - newPaid);
+
+          await tx.order.update({
+            where: { id: orderId },
+            data: {
+              paidAmount: newPaid,
+              creditAmount: newCredit,
+              paymentType: newCredit <= 0 ? "DEBIT" : "PARTIAL",
+              paymentStatus: "SUCCESS",
+            },
+          });
+        }
+      }
+
+      // Record in ledger
       const ledger = await tx.ledgerEntry.create({
         data: {
           customerId,
@@ -85,8 +113,8 @@ export async function POST(req: NextRequest) {
           entryType: "PAYMENT_CREDIT",
           debitAmount: 0,
           creditAmount: payAmount,
-          runningBalance: updatedCustomer.currentBalance,
-          description: `Payment received (${payment.method}) - Ref #${paymentRef}${bankRrn ? ` [RRN: ${bankRrn}]` : ""}${notes ? `: ${notes}` : ""}`,
+          runningBalance: newBalance,
+          description: `Payment received via ${method || "Google Pay"} [Ref: ${paymentRef}]`,
         },
       });
 
@@ -101,7 +129,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Error recording payment:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to record payment" },
+      { success: false, error: sanitizeApiError(error, "Failed to record payment.") },
       { status: 500 }
     );
   }
@@ -111,6 +139,15 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const customerId = searchParams.get("customerId");
+
+    // If customerId is provided, authorize for that customer or admin; otherwise require admin
+    if (customerId) {
+      const auth = await requireCustomerSession(req, customerId);
+      if (!auth.authorized) return auth.response!;
+    } else {
+      const adminAuth = await requireAdminSession(req);
+      if (!adminAuth.authorized) return adminAuth.response!;
+    }
 
     const payments = await prisma.payment.findMany({
       where: customerId ? { customerId } : {},
@@ -144,6 +181,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, payments: formatted });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Error fetching payments:", error);
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Failed to fetch payments.") },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { PaymentSecurityPolicyEngine } from "../../src/lib/payment-policies";
-import { getGPayConfig } from "../../src/lib/gpay";
+import { CashfreeGatewayService } from "../../src/lib/cashfree";
 import { TestResult, TestSuiteResult } from "../types";
 
 export async function runPaymentPolicyTests(): Promise<TestSuiteResult> {
@@ -184,25 +184,25 @@ export async function runPaymentPolicyTests(): Promise<TestSuiteResult> {
     }
   })();
 
-  // Test 7: Merchant VPA Configuration Integrity
+  // Test 7: Cashfree Gateway Configuration Integrity
   (() => {
     const start = performance.now();
     try {
-      const config = getGPayConfig();
-      if (config.merchantVpa !== "kbfashions.eazypay@icici") {
-        throw new Error(`Expected merchant VPA kbfashions.eazypay@icici, got ${config.merchantVpa}`);
+      const cf = CashfreeGatewayService.getInstance();
+      if (!cf.getAppId() || cf.getAppId() !== "2321580e485b8ada058705b82c851232") {
+        throw new Error(`Expected Cashfree App ID 2321580e485b8ada058705b82c851232, got ${cf.getAppId()}`);
       }
       tests.push({
-        name: "Verify official Google Pay VPA (kbfashions.eazypay@icici)",
+        name: "Verify official Cashfree Gateway Client ID (2321580e...1232)",
         suite: "Payment Security Policies",
         category: "UNIT",
         passed: true,
         durationMs: performance.now() - start,
-        details: "Verified production UPI VPA and Merchant Name: 'KB Fashions'.",
+        details: "Verified Cashfree sandbox gateway service instance and credentials.",
       });
     } catch (e: any) {
       tests.push({
-        name: "Verify official Google Pay VPA (kbfashions.eazypay@icici)",
+        name: "Verify official Cashfree Gateway Client ID (2321580e...1232)",
         suite: "Payment Security Policies",
         category: "UNIT",
         passed: false,
