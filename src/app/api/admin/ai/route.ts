@@ -4,13 +4,60 @@ import { askGeminiAssistant } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  try {
+    const [
+      totalVillages,
+      totalCustomers,
+      allCustomers,
+      totalOrders,
+      openTickets,
+    ] = await Promise.all([
+      prisma.village.count({ where: { isActive: true } }),
+      prisma.customer.count({ where: { isActive: true } }),
+      prisma.customer.findMany({
+        where: { isActive: true },
+        select: { currentBalance: true },
+      }),
+      prisma.order.count(),
+      prisma.supportTicket.count({ where: { status: "OPEN" } }),
+    ]);
+
+    let totalOutstandingUdhaar = 0;
+    for (const c of allCustomers) {
+      totalOutstandingUdhaar += Number(c.currentBalance);
+    }
+
+    return NextResponse.json({
+      success: true,
+      metrics: {
+        totalVillages,
+        totalCustomers,
+        totalOutstandingUdhaar,
+        totalOrders,
+        openTickets,
+      },
+    });
+  } catch (error: any) {
+    const { sanitizeApiError } = await import("@/lib/api-error");
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Failed to load store metrics.") },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { prompt, conversationHistory = [] } = body;
+    let { prompt = "", conversationHistory = [], image } = body;
 
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json({ error: "A valid prompt is required." }, { status: 400 });
+    if ((!prompt || typeof prompt !== "string" || !prompt.trim()) && !image) {
+      return NextResponse.json({ error: "A valid prompt or image upload is required." }, { status: 400 });
+    }
+
+    if (!prompt.trim() && image) {
+      prompt = "Please inspect and analyze this uploaded store document/receipt/collection sheet.";
     }
 
     // 1. Fetch live database summary for grounded AI reasoning
@@ -22,6 +69,8 @@ export async function POST(req: NextRequest) {
       allCustomers,
       recentOrders,
       recentPayments,
+      totalOrders,
+      openTickets,
     ] = await Promise.all([
       prisma.village.count({ where: { isActive: true } }),
       prisma.village.findMany({
@@ -54,6 +103,8 @@ export async function POST(req: NextRequest) {
         take: 5,
         include: { customer: { select: { name: true } } },
       }),
+      prisma.order.count(),
+      prisma.supportTicket.count({ where: { status: "OPEN" } }),
     ]);
 
     // Aggregate statistics
@@ -90,27 +141,57 @@ export async function POST(req: NextRequest) {
     );
 
     const dbContextSummary = `
+STORE OVERVIEW:
 - Total Active Villages: ${totalVillages}
 - Total Active Customers: ${totalCustomers}
-- Total Outstanding Udhaar Across All Customers: ₹${totalOutstandingUdhaar.toFixed(2)}
-- Top Indebted Customers:
+- Total Lifetime Orders: ${totalOrders}
+- Open Support Enquiries/Tickets: ${openTickets}
+- Total Outstanding Udhaar Across All Village Ledgers: ₹${totalOutstandingUdhaar.toFixed(2)}
+
+TOP DEBTOR CUSTOMERS:
 ${debtorSummary.join("\n") || "None currently in debt."}
 
-- Village Overview & Dues:
+VILLAGE TERRITORIES & EXPOSURE:
 ${villageSummary.join("\n")}
 
-- Most Recent Orders Recorded:
+RECENT STORE ORDERS:
 ${recentOrderSummary.join("\n") || "No recent orders."}
 
-- Recent Payments & Settlements:
-${recentPaymentSummary.join("\n") || "No recent payments."}
+RECENT CASHFREE PAYMENTS & RECONCILIATION:
+${recentPaymentSummary.join("\n") || "No recent payments recorded."}
+`;
+
+    const adminSystemPrompt = `
+You are the dedicated Executive AI Business Advisor for "KB Fashions & Khata", an offline village store ledger and retail platform in Telangana.
+Merchant: KB Fashions & Khata (Tandoor, Mancherial Dist, TS • Ph: 6303185141).
+Payment Gateway: Cashfree Payments (UPI, PhonePe, Cards, NetBanking, Dynamic QR).
+
+Your Core Responsibilities:
+1. Provide accurate, executive-level financial analysis and actionable store management advice based directly on the live PostgreSQL store database context provided.
+2. Structure answers with clean headings, bold figures, rupee symbols (₹), bullet points, and markdown tables where suitable.
+3. If queried in Telugu, respond fluently and politely in Telugu (తెలుగు) with clear numerical breakdowns.
+4. If queried in English or Hinglish, respond with crisp executive bullet points and clear recommendations.
+5. Offer strategic guidance on recovering pending Udhaar, monitoring debtor concentration by village, auditing Cashfree payments, and managing customer support tickets.
+6. Always ground every metric in the live database figures provided below.
+
+=== MULTIMODAL STORE DOCUMENT & RECEIPT OCR ===
+Store administrators may upload photos of handwritten village collection sheets, customer passbooks, supplier invoices, wholesale purchase bills, or paper receipts.
+- When an image is provided: Accurately transcribe and OCR all names, numbers, dates, and amounts.
+- Cross-reference with the live store ledger context provided.
+- Format all summaries with clean tables, bold numbers, and rupee signs (₹) like ChatGPT.
 `;
 
     // 2. Query Google Gemini AI
     const answer = await askGeminiAssistant({
       prompt,
-      conversationHistory,
+      conversationHistory: conversationHistory.map((m: any) => ({
+        role: m.role === "assistant" || m.role === "model" ? "model" : "user",
+        text: m.content || m.text || "",
+      })),
       dbContextSummary,
+      systemInstruction: adminSystemPrompt,
+      temperature: 0.5,
+      image,
     });
 
     return NextResponse.json({
@@ -120,13 +201,17 @@ ${recentPaymentSummary.join("\n") || "No recent payments."}
         totalVillages,
         totalCustomers,
         totalOutstandingUdhaar,
+        totalOrders,
+        openTickets,
       },
     });
   } catch (error: any) {
     console.error("[Admin AI Route Error]:", error);
+    const { sanitizeApiError } = await import("@/lib/api-error");
     return NextResponse.json(
       {
-        error: error.message || "Failed to process AI assistant request.",
+        success: false,
+        error: sanitizeApiError(error, "The AI Advisor is temporarily unavailable. Please try again shortly."),
       },
       { status: 500 }
     );

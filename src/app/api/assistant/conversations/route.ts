@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth-session";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/assistant/conversations - List all conversations
-export async function GET() {
+// GET /api/assistant/conversations - List all conversations (Admin only)
+export async function GET(req: NextRequest) {
   try {
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
     const conversations = await prisma.assistantConversation.findMany({
       orderBy: { updatedAt: "desc" },
       select: {
@@ -38,9 +46,17 @@ export async function GET() {
   }
 }
 
-// POST /api/assistant/conversations - Create a new conversation
+// POST /api/assistant/conversations - Create a new conversation (Admin only)
 export async function POST(req: NextRequest) {
   try {
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const title = typeof body.title === "string" && body.title.trim()
       ? body.title.trim().slice(0, 80)

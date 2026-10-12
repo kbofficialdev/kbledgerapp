@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { marked } from "marked";
 
 interface MarkdownRendererProps {
@@ -12,6 +12,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   content,
   className = "",
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const html = useMemo(() => {
     try {
       marked.setOptions({
@@ -25,13 +27,26 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     }
   }, [content]);
 
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const tables = container.querySelectorAll("table");
+    tables.forEach((table) => {
+      if (table.parentElement?.classList.contains("kb-table-scroll-wrapper")) return;
+      const wrapper = document.createElement("div");
+      wrapper.className = "kb-table-scroll-wrapper w-full overflow-x-auto my-3 rounded-xl";
+      table.parentNode?.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    });
+  }, [html]);
+
   return (
     <div
-      className={`kb-markdown-content text-slate-800 leading-relaxed text-xs sm:text-sm font-sans ${className}`}
+      ref={containerRef}
+      className={`kb-markdown-content prose prose-slate dark:prose-invert max-w-none text-slate-800 dark:text-zinc-200 leading-relaxed text-xs sm:text-sm font-sans ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 };
 
 export default MarkdownRenderer;
-

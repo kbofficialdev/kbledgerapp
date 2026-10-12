@@ -530,7 +530,7 @@ export default function AssistantPage() {
         <div className="p-3 border-b border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-2">
           <button
             onClick={handleStartNewConversation}
-            className="flex-1 flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-700/80 transition-colors shadow-2xs"
+            className="flex-1 flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-700/80 transition-colors"
           >
             <SquarePen className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
             <span>New conversation</span>
@@ -668,11 +668,11 @@ export default function AssistantPage() {
           {/* Backdrop */}
           <div
             onClick={() => setMobileDrawerOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-2xs transition-opacity"
+            className="fixed inset-0 bg-black/40 transition-opacity"
           />
 
           {/* Drawer content */}
-          <div className="relative w-72 max-w-[80vw] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col z-10 shadow-2xl">
+          <div className="relative w-72 max-w-[80vw] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col z-10">
             <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <button
                 onClick={handleStartNewConversation}
@@ -834,7 +834,7 @@ export default function AssistantPage() {
           ) : messages.length === 0 ? (
             /* Empty State / Initial Greeting */
             <div className="h-full min-h-[50vh] flex flex-col items-center justify-center text-center max-w-lg mx-auto space-y-4 animate-in fade-in duration-200 py-6">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center">
                 <Bot className="w-6 h-6 stroke-[1.8]" />
               </div>
               <div className="space-y-1">
@@ -856,7 +856,7 @@ export default function AssistantPage() {
                       setInput(chip.prompt);
                       handleSubmitPrompt(undefined, chip.prompt);
                     }}
-                    className="flex flex-col gap-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all text-left shadow-2xs group"
+                    className="flex flex-col gap-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 transition-all text-left group"
                   >
                     <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
                       <span>{chip.icon}</span>
@@ -885,13 +885,13 @@ export default function AssistantPage() {
                   >
                     {isUser ? (
                       /* User Prompt Bubble */
-                      <div className="max-w-[85%] sm:max-w-[78%] rounded-3xl px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[14px] leading-relaxed shadow-2xs">
+                      <div className="max-w-[85%] sm:max-w-[78%] rounded-2xl px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-[14px] leading-relaxed">
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       </div>
                     ) : (
                       /* Assistant Response Block */
                       <div className="w-full flex items-start gap-3.5 sm:gap-4">
-                        <div className="w-7 h-7 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+                        <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <Bot className="w-4 h-4" />
                         </div>
 
@@ -963,7 +963,7 @@ export default function AssistantPage() {
           <button
             onClick={() => scrollToBottom(true)}
             aria-label="Scroll to bottom"
-            className="fixed bottom-28 right-6 z-40 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-md flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all"
+            className="fixed bottom-28 right-6 z-40 w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-all"
           >
             <ArrowDown className="w-4 h-4" />
           </button>
@@ -976,7 +976,7 @@ export default function AssistantPage() {
           <div className="max-w-3xl mx-auto w-full pointer-events-auto">
             <form
               onSubmit={(e) => handleSubmitPrompt(e)}
-              className="relative flex items-end bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800 rounded-3xl shadow-xl shadow-zinc-950/10 focus-within:ring-2 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600 focus-within:border-zinc-400 transition-all px-3.5 py-2 sm:px-4 sm:py-2.5"
+              className="relative flex items-end bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-2xl focus-within:ring-2 focus-within:ring-zinc-400 dark:focus-within:ring-zinc-600 focus-within:border-zinc-400 transition-all px-3.5 py-2 sm:px-4 sm:py-2.5"
             >
               <textarea
                 ref={textareaRef}
@@ -1024,8 +1024,8 @@ export default function AssistantPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 max-w-sm w-full space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Delete chat?</h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
@@ -1036,14 +1036,14 @@ export default function AssistantPage() {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleConfirmDelete(deleteConfirmId)}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-xs"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors"
               >
                 Delete
               </button>

@@ -1,12 +1,51 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { marked } from "marked";
 
 interface MarkdownViewProps {
   content: string;
   isStreaming?: boolean;
   className?: string;
+}
+
+/**
+ * Sanitizes partial markdown string during streaming to avoid
+ * breaking syntax (such as unclosed code fences, bold markers, or incomplete tables)
+ * which would otherwise cause flickering and unformatted flashes during typing.
+ */
+function sanitizeStreamingMarkdown(text: string): string {
+  if (!text) return "";
+  let sanitized = text;
+
+  // 1. Auto-close code blocks (odd number of ```)
+  const codeBlockMatches = sanitized.match(/```/g);
+  if (codeBlockMatches && codeBlockMatches.length % 2 !== 0) {
+    sanitized += "\n```";
+  }
+
+  // 2. Auto-close bold markdown markers (odd count of **)
+  const boldMatches = sanitized.match(/\*\*/g);
+  if (boldMatches && boldMatches.length % 2 !== 0) {
+    sanitized += "**";
+  }
+
+  // 3. Auto-close single backtick inline code
+  const strippedFences = sanitized.replace(/```[\s\S]*?```/g, "");
+  const singleBackticks = (strippedFences.match(/`/g) || []).length;
+  if (singleBackticks % 2 !== 0) {
+    sanitized += "`";
+  }
+
+  // 4. Incomplete table rows: if last line starts with | and does not end with |
+  const lines = sanitized.split("\n");
+  const lastLine = lines[lines.length - 1];
+  if (lastLine.trim().startsWith("|") && !lastLine.trim().endsWith("|")) {
+    lines[lines.length - 1] = lastLine + " |";
+    sanitized = lines.join("\n");
+  }
+
+  return sanitized;
 }
 
 export const MarkdownView: React.FC<MarkdownViewProps> = ({
@@ -18,17 +57,16 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
 
   // Typewriter effect state for letter-by-letter typing like ChatGPT
   const [displayedLength, setDisplayedLength] = useState<number>(() => {
-    return isStreaming ? 0 : content.length;
+    return isStreaming ? 0 : (content?.length || 0);
   });
 
-  // Reference to track target content length
-  const targetLengthRef = useRef(content.length);
-  targetLengthRef.current = content.length;
+  const targetLengthRef = useRef(content?.length || 0);
+  targetLengthRef.current = content?.length || 0;
 
   // Typewriter animation loop
   useEffect(() => {
     if (!isStreaming) {
-      setDisplayedLength(content.length);
+      setDisplayedLength(content?.length || 0);
       return;
     }
 
@@ -36,8 +74,8 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
     let lastTick = performance.now();
 
     const tick = (now: number) => {
-      // Run every ~14ms (approx 70 characters/sec) with adaptive speedup
-      if (now - lastTick >= 14) {
+      // Dynamic pacing: ~15ms tick with adaptive character steps
+      if (now - lastTick >= 15) {
         lastTick = now;
 
         setDisplayedLength((prev) => {
@@ -48,7 +86,9 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
 
           const diff = target - prev;
           let step = 1;
-          if (diff > 50) {
+          if (diff > 120) {
+            step = 8;
+          } else if (diff > 50) {
             step = 4;
           } else if (diff > 20) {
             step = 2;
@@ -68,12 +108,13 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
     };
   }, [isStreaming, content]);
 
-  // Compute text to render
-  const textToRender = isStreaming ? content.slice(0, displayedLength) : content;
-  const isTypingActive = isStreaming && displayedLength < content.length;
+  // Compute text to render safely
+  const rawSlice = isStreaming ? (content || "").slice(0, displayedLength) : (content || "");
+  const textToRender = isStreaming ? sanitizeStreamingMarkdown(rawSlice) : (content || "");
+  const isTypingActive = isStreaming && displayedLength < (content?.length || 0);
 
-  // Parse markdown into HTML safely
-  const html = React.useMemo(() => {
+  // Parse markdown into HTML safely using marked
+  const html = useMemo(() => {
     try {
       marked.setOptions({
         gfm: true,
@@ -85,11 +126,23 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
     }
   }, [textToRender]);
 
-  // Attach copy buttons to rendered pre/code blocks
+  // Enhance rendered DOM: wrap tables in horizontal scroll containers and add code copy buttons
   useEffect(() => {
     if (!containerRef.current) return;
-    const preBlocks = containerRef.current.querySelectorAll("pre");
+    const container = containerRef.current;
 
+    // 1. Wrap tables in responsive overflow-x-auto containers if not wrapped
+    const tables = container.querySelectorAll("table");
+    tables.forEach((table) => {
+      if (table.parentElement?.classList.contains("kb-table-scroll-wrapper")) return;
+      const wrapper = document.createElement("div");
+      wrapper.className = "kb-table-scroll-wrapper w-full overflow-x-auto my-3 rounded-xl";
+      table.parentNode?.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    });
+
+    // 2. Attach copy buttons and language header to pre/code blocks
+    const preBlocks = container.querySelectorAll("pre");
     preBlocks.forEach((pre) => {
       if (pre.querySelector(".code-copy-btn")) return;
 
@@ -116,7 +169,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
       copyBtn.onclick = async () => {
         try {
           await navigator.clipboard.writeText(codeText);
-          copyBtn.innerHTML = `<span class="text-emerald-400">Copied!</span>`;
+          copyBtn.innerHTML = `<span class="text-emerald-400 font-semibold">Copied!</span>`;
           setTimeout(() => {
             copyBtn.innerHTML = `<span>Copy</span>`;
           }, 2000);
@@ -129,24 +182,10 @@ export const MarkdownView: React.FC<MarkdownViewProps> = ({
   }, [html]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div
         ref={containerRef}
-        className={`prose prose-zinc dark:prose-invert max-w-none text-[14px] sm:text-[15px] leading-relaxed break-words font-sans
-          prose-p:my-2.5 prose-p:leading-relaxed
-          prose-headings:font-semibold prose-headings:tracking-tight prose-headings:my-3.5
-          prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-h4:text-sm
-          prose-ul:my-2 prose-ul:pl-5 prose-li:my-1
-          prose-ol:my-2 prose-ol:pl-5
-          prose-strong:font-bold prose-strong:text-zinc-900 dark:prose-strong:text-zinc-50
-          prose-pre:p-0 prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-zinc-950 prose-pre:border prose-pre:border-zinc-800
-          prose-code:font-mono prose-code:text-[13px] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800/80 prose-code:text-zinc-800 dark:prose-code:text-zinc-200 prose-code:before:content-none prose-code:after:content-none
-          prose-table:my-4 prose-table:w-full prose-table:border-collapse prose-table:text-xs sm:prose-table:text-sm prose-table:shadow-xs prose-table:rounded-xl prose-table:overflow-hidden
-          prose-th:border prose-th:border-zinc-200 dark:prose-th:border-zinc-700/80 prose-th:bg-zinc-100/80 dark:prose-th:bg-zinc-800/80 prose-th:p-2.5 prose-th:font-semibold prose-th:text-left
-          prose-td:border prose-td:border-zinc-200 dark:prose-td:border-zinc-800 prose-td:p-2.5
-          prose-blockquote:border-l-4 prose-blockquote:border-indigo-500/80 prose-blockquote:bg-indigo-50/40 dark:prose-blockquote:bg-indigo-950/20 prose-blockquote:rounded-r-xl prose-blockquote:p-3 prose-blockquote:my-3
-          ${className}
-        `}
+        className={`kb-markdown-content prose prose-slate dark:prose-invert max-w-none text-[14px] sm:text-[15px] leading-relaxed break-words font-sans ${className}`}
         dangerouslySetInnerHTML={{ __html: html }}
       />
 

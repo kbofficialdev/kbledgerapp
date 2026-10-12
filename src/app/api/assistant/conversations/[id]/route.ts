@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth-session";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/assistant/conversations/[id] - Load single conversation with messages
+// GET /api/assistant/conversations/[id] - Load single conversation with messages (Admin only)
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const { id } = params;
 
     const conversation = await prisma.assistantConversation.findUnique({
@@ -51,12 +60,20 @@ export async function GET(
   }
 }
 
-// PATCH /api/assistant/conversations/[id] - Rename conversation
+// PATCH /api/assistant/conversations/[id] - Rename conversation (Admin only)
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const { id } = params;
     const body = await req.json();
     const title = typeof body.title === "string" ? body.title.trim().slice(0, 80) : "";
@@ -90,12 +107,20 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/assistant/conversations/[id] - Delete conversation
+// DELETE /api/assistant/conversations/[id] - Delete conversation (Admin only)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required." },
+        { status: 401 }
+      );
+    }
+
     const { id } = params;
 
     await prisma.assistantConversation.delete({

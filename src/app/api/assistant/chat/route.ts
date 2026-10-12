@@ -7,10 +7,25 @@ import {
   MessagePayload,
 } from "@/lib/assistant-ai";
 
+import { requireAdminSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    // Restrict AI Service exclusively to authenticated Store Administrators
+    const adminAuth = await requireAdminSession(req);
+    if (!adminAuth.authorized) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Access Denied: KB AI Business Advisor is restricted exclusively to authenticated store administrators.",
+        },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
     let conversationId = typeof body.conversationId === "string" ? body.conversationId.trim() : "";
@@ -155,7 +170,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to generate AI response. Please retry.",
+        error: sanitizeApiError(error, "AI Assistant is currently performing ledger reconciliation. Please ask your question again shortly."),
       },
       { status: 500 }
     );
