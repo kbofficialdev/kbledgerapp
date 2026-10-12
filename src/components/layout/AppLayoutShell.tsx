@@ -1,10 +1,8 @@
 "use client";
 
-import React from "react";
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Navbar from "./Navbar";
-import { DesktopSidebar, MobileBottomNav } from "./Navigation";
-import FloatingAiAdvisor from "@/components/ai/FloatingAiAdvisor";
 
 export default function AppLayoutShell({
   children,
@@ -12,49 +10,115 @@ export default function AppLayoutShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isStandaloneAssistant =
-    pathname?.startsWith("/assistant") || pathname?.startsWith("/chat");
+  const router = useRouter();
 
-  if (isStandaloneAssistant) {
+  // State to track admin authorization on protected admin routes
+  const [authStatus, setAuthStatus] = useState<"loading" | "authorized" | "unauthorized">("loading");
+
+  // Explicit list of authenticated Admin routes where the admin workspace chrome is displayed
+  const isAdminRoute =
+    pathname === "/" ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname.startsWith("/orders") ||
+    pathname.startsWith("/billing") ||
+    pathname.startsWith("/villages") ||
+    pathname.startsWith("/customers") ||
+    pathname.startsWith("/ledger") ||
+    pathname.startsWith("/payments") ||
+    pathname.startsWith("/reports");
+
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname?.startsWith("/login/") ||
+    pathname === "/admin/login" ||
+    pathname === "/admin/register" ||
+    pathname === "/customer/login" ||
+    pathname === "/portal/login";
+
+  // Standalone shell for unauthenticated/login routes, customer portal, standalone assistant
+  const isStandaloneShell =
+    !isAdminRoute ||
+    isAuthRoute ||
+    pathname === "/customer" ||
+    pathname?.startsWith("/customer/") ||
+    pathname === "/portal" ||
+    pathname?.startsWith("/portal/") ||
+    pathname?.startsWith("/assistant") ||
+    pathname?.startsWith("/chat");
+
+  useEffect(() => {
+    // If not an admin dashboard route, no admin chrome verification is needed
+    if (!isAdminRoute || isStandaloneShell) {
+      setAuthStatus("authorized");
+      return;
+    }
+
+    let isMounted = true;
+    const verifyAuthorization = async () => {
+      try {
+        const res = await fetch("/api/admin/auth/status");
+        if (!isMounted) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated || data.isAuthenticated) {
+            setAuthStatus("authorized");
+            return;
+          }
+        }
+
+        // Not authenticated as admin
+        setAuthStatus("unauthorized");
+        const redirectUrl = `/admin/login${pathname && pathname !== "/" ? `?from=${encodeURIComponent(pathname)}` : ""}`;
+        router.replace(redirectUrl);
+      } catch {
+        if (!isMounted) return;
+        setAuthStatus("unauthorized");
+        router.replace("/admin/login");
+      }
+    };
+
+    verifyAuthorization();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, isAdminRoute, isStandaloneShell, router]);
+
+  // If this is a standalone route (e.g. login, customer portal)
+  if (isStandaloneShell) {
     return (
-      <div className="min-h-screen w-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased flex flex-col selection:bg-zinc-800 selection:text-white dark:selection:bg-zinc-200 dark:selection:text-zinc-900">
+      <div className="min-h-screen w-full bg-white text-slate-900 antialiased flex flex-col selection:bg-black selection:text-white">
         {children}
       </div>
     );
   }
 
-  return (
-    <>
-      {/* Ambient Luminous Mesh Gradient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden no-print">
-        <div className="absolute -top-[10%] -left-[5%] w-[600px] h-[600px] rounded-full bg-emerald-500/8 blur-[130px] animate-mesh-1" />
-        <div className="absolute top-[25%] -right-[8%] w-[550px] h-[550px] rounded-full bg-indigo-500/8 blur-[140px] animate-mesh-2" />
-        <div className="absolute -bottom-[12%] left-[20%] w-[580px] h-[580px] rounded-full bg-blue-500/6 blur-[140px] animate-mesh-1" />
-      </div>
-
-      {/* Full-Height Screen Layout with Body Scrolling */}
-      <div className="flex min-h-screen relative z-10">
-        {/* Docked Icon Sidebar (Desktop) */}
-        <DesktopSidebar />
-
-        {/* Main App Workspace */}
-        <div className="flex-1 flex flex-col min-w-0 w-full">
-          {/* Advanced Glassmorphic Sticky Navbar */}
-          <Navbar />
-
-          {/* Natural Body Scrollable Content Canvas */}
-          <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-28 lg:pb-12">
-            {children}
-          </main>
+  // If the admin route is still verifying or unauthorized, do NOT show dashboard chrome or links!
+  if (authStatus !== "authorized") {
+    return (
+      <div className="min-h-screen w-full bg-white text-slate-900 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-medium text-slate-500">
+            Verifying administrator authorization...
+          </p>
         </div>
       </div>
+    );
+  }
 
-      {/* Floating Gemini AI Advisor (Bottom-Right Action Trigger) */}
-      <FloatingAiAdvisor />
+  // Authenticated Admin Workspace: Full-width layout with Single-Logo Navbar & Slide-In Left Drawer
+  return (
+    <div className="min-h-screen bg-white text-slate-900 antialiased flex flex-col">
+      {/* Top Header Navbar (Single Logo + Menu Drawer Trigger) */}
+      <Navbar />
 
-      {/* Mobile Dock Navigation */}
-      <MobileBottomNav />
-    </>
+      {/* Natural Full-Width Scrollable Content Canvas */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {children}
+      </main>
+    </div>
   );
 }
-

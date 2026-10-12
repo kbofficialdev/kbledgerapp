@@ -13,28 +13,9 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior: none;
 }
 
-@keyframes float-slow {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(15px, 20px) scale(1.03); }
-}
-
-@keyframes float-reverse {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-20px, -15px) scale(0.97); }
-}
-
-.animate-mesh-1 {
-  animation: float-slow 18s ease-in-out infinite;
-}
-
-.animate-mesh-2 {
-  animation: float-reverse 22s ease-in-out infinite;
-}
-
-/* Custom subtle scrollbar */
+/* Custom subtle flat scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -46,25 +27,36 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Specialized Print Engine Rules */
+/* Specialized Carbon Print Engine Rules */
 @media print {
+  header, nav, footer, aside, .no-print {
+    display: none !important;
+  }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 12pt;
-    padding: 0;
-    margin: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: monospace !important;
   }
 
-  .no-print {
-    display: none !important;
+  .carbon-receipt-print-area {
+    border: 1px dashed #000000 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    padding: 12px !important;
+    page-break-inside: avoid;
+    font-family: monospace !important;
   }
 
   .print-only {
@@ -82,63 +74,92 @@ body {
   }
 
   @page {
-    margin: 4mm;
+    margin: 6mm;
   }
 }
 
 @layer components {
-  /* Modern white theme card with subtle border & depth */
+  /* Flat clean card with subtle border */
   .kb-card {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:shadow-[0_6px_20px_rgba(15,23,42,0.06)] transition-all duration-200;
+    @apply bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 transition-colors;
   }
 
-  /* Elevated Glass Card */
+  /* Flat Card Surface */
   .kb-card-elevated {
-    @apply bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-[0_4px_24px_rgba(15,23,42,0.05),0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all duration-200;
+    @apply bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 transition-colors;
   }
 
   /* Custom input */
   .kb-input {
-    @apply w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm;
+    @apply w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-colors;
   }
 
-  /* Primary action button with smooth gradient */
+  /* Primary flat action button */
   .kb-btn-primary {
-    @apply bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Google Pay Brand Gradient Action Button */
+  /* Google Pay Flat Action Button */
   .kb-btn-gpay {
-    @apply bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Secondary action button */
+  /* Secondary flat action button */
   .kb-btn-secondary {
-    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-white hover:bg-slate-50 active:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Solid-like interactive pill */
+  /* Flat status pill */
   .kb-pill {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border transition-all;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors;
   }
 }
 
-/* Markdown Content Styles for ChatGPT-style Gemini Assistant */
+/* ========================================================================= */
+/* KB Markdown Content Engine — ChatGPT-Grade Markdown & Data Table Styling  */
+/* ========================================================================= */
+
+.kb-markdown-content {
+  font-family: inherit;
+  color: #1e293b;
+  line-height: 1.68;
+  word-break: break-word;
+}
+
+.dark .kb-markdown-content {
+  color: #e4e4e7;
+}
+
+/* Headings */
 .kb-markdown-content h1,
 .kb-markdown-content h2,
-.kb-markdown-content h3 {
+.kb-markdown-content h3,
+.kb-markdown-content h4 {
   font-weight: 700;
   color: #0f172a;
-  margin-top: 1rem;
+  letter-spacing: -0.02em;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  line-height: 1.35;
 }
-.kb-markdown-content h1 { font-size: 1.25rem; }
-.kb-markdown-content h2 { font-size: 1.1rem; }
-.kb-markdown-content h3 { font-size: 0.95rem; }
 
+.dark .kb-markdown-content h1,
+.dark .kb-markdown-content h2,
+.dark .kb-markdown-content h3,
+.dark .kb-markdown-content h4 {
+  color: #fafafa;
+}
+
+.kb-markdown-content h1 { font-size: 1.3rem; }
+.kb-markdown-content h2 { font-size: 1.15rem; }
+.kb-markdown-content h3 { font-size: 1.025rem; }
+.kb-markdown-content h4 { font-size: 0.925rem; }
+
+/* Paragraphs & Text */
 .kb-markdown-content p {
+  margin-top: 0.4rem;
   margin-bottom: 0.75rem;
-  line-height: 1.6;
+  line-height: 1.68;
 }
 
 .kb-markdown-content strong {
@@ -146,70 +167,205 @@ body {
   color: #0f172a;
 }
 
+.dark .kb-markdown-content strong {
+  color: #ffffff;
+}
+
+.kb-markdown-content em {
+  font-style: italic;
+  color: #334155;
+}
+
+.dark .kb-markdown-content em {
+  color: #cbd5e1;
+}
+
+/* Unordered & Ordered Lists */
 .kb-markdown-content ul,
 .kb-markdown-content ol {
-  margin-bottom: 0.75rem;
-  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding-left: 1.35rem;
 }
 
-.kb-markdown-content ul { list-style-type: disc; }
-.kb-markdown-content ol { list-style-type: decimal; }
+.kb-markdown-content ul {
+  list-style-type: disc;
+}
+
+.kb-markdown-content ol {
+  list-style-type: decimal;
+}
 
 .kb-markdown-content li {
-  margin-bottom: 0.35rem;
-  line-height: 1.5;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
 }
 
+.kb-markdown-content li > p {
+  margin-top: 0.15rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Data Tables — Responsive, Rounded, Zebra-Striped, Tabular Figures */
 .kb-markdown-content table {
   width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
-  font-size: 0.825rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.15rem 0;
+  font-size: 0.84rem;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  font-variant-numeric: tabular-nums;
 }
 
-.kb-markdown-content th,
-.kb-markdown-content td {
-  border: 1px solid #e2e8f0;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
+.dark .kb-markdown-content table {
+  border-color: #27272a;
+  background-color: #121215;
 }
 
 .kb-markdown-content th {
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
+  color: #0f172a;
   font-weight: 700;
-  color: #1e293b;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.dark .kb-markdown-content th {
+  background-color: #1f1f23;
+  color: #f4f4f5;
+  border-bottom-color: #3f3f46;
+}
+
+.kb-markdown-content td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.dark .kb-markdown-content td {
+  border-bottom-color: #222226;
+  color: #d4d4d8;
+}
+
+.kb-markdown-content tr:last-child td {
+  border-bottom: none;
 }
 
 .kb-markdown-content tr:nth-child(even) td {
   background-color: #f8fafc;
 }
 
-.kb-markdown-content pre {
-  background-color: #0f172a;
-  color: #f8fafc;
+.dark .kb-markdown-content tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.kb-markdown-content tr:hover td {
+  background-color: #eef2f6;
+}
+
+.dark .kb-markdown-content tr:hover td {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Callout Cards & Blockquotes */
+.kb-markdown-content blockquote {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+  border-radius: 0 0.85rem 0.85rem 0;
   padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  margin: 1rem 0;
+  font-style: normal;
+  color: #1e293b;
+  border-top: 1px solid rgba(16, 185, 129, 0.15);
+  border-right: 1px solid rgba(16, 185, 129, 0.15);
+  border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.dark .kb-markdown-content blockquote {
+  border-left-color: #34d399;
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.14), rgba(16, 185, 129, 0.03));
+  color: #e4e4e7;
+  border-top-color: rgba(16, 185, 129, 0.2);
+  border-right-color: rgba(16, 185, 129, 0.2);
+  border-bottom-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Horizontal Dividers */
+.kb-markdown-content hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+.dark .kb-markdown-content hr {
+  border-top-color: #27272a;
+}
+
+/* Code Blocks & Inline Code */
+.kb-markdown-content pre {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+  padding: 0.85rem 1.15rem;
+  border-radius: 0.85rem;
   overflow-x: auto;
-  margin: 0.75rem 0;
-  font-family: monospace;
-  font-size: 0.8rem;
+  margin: 0.85rem 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.825rem;
+  border: 1px solid #27272a;
+}
+
+.kb-markdown-content pre code {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: inherit !important;
 }
 
 .kb-markdown-content code:not(pre code) {
   background-color: #f1f5f9;
-  color: #0f172a;
-  padding: 0.15rem 0.35rem;
-  border-radius: 0.375rem;
-  font-family: monospace;
-  font-size: 0.8rem;
+  color: #059669;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.4rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.825em;
+  font-weight: 600;
   border: 1px solid #e2e8f0;
 }
 
-.kb-markdown-content blockquote {
-  border-left: 4px solid #10b981;
-  padding-left: 0.75rem;
-  color: #475569;
-  font-style: italic;
-  margin: 0.75rem 0;
+.dark .kb-markdown-content code:not(pre code) {
+  background-color: #27272a;
+  color: #34d399;
+  border-color: #3f3f46;
+}
+
+/* External Links inside Markdown */
+.kb-markdown-content a {
+  color: #0284c7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.kb-markdown-content a:hover {
+  color: #0369a1;
+}
+
+.dark .kb-markdown-content a {
+  color: #38bdf8;
+}
+
+.dark .kb-markdown-content a:hover {
+  color: #7dd3fc;
 }
 

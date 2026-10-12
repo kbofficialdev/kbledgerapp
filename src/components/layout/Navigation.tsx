@@ -11,14 +11,13 @@ import {
   BookOpen,
   CreditCard,
   Printer,
-  Shield,
+  Sparkles,
   Smartphone,
-  Presentation,
+  Shield,
   X,
-  ChevronRight,
 } from "lucide-react";
 
-interface NavItem {
+export interface NavPillItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -26,74 +25,126 @@ interface NavItem {
   badgeColor?: string;
 }
 
-const mainNavItems: NavItem[] = [
+export const adminNavPillItems: NavPillItem[] = [
   { label: "Overview", href: "/", icon: LayoutDashboard },
-  { label: "New Bill", href: "/orders/new", icon: Receipt, badge: "F2", badgeColor: "bg-emerald-100 text-emerald-800" },
-  { label: "Orders Archive", href: "/orders", icon: Receipt },
-  { label: "Villages", href: "/villages", icon: MapPin },
+  { label: "Counter POS", href: "/orders/new", icon: Receipt, badge: "F2", badgeColor: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300" },
+  { label: "Bills Archive", href: "/orders", icon: Receipt },
   { label: "Customers", href: "/customers", icon: Users },
-  { label: "Khata Ledger", href: "/ledger", icon: BookOpen },
-  { label: "Google Pay Hub", href: "/payments", icon: CreditCard, badge: "UPI", badgeColor: "bg-blue-100 text-blue-800" },
-  { label: "Carbon Reports", href: "/reports", icon: Printer },
+  { label: "Bahi-Khata", href: "/ledger", icon: BookOpen },
+  { label: "Google Pay UPI", href: "/payments", icon: CreditCard, badge: "UPI", badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300" },
+  { label: "Villages", href: "/villages", icon: MapPin },
+  { label: "Reports", href: "/reports", icon: Printer },
+  { label: "AI Advisor", href: "/assistant", icon: Sparkles, badge: "AI", badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300" },
 ];
 
-const secondaryNavItems: NavItem[] = [
-  { label: "Customer Portal", href: "/portal/login", icon: Smartphone, badge: "Self-Pay", badgeColor: "bg-indigo-100 text-indigo-800" },
-  { label: "Testing & QA Deck", href: "/presentation", icon: Presentation, badge: "IEEE 829", badgeColor: "bg-emerald-100 text-emerald-800" },
-  { label: "Admin Security & MFA", href: "/admin", icon: Shield, badge: "MFA", badgeColor: "bg-emerald-100 text-emerald-800" },
-];
-
-export const DesktopSidebar: React.FC = () => {
+/**
+ * Modern Horizontal Navigation Pill Bar (Replacing the old desktop sidebar)
+ * Provides full horizontal screen width for receipts, ledgers, and transactions.
+ */
+export const NavigationPills: React.FC = () => {
   const pathname = usePathname();
-  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <nav
+      aria-label="Admin Navigation"
+      className="hidden md:flex items-center gap-1.5 overflow-x-auto py-2 px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur no-print scrollbar-none"
+    >
+      <div className="flex items-center gap-1 min-w-max mx-auto w-full max-w-7xl">
+        {adminNavPillItems.map((item) => {
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href ||
+                (item.href !== "/" && pathname.startsWith(item.href) && item.href !== "/orders");
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 font-semibold"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800/60 border border-transparent"
+              }`}
+            >
+              <Icon
+                className={`w-3.5 h-3.5 flex-shrink-0 ${
+                  isActive
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-slate-500 dark:text-zinc-400"
+                }`}
+              />
+              <span>{item.label}</span>
+              {item.badge && (
+                <span
+                  className={`text-[9px] font-mono font-medium px-1.5 py-0.2 rounded ${
+                    isActive
+                      ? "bg-emerald-200/60 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200"
+                      : item.badgeColor || "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
+/**
+ * Mobile Navigation Drawer (For small screens when hamburger is tapped)
+ */
+export const MobileDrawer: React.FC = () => {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Listen to mobile menu trigger event from Navbar
   useEffect(() => {
     const handleOpenMobile = () => setMobileOpen(true);
     window.addEventListener("kb:open-mobile-sidebar", handleOpenMobile);
     return () => window.removeEventListener("kb:open-mobile-sidebar", handleOpenMobile);
   }, []);
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
+  if (!mobileOpen) return null;
+
   return (
-    <>
-      {/* 1. Desktop Hover Collapsible Sidebar (Hidden on mobile) */}
-      <aside
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={`hidden lg:flex flex-col bg-white/95 backdrop-blur-2xl border-r border-slate-200/90 h-screen sticky top-0 no-print flex-shrink-0 z-30 shadow-[4px_0_24px_rgba(15,23,42,0.03)] transition-all duration-300 ease-in-out ${
-          isHovered ? "w-64" : "w-[72px]"
-        }`}
-      >
-        {/* Brand Header: Strictly ONLY "KB" */}
-        <div
-          className={`h-14 border-b border-slate-100/90 flex items-center transition-all duration-300 ${
-            isHovered ? "px-6 justify-start" : "px-0 justify-center"
-          }`}
-        >
-          <Link href="/" className="inline-flex items-center group">
-            <span className="font-black text-2xl tracking-tighter bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform">
-              KB
-            </span>
-          </Link>
+    <div className="md:hidden fixed inset-0 z-50 flex">
+      <div
+        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div className="relative w-72 max-w-[80vw] bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 h-full flex flex-col z-10">
+        {/* Mobile Drawer Header */}
+        <div className="h-14 px-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+          <span className="font-bold text-base text-emerald-700 dark:text-emerald-400">
+            KB KHATA
+          </span>
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-4 space-y-6">
-          {/* Main Operations Section */}
+        {/* Mobile Navigation List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
           <div>
-            {isHovered && (
-              <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2 animate-in fade-in duration-150">
-                Operations &amp; Billing
-              </div>
-            )}
+            <div className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 dark:text-zinc-500 px-3 mb-1.5">
+              Operations & Ledgers
+            </div>
             <nav className="space-y-1">
-              {mainNavItems.map((item) => {
+              {adminNavPillItems.map((item) => {
                 const isActive =
                   item.href === "/"
                     ? pathname === "/"
@@ -105,31 +156,27 @@ export const DesktopSidebar: React.FC = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    title={!isHovered ? item.label : undefined}
-                    className={`flex items-center rounded-xl text-xs font-medium transition-all group ${
-                      isHovered ? "px-3 py-2.5 justify-between" : "p-3 justify-center"
-                    } ${
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                       isActive
-                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-md shadow-emerald-600/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                        ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800"
+                        : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-3">
                       <Icon
-                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                          isActive ? "text-white" : "text-slate-500 group-hover:scale-110"
+                        className={`w-4 h-4 ${
+                          isActive ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500"
                         }`}
                       />
-                      {isHovered && (
-                        <span className="truncate whitespace-nowrap animate-in fade-in duration-150">
-                          {item.label}
-                        </span>
-                      )}
+                      <span>{item.label}</span>
                     </div>
-                    {isHovered && item.badge && (
+                    {item.badge && (
                       <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded animate-in fade-in duration-150 ${
-                          isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
+                        className={`text-[10px] font-mono font-medium px-1.5 py-0.2 rounded ${
+                          isActive
+                            ? "bg-emerald-100 text-emerald-800"
+                            : item.badgeColor || "bg-slate-100 text-slate-600"
                         }`}
                       >
                         {item.badge}
@@ -141,216 +188,49 @@ export const DesktopSidebar: React.FC = () => {
             </nav>
           </div>
 
-          {/* Secondary Portal & Security Section */}
           <div>
-            {isHovered && (
-              <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2 animate-in fade-in duration-150">
-                Portal &amp; Security
-              </div>
-            )}
+            <div className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 dark:text-zinc-500 px-3 mb-1.5">
+              Portals
+            </div>
             <nav className="space-y-1">
-              {secondaryNavItems.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={!isHovered ? item.label : undefined}
-                    className={`flex items-center rounded-xl text-xs font-medium transition-all group ${
-                      isHovered ? "px-3 py-2.5 justify-between" : "p-3 justify-center"
-                    } ${
-                      isActive
-                        ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-md shadow-indigo-600/20"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Icon
-                        className={`w-4 h-4 flex-shrink-0 transition-transform ${
-                          isActive ? "text-white" : "text-slate-500 group-hover:scale-110"
-                        }`}
-                      />
-                      {isHovered && (
-                        <span className="truncate whitespace-nowrap animate-in fade-in duration-150">
-                          {item.label}
-                        </span>
-                      )}
-                    </div>
-                    {isHovered && item.badge && (
-                      <span
-                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded animate-in fade-in duration-150 ${
-                          isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+              <Link
+                href="/customer"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+              >
+                <Smartphone className="w-4 h-4 text-indigo-500" />
+                <span>Customer Khata Portal</span>
+              </Link>
+              <Link
+                href="/admin"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+              >
+                <Shield className="w-4 h-4 text-emerald-600" />
+                <span>Admin Security Center</span>
+              </Link>
             </nav>
           </div>
         </div>
 
-        {/* Footer Status Pill */}
-        <div
-          className={`p-3 border-t border-slate-100/90 bg-slate-50/60 mt-auto flex items-center transition-all ${
-            isHovered ? "justify-between" : "justify-center"
-          }`}
-        >
+        {/* Mobile Drawer Footer */}
+        <div className="p-3 border-t border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
-            </span>
-            {isHovered && (
-              <span className="font-semibold text-slate-700 text-[11px] whitespace-nowrap animate-in fade-in duration-150">
-                Live Counter Active
-              </span>
-            )}
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="font-medium text-slate-700 dark:text-zinc-300 text-[11px]">KB Live Counter</span>
           </div>
-          {isHovered && (
-            <span className="font-mono text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200 animate-in fade-in duration-150">
-              UPI v2.8
-            </span>
-          )}
+          <span className="font-mono text-[10px] text-slate-500 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+            UPI v2.8
+          </span>
         </div>
-      </aside>
-
-      {/* 2. Mobile Slide-Over Drawer (Hidden on desktop, opened via icon) */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden no-print">
-          {/* Backdrop */}
-          <div
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200"
-          />
-
-          {/* Drawer Content */}
-          <div className="fixed inset-y-0 left-0 w-72 max-w-[80vw] bg-white shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-250">
-            {/* Header: Strictly ONLY "KB" + Close (X) Icon */}
-            <div className="h-14 px-5 border-b border-slate-200 flex items-center justify-between">
-              <Link
-                href="/"
-                onClick={() => setMobileOpen(false)}
-                className="font-black text-2xl tracking-tighter bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 bg-clip-text text-transparent"
-              >
-                KB
-              </Link>
-
-              <button
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close Navigation Menu"
-                className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Mobile Nav Links */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              <div>
-                <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
-                  Operations &amp; Billing
-                </div>
-                <nav className="space-y-1">
-                  {mainNavItems.map((item) => {
-                    const isActive =
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname === item.href ||
-                          (item.href !== "/" && pathname.startsWith(item.href) && item.href !== "/orders");
-                    const Icon = item.icon;
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
-                          isActive
-                            ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-md shadow-emerald-600/20"
-                            : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge && (
-                          <span
-                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                              isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-
-              <div>
-                <div className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-3 mb-2">
-                  Portal &amp; Security
-                </div>
-                <nav className="space-y-1">
-                  {secondaryNavItems.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
-                    const Icon = item.icon;
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
-                          isActive
-                            ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold shadow-md shadow-indigo-600/20"
-                            : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.badge && (
-                          <span
-                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                              isActive ? "bg-white/20 text-white" : item.badgeColor || "bg-slate-100 text-slate-600"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-            </div>
-
-            {/* Mobile Footer Status */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="font-semibold text-slate-700 text-[11px]">KB Live Counter</span>
-              </div>
-              <span className="font-mono text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                UPI v2.8
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 
+/**
+ * Mobile Bottom Navigation Bar (Dock)
+ */
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
 
@@ -358,12 +238,12 @@ export const MobileBottomNav: React.FC = () => {
     { label: "Home", href: "/", icon: LayoutDashboard },
     { label: "New Bill", href: "/orders/new", icon: Receipt },
     { label: "Khata", href: "/ledger", icon: BookOpen },
-    { label: "Portal", href: "/portal", icon: Smartphone },
+    { label: "Customers", href: "/customers", icon: Users },
     { label: "G-Pay", href: "/payments", icon: CreditCard },
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200 py-1.5 px-2 flex justify-around items-center no-print shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 py-1.5 px-2 flex justify-around items-center no-print">
       {mobileItems.map((item) => {
         const isActive =
           item.href === "/"
@@ -375,24 +255,14 @@ export const MobileBottomNav: React.FC = () => {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[10px] font-medium transition-colors ${
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-md text-[10px] font-medium transition-colors ${
               isActive
-                ? "text-emerald-700 font-bold"
-                : "text-slate-500 hover:text-slate-800"
+                ? "text-emerald-700 dark:text-emerald-400 font-semibold"
+                : "text-slate-500 dark:text-zinc-400 hover:text-slate-800"
             }`}
           >
-            <div
-              className={`p-1.5 rounded-full transition-all ${
-                isActive && item.href === "/orders/new"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : isActive
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "text-slate-500"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-            </div>
-            <span className="mt-0.5">{item.label}</span>
+            <Icon className="w-4 h-4 mb-0.5" />
+            <span>{item.label}</span>
           </Link>
         );
       })}
@@ -400,3 +270,4 @@ export const MobileBottomNav: React.FC = () => {
   );
 };
 
+export default NavigationPills;

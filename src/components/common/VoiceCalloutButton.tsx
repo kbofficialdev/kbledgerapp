@@ -53,7 +53,7 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
         title={isPlaying ? "Stop Voice" : "Telugu Voice Callout"}
         className={`p-1.5 rounded-lg border transition-all ${
           isPlaying
-            ? "bg-amber-500 text-white border-amber-600 animate-pulse shadow-sm"
+            ? "bg-amber-500 text-white border-amber-600 animate-pulse"
             : "bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 border-slate-200 hover:border-emerald-200"
         } ${className}`}
       >
@@ -86,8 +86,8 @@ export const VoiceCalloutButton: React.FC<VoiceCalloutButtonProps> = ({
       onClick={handleClick}
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all border ${
         isPlaying
-          ? "bg-amber-500 text-white border-amber-600 shadow-sm animate-pulse"
-          : "bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 border-slate-200 shadow-xs"
+          ? "bg-amber-500 text-white border-amber-600 animate-pulse"
+          : "bg-white hover:bg-slate-50 text-slate-700 hover:text-emerald-700 border-slate-200"
       } ${className}`}
     >
       {isPlaying ? (

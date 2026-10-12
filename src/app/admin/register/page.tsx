@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Shield,
   Camera,
   Scan,
   CheckCircle2,
@@ -15,6 +14,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import KbLogo from "@/components/brand/KbLogo";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 export default function AdminRegisterPage() {
   const router = useRouter();
@@ -181,32 +183,30 @@ export default function AdminRegisterPage() {
   if (!isRegistrationAllowed) {
     return (
       <div className="min-h-[75vh] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200/90 shadow-elevated p-8 text-center space-y-5">
-          <div className="w-16 h-16 rounded-3xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
-            <Lock className="w-8 h-8 text-slate-800" />
+        <Card className="max-w-md w-full p-8 text-center space-y-5">
+          <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 flex items-center justify-center mx-auto border border-slate-200 dark:border-zinc-700">
+            <Lock className="w-7 h-7 text-slate-800 dark:text-zinc-200" />
           </div>
 
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-zinc-100">
               Admin Registration is Disabled
             </h2>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-2 leading-relaxed">
               The Administrator face profile has already been registered and locked. For security reasons, registration is permanently closed.
             </p>
           </div>
 
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 font-medium">
             Please authenticate using webcam face recognition.
           </div>
 
-          <Link
-            href="/admin/login"
-            className="kb-btn-primary w-full py-3 text-sm font-bold justify-center"
-          >
-            <span>Proceed to Admin Face Login</span>
-            <ArrowRight className="w-4 h-4" />
+          <Link href="/admin/login" className="block w-full">
+            <Button variant="primary" size="lg" icon={ArrowRight} className="w-full justify-center">
+              Proceed to Admin Face Login
+            </Button>
           </Link>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -216,35 +216,35 @@ export default function AdminRegisterPage() {
     <div className="min-h-[85vh] flex items-center justify-center p-4">
       <canvas ref={canvasRef} className="hidden" />
 
-      <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200/90 shadow-elevated p-6 sm:p-8 space-y-6">
+      <Card className="max-w-lg w-full p-6 sm:p-8 space-y-6">
         <div className="text-center">
           <KbLogo size="md" className="justify-center" />
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mt-4 flex items-center justify-center gap-2">
-            <UserPlus className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-zinc-100 mt-4 flex items-center justify-center gap-2">
+            <UserPlus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             <span>One-Time Initial Admin Face Setup</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto leading-relaxed">
             Perform initial biometric registration. Once saved, <strong>registration is permanently locked</strong> and all future access requires webcam face recognition.
           </p>
         </div>
 
         {feedback && (
           <div
-            className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-medium ${
+            className={`p-3.5 rounded-lg border flex items-center justify-between text-xs font-medium ${
               feedback.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : "bg-rose-50 border-rose-200 text-rose-800"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                : "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300"
             }`}
           >
             <div className="flex items-center gap-2">
               {feedback.type === "success" ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
               )}
               <span>{feedback.message}</span>
             </div>
-            <button onClick={() => setFeedback(null)} className="text-slate-400">
+            <button onClick={() => setFeedback(null)} className="text-slate-400 hover:text-slate-600">
               ×
             </button>
           </div>
@@ -252,7 +252,7 @@ export default function AdminRegisterPage() {
 
         {/* Live Camera Viewfinder */}
         <div className="space-y-2 text-center">
-          <div className="relative mx-auto w-56 h-56 rounded-full overflow-hidden border-4 border-emerald-200 bg-slate-950 flex items-center justify-center shadow-inner">
+          <div className="relative mx-auto w-52 h-52 rounded-full overflow-hidden border-2 border-emerald-500/40 bg-slate-950 flex items-center justify-center">
             {cameraError ? (
               <div className="p-4 text-center text-xs text-rose-400">
                 <AlertCircle className="w-8 h-8 mx-auto text-rose-500 mb-1" />
@@ -269,9 +269,9 @@ export default function AdminRegisterPage() {
                 />
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                   <div
-                    className={`w-44 h-44 rounded-full border-2 transition-all ${
+                    className={`w-40 h-40 rounded-full border-2 transition-all ${
                       capturedVector
-                        ? "border-emerald-500 shadow-[0_0_20px_#10b981]"
+                        ? "border-emerald-500"
                         : "border-emerald-400/60 border-dashed animate-pulse"
                     }`}
                   />
@@ -280,79 +280,72 @@ export default function AdminRegisterPage() {
             )}
 
             {capturedVector && (
-              <div className="absolute inset-0 bg-emerald-950/70 flex flex-col items-center justify-center text-white animate-in zoom-in-75">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mb-1" />
-                <span className="font-bold text-xs">FACE VECTOR CAPTURED</span>
+              <div className="absolute inset-0 bg-emerald-950/80 flex flex-col items-center justify-center text-white">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mb-1" />
+                <span className="font-semibold text-xs tracking-wide">FACE VECTOR CAPTURED</span>
               </div>
             )}
           </div>
 
           <div className="flex items-center justify-center gap-3 pt-2">
             {!capturedVector ? (
-              <button
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
+                icon={Camera}
                 onClick={captureFaceVector}
                 disabled={!streamActive}
-                className="kb-btn-primary text-xs py-2 px-4 shadow-sm"
               >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Capture &amp; Extract Face</span>
-              </button>
+                Capture &amp; Extract Face
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                icon={RotateCcw}
                 onClick={() => setCapturedVector(null)}
-                className="kb-btn-secondary text-xs py-1.5 px-3"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Re-take Photo</span>
-              </button>
+                Re-take Photo
+              </Button>
             )}
           </div>
         </div>
 
         {/* Credentials Form */}
-        <form onSubmit={handleSubmitRegistration} className="space-y-4 pt-2 border-t border-slate-100">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-              Admin Username
-            </label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="kb-input"
-            />
-          </div>
+        <form onSubmit={handleSubmitRegistration} className="space-y-4 pt-2 border-t border-slate-100 dark:border-zinc-800">
+          <Input
+            label="Admin Username"
+            type="text"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-              Emergency Backup PIN (6 digits)
-            </label>
-            <input
-              type="password"
-              maxLength={6}
-              required
-              value={fallbackPin}
-              onChange={(e) => setFallbackPin(e.target.value)}
-              className="kb-input font-mono tracking-widest text-center"
-            />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Used strictly in hardware emergencies if the webcam fails.
-            </p>
-          </div>
+          <Input
+            label="Emergency Backup PIN (6 digits)"
+            type="password"
+            maxLength={6}
+            required
+            value={fallbackPin}
+            onChange={(e) => setFallbackPin(e.target.value)}
+            className="font-mono tracking-widest text-center"
+            helperText="Used strictly in hardware emergencies if the webcam fails."
+          />
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
+            className="w-full justify-center"
             disabled={submitting || !capturedVector}
-            className="kb-btn-primary w-full py-3 text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50"
+            loading={submitting}
           >
             {submitting ? "Locking & Registering..." : "Complete Initial Registration & Lock"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }
-

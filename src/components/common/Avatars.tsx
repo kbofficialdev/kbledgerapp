@@ -64,7 +64,7 @@ export const CustomerAvatar: React.FC<{
   return (
     <div className={`relative inline-block ${className}`}>
       <div
-        className={`${sizeClasses} rounded-2xl bg-gradient-to-br ${gradient} text-white font-extrabold flex items-center justify-center shadow-xs border border-white/40 select-none`}
+        className={`${sizeClasses} rounded-xl bg-gradient-to-br ${gradient} text-white font-bold flex items-center justify-center select-none`}
       >
         {initials}
       </div>
