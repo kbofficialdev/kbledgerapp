@@ -6,11 +6,16 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
   const tests: TestResult[] = [];
   const suiteStart = performance.now();
 
+  const authHeaders = {
+    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
+    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+  };
+
   // Test 1: GET /api/villages Contract
   await (async () => {
     const start = performance.now();
     try {
-      const res = await fetch(`${BASE_URL}/api/villages`);
+      const res = await fetch(`${BASE_URL}/api/villages`, { headers: authHeaders });
       if (res.status !== 200) {
         throw new Error(`Expected HTTP 200, got ${res.status}`);
       }
@@ -42,7 +47,7 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
   await (async () => {
     const start = performance.now();
     try {
-      const res = await fetch(`${BASE_URL}/api/customers`);
+      const res = await fetch(`${BASE_URL}/api/customers`, { headers: authHeaders });
       if (res.status !== 200) {
         throw new Error(`Expected HTTP 200, got ${res.status}`);
       }
@@ -70,17 +75,20 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
     }
   })();
 
-  // Test 3: POST /api/payments/gpay/intent - Valid UPI Intent Generation
+  // Test 3: POST /api/payments/cashfree/create-order - Valid Order Creation
   await (async () => {
     const start = performance.now();
     try {
-      const res = await fetch(`${BASE_URL}/api/payments/gpay/intent`, {
+      const res = await fetch(`${BASE_URL}/api/payments/cashfree/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: 750,
-          orderNumber: "TEST-ORD-999",
-          customerName: "Integration Test User",
+          orderAmount: 750,
+          customerDetails: {
+            customerId: "cust_test_999",
+            customerName: "Integration Test User",
+            customerPhone: "9876543210",
+          },
         }),
       });
 
@@ -88,25 +96,20 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
         throw new Error(`Expected HTTP 200, got ${res.status}`);
       }
       const data = await res.json();
-      const intent = data.data || data.intent;
-      if (!data.success || !intent?.upiUri || !intent?.qrCodeDataUrl) {
-        throw new Error(`Malformed GPay intent response structure: keys=${Object.keys(data).join(",")}`);
-      }
-      const decodedUri = decodeURIComponent(intent.upiUri);
-      if (!decodedUri.includes("kbfashions.eazypay@icici") || !decodedUri.includes("am=750.00")) {
-        throw new Error(`UPI URI parameters mismatch: ${intent.upiUri}`);
+      if (!data.success || !data.payment_session_id || !data.order_id) {
+        throw new Error(`Malformed Cashfree order response structure: keys=${Object.keys(data).join(",")}`);
       }
       tests.push({
-        name: "POST /api/payments/gpay/intent generation (Deep link + Dynamic QR)",
+        name: "POST /api/payments/cashfree/create-order generation (Session ID + Order ID)",
         suite: "API Integration & Contracts",
         category: "INTEGRATION",
         passed: true,
         durationMs: performance.now() - start,
-        details: `Generated valid UPI URI: ${intent.upiUri.slice(0, 60)}...`,
+        details: `Generated Cashfree order: ${data.order_id}, session: ${data.payment_session_id.slice(0, 30)}...`,
       });
     } catch (e: any) {
       tests.push({
-        name: "POST /api/payments/gpay/intent generation (Deep link + Dynamic QR)",
+        name: "POST /api/payments/cashfree/create-order generation (Session ID + Order ID)",
         suite: "API Integration & Contracts",
         category: "INTEGRATION",
         passed: false,
@@ -116,15 +119,15 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
     }
   })();
 
-  // Test 4: POST /api/payments/gpay/intent - Bad Request Validation
+  // Test 4: POST /api/payments/cashfree/create-order - Bad Request Validation
   await (async () => {
     const start = performance.now();
     try {
-      const res = await fetch(`${BASE_URL}/api/payments/gpay/intent`, {
+      const res = await fetch(`${BASE_URL}/api/payments/cashfree/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: -50,
+          orderAmount: -50,
         }),
       });
 
@@ -136,7 +139,7 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
         throw new Error("Expected success: false for invalid amount");
       }
       tests.push({
-        name: "POST /api/payments/gpay/intent negative amount rejection (HTTP 400)",
+        name: "POST /api/payments/cashfree/create-order negative amount rejection (HTTP 400)",
         suite: "API Integration & Contracts",
         category: "INTEGRATION",
         passed: true,
@@ -145,7 +148,7 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
       });
     } catch (e: any) {
       tests.push({
-        name: "POST /api/payments/gpay/intent negative amount rejection (HTTP 400)",
+        name: "POST /api/payments/cashfree/create-order negative amount rejection (HTTP 400)",
         suite: "API Integration & Contracts",
         category: "INTEGRATION",
         passed: false,

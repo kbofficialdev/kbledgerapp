@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateOtp, sendOtpEmail } from "@/lib/email";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("[Portal Send OTP Error]:", error);
-    return NextResponse.json({ error: error.message || "Failed to send OTP." }, { status: 500 });
+    return NextResponse.json(
+      { error: sanitizeApiError(error, "Failed to send verification code. Please try again.") },
+      { status: 500 }
+    );
   }
 }
 

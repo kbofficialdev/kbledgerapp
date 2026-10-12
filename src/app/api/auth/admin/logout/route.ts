@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { clearAdminCookie } from "@/lib/auth-session";
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +23,7 @@ export async function POST(req: NextRequest) {
       message: "Admin logged out successfully.",
     });
 
-    // Clear the HTTP-only cookie
-    response.cookies.set("kb_admin_session", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 0,
-      path: "/",
-      expires: new Date(0),
-    });
+    clearAdminCookie(response);
 
     return response;
   } catch (error: any) {

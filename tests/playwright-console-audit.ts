@@ -140,16 +140,16 @@ async function runConsoleAudit() {
   });
 
   const routesToAudit = [
-    "/",
+    "/admin",
+    "/admin/billing",
+    "/admin/customers",
+    "/admin/reports",
+    "/admin/payments",
     "/admin/ai",
-    "/orders",
-    "/orders/new",
-    "/villages",
-    "/customers",
-    "/ledger",
-    "/payments",
-    "/reports",
-    "/presentation",
+    "/admin/security",
+    "/customer/pay",
+    "/customer",
+    "/assistant",
   ];
 
   for (const route of routesToAudit) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export async function GET(
   req: NextRequest,
@@ -67,7 +68,7 @@ export async function GET(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to load customer profile.") },
       { status: 500 }
     );
   }
@@ -81,13 +82,60 @@ export async function PUT(
     const body = await req.json();
     const { name, mobile, altMobile, email, address, creditLimit, notes, villageId } = body;
 
+    let cleanMobile: string | undefined = undefined;
+    if (mobile && typeof mobile === "string") {
+      const sanitized = mobile.trim().replace(/\D/g, "");
+      if (sanitized.length < 10) {
+        return NextResponse.json(
+          { success: false, error: "Valid 10-digit mobile number is required" },
+          { status: 400 }
+        );
+      }
+      const existing = await prisma.customer.findFirst({
+        where: { mobile: sanitized, id: { not: params.id } },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: `Mobile number ${sanitized} is already in use by customer "${existing.name}" (${existing.customerCode}).` },
+          { status: 409 }
+        );
+      }
+      cleanMobile = sanitized;
+    }
+
+    let cleanEmail: string | null | undefined = undefined;
+    if (email !== undefined) {
+      if (email && typeof email === "string" && email.trim()) {
+        const sanitizedEmail = email.trim().toLowerCase();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(sanitizedEmail)) {
+          return NextResponse.json(
+            { success: false, error: "Please provide a valid email format" },
+            { status: 400 }
+          );
+        }
+        const existing = await prisma.customer.findFirst({
+          where: { email: sanitizedEmail, id: { not: params.id } },
+        });
+        if (existing) {
+          return NextResponse.json(
+            { success: false, error: `Email address "${sanitizedEmail}" is already in use by customer "${existing.name}" (${existing.customerCode}).` },
+            { status: 409 }
+          );
+        }
+        cleanEmail = sanitizedEmail;
+      } else {
+        cleanEmail = null;
+      }
+    }
+
     const customer = await prisma.customer.update({
       where: { id: params.id },
       data: {
         ...(name ? { name: name.trim() } : {}),
-        ...(mobile ? { mobile: mobile.trim() } : {}),
+        ...(cleanMobile ? { mobile: cleanMobile } : {}),
         altMobile: altMobile !== undefined ? altMobile?.trim() || null : undefined,
-        email: email !== undefined ? email?.trim() || null : undefined,
+        ...(cleanEmail !== undefined ? { email: cleanEmail } : {}),
         address: address !== undefined ? address?.trim() || null : undefined,
         villageId: villageId || undefined,
         creditLimit: creditLimit !== undefined ? Number(creditLimit) : undefined,
@@ -98,7 +146,7 @@ export async function PUT(
     return NextResponse.json({ success: true, customer });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to update customer details.") },
       { status: 500 }
     );
   }
@@ -141,7 +189,7 @@ export async function DELETE(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to archive customer.") },
       { status: 500 }
     );
   }

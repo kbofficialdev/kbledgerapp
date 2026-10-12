@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOtp, sendOtpEmail } from "@/lib/email";
+import { sanitizeApiError } from "@/lib/api-error";
 
 function computeCosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length || vecA.length === 0) return 0;
@@ -120,7 +121,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Face verification error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Biometric authentication failed. Please retry or use PIN.") },
+      { status: 500 }
+    );
   }
 }
 

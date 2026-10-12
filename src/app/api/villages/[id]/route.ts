@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export async function GET(
   req: NextRequest,
@@ -40,7 +41,7 @@ export async function GET(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to load village details.") },
       { status: 500 }
     );
   }
@@ -68,7 +69,7 @@ export async function PUT(
     return NextResponse.json({ success: true, village });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to update village.") },
       { status: 500 }
     );
   }
@@ -105,7 +106,7 @@ export async function DELETE(
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: sanitizeApiError(error, "Failed to archive village.") },
       { status: 500 }
     );
   }

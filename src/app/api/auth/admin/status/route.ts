@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyAdminToken } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +13,8 @@ export async function GET(req: NextRequest) {
 
     const hasEnrolledAdmin = Boolean(admin && admin.isFaceEnrolled);
     const sessionToken = req.cookies.get("kb_admin_session")?.value;
-    const isAuthenticated = Boolean(sessionToken && sessionToken.startsWith("kb_adm_"));
+    const authResult = await verifyAdminToken(sessionToken);
+    const isAuthenticated = authResult.valid;
 
     return NextResponse.json({
       success: true,
@@ -22,6 +25,10 @@ export async function GET(req: NextRequest) {
       isAuthenticated,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[Admin Status Error]:", error);
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Failed to verify admin status.") },
+      { status: 500 }
+    );
   }
 }

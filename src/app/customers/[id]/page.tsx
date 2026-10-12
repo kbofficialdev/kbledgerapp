@@ -14,9 +14,7 @@ import {
   Plus,
   ArrowLeft,
   Printer,
-  Calendar,
   CheckCircle2,
-  AlertCircle,
   X,
   CreditCard,
   QrCode,
@@ -27,6 +25,19 @@ import {
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { CustomerAvatar } from "@/components/common/Avatars";
 import { VoiceCalloutButton } from "@/components/common/VoiceCalloutButton";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableEmptyState,
+} from "@/components/ui/Table";
 
 interface OrderItem {
   id: string;
@@ -207,43 +218,45 @@ export default function CustomerDetailPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-slate-200 rounded w-1/4 animate-pulse"></div>
-        <div className="kb-card p-6 h-48 animate-pulse bg-slate-100"></div>
+        <div className="h-8 bg-slate-200 dark:bg-zinc-800 rounded w-1/4 animate-pulse"></div>
+        <Card className="p-6 h-48 animate-pulse bg-slate-100 dark:bg-zinc-800"></Card>
       </div>
     );
   }
 
   if (!customer) {
     return (
-      <div className="kb-card p-12 text-center">
-        <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-slate-800">Customer Not Found</h3>
-        <p className="text-sm text-slate-500 mt-1 mb-4">The requested customer account does not exist or was archived.</p>
-        <Link href="/customers" className="kb-btn-primary inline-flex">
-          Back to Customers
+      <Card className="p-12 text-center">
+        <Users className="w-12 h-12 text-slate-300 dark:text-zinc-600 mx-auto mb-3" />
+        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100">Customer Not Found</h3>
+        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 mb-4">The requested customer account does not exist or was archived.</p>
+        <Link href="/customers">
+          <Button variant="primary" size="md">
+            Back to Customers
+          </Button>
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Top Breadcrumb & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print pb-4 border-b border-slate-200 dark:border-zinc-800">
         <div className="flex items-center gap-3">
           <Link
             href="/customers"
-            className="p-2 bg-white rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 shadow-soft"
+            className="p-2 bg-white dark:bg-zinc-900 rounded-md border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <CustomerAvatar name={customer.name} size="lg" />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-black tracking-tight text-slate-900">{customer.name}</h1>
-              <span className="font-mono text-xs font-semibold px-2.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-700">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">{customer.name}</h1>
+              <Badge variant="neutral">
                 {customer.customerCode}
-              </span>
+              </Badge>
               <VoiceCalloutButton
                 payload={{
                   customerName: customer.name,
@@ -254,13 +267,13 @@ export default function CustomerDetailPage() {
                 variant="badge"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Village: <strong>{customer.village.name}</strong> ({customer.village.code})</span>
               </span>
               {customer.email && (
-                <span className="flex items-center gap-1 font-mono text-slate-400">
+                <span className="flex items-center gap-1 font-mono text-slate-400 dark:text-zinc-500">
                   <Mail className="w-3 h-3" />
                   <span>{customer.email}</span>
                 </span>
@@ -271,276 +284,284 @@ export default function CustomerDetailPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
           {customer.email && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Send}
               onClick={handleSendCredentials}
               disabled={sendingEmail}
-              className="kb-btn-secondary text-xs py-2 px-3 flex items-center gap-1.5"
+              loading={sendingEmail}
               title="Send Account Credentials and Portal Link to Customer Email"
             >
-              <Send className="w-3.5 h-3.5 text-indigo-600" />
-              <span>{sendingEmail ? "Sending..." : "Email Portal Link"}</span>
-            </button>
+              Email Portal Link
+            </Button>
           )}
 
-          <Link
-            href={`/portal/${customer.id}`}
-            target="_blank"
-            className="kb-btn-secondary text-xs py-2 px-3 border-indigo-200 text-indigo-700 hover:bg-indigo-50 flex items-center gap-1.5"
-            title="Open customer self-service view"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>Open Portal</span>
+          <Link href={`/portal/${customer.id}`} target="_blank">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Smartphone}
+              className="border-indigo-200 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-400"
+              title="Open customer self-service view"
+            >
+              Open Portal
+            </Button>
           </Link>
 
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Printer}
             onClick={() => window.print()}
-            className="kb-btn-secondary text-xs py-2 px-3"
           >
-            <Printer className="w-4 h-4 text-slate-600" />
-            <span>Print Khata</span>
-          </button>
+            Print Khata
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            icon={IndianRupee}
+            className="border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400"
             onClick={() => {
               setPayAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : "");
               setIsPayModalOpen(true);
             }}
-            className="kb-btn-secondary text-xs py-2 px-3 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
           >
-            <IndianRupee className="w-4 h-4 text-emerald-600" />
-            <span>Record Payment (Jama)</span>
-          </button>
+            Record Payment (Jama)
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="destructive"
+            size="sm"
+            icon={Archive}
             onClick={handleArchiveCustomer}
             disabled={archiving}
-            className="kb-btn-secondary text-xs py-2 px-3 border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-1.5"
+            loading={archiving}
             title="Archive customer account (must have zero balance)"
           >
-            <Archive className="w-3.5 h-3.5 text-rose-600" />
-            <span>{archiving ? "Archiving..." : "Archive"}</span>
-          </button>
+            Archive
+          </Button>
 
-          <Link
-            href={`/orders/new?customerId=${customer.id}&villageId=${customer.villageId}`}
-            className="kb-btn-primary text-xs py-2 px-3"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Bill</span>
+          <Link href={`/orders/new?customerId=${customer.id}&villageId=${customer.villageId}`}>
+            <Button variant="primary" size="sm" icon={Plus}>
+              New Bill
+            </Button>
           </Link>
         </div>
       </div>
 
       {payFeedback && (
         <div
-          className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
+          className={`p-3.5 rounded-lg border flex items-center justify-between gap-3 text-xs ${
             payFeedback.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-rose-50 border-rose-200 text-rose-800"
+              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+              : "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300"
           }`}
         >
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center gap-2 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <span>{payFeedback.message}</span>
           </div>
-          <button onClick={() => setPayFeedback(null)} className="text-slate-400">
+          <button onClick={() => setPayFeedback(null)} className="text-slate-400 hover:text-slate-600">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Profile Overview Card */}
-      <div className="kb-card p-6">
+      <Card className="p-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Outstanding Balance Banner */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between">
+          <div className="p-4 rounded-lg bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                 Current Khata Balance (Udhaar)
               </span>
               <p
-                className={`text-3xl font-extrabold font-mono mt-1 ${
-                  customer.currentBalance > 0 ? "text-rose-600" : "text-emerald-600"
+                className={`text-2xl font-bold font-mono mt-1 tabular-nums ${
+                  customer.currentBalance > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                 }`}
               >
                 {formatCurrency(customer.currentBalance)}
               </p>
             </div>
-            <div className="mt-3 text-xs text-slate-500 flex items-center justify-between border-t border-slate-200/60 pt-2">
+            <div className="mt-3 text-xs text-slate-500 dark:text-zinc-400 flex items-center justify-between border-t border-slate-200 dark:border-zinc-700 pt-2">
               <span>Credit Limit:</span>
-              <span className="font-mono font-semibold text-slate-700">
+              <span className="font-mono font-medium text-slate-700 dark:text-zinc-300 tabular-nums">
                 {customer.creditLimit > 0 ? formatCurrency(customer.creditLimit) : "No Limit"}
               </span>
             </div>
           </div>
 
           {/* Contact Details */}
-          <div className="space-y-2.5 text-sm text-slate-600">
+          <div className="space-y-2 text-xs text-slate-600 dark:text-zinc-400">
             <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-slate-400" />
-              <span className="font-mono font-medium text-slate-900">{customer.mobile}</span>
+              <Phone className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 flex-shrink-0" />
+              <span className="font-mono font-medium text-slate-900 dark:text-zinc-100">{customer.mobile}</span>
               {customer.altMobile && (
-                <span className="text-slate-400 font-mono text-xs">/ {customer.altMobile}</span>
+                <span className="text-slate-400 dark:text-zinc-500 font-mono">/ {customer.altMobile}</span>
               )}
             </div>
 
             {customer.email && (
               <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-700">{customer.email}</span>
+                <Mail className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 flex-shrink-0" />
+                <span className="text-slate-700 dark:text-zinc-300">{customer.email}</span>
               </div>
             )}
 
             {customer.address && (
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                <span className="text-slate-600 text-xs">{customer.address}</span>
+                <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 mt-0.5 flex-shrink-0" />
+                <span className="text-slate-600 dark:text-zinc-400">{customer.address}</span>
               </div>
             )}
           </div>
 
           {/* Metadata & Summary */}
-          <div className="space-y-2 text-xs text-slate-500 border-t md:border-t-0 md:border-l border-slate-200/80 md:pl-6 pt-3 md:pt-0">
+          <div className="space-y-1.5 text-xs text-slate-500 dark:text-zinc-400 border-t md:border-t-0 md:border-l border-slate-200 dark:border-zinc-800 md:pl-6 pt-3 md:pt-0">
             <p>
-              Account Registered: <strong className="text-slate-700">{formatDate(customer.createdAt)}</strong>
+              Account Registered: <strong className="text-slate-700 dark:text-zinc-300">{formatDate(customer.createdAt)}</strong>
             </p>
             <p>
-              Total Bills Recorded: <strong className="text-slate-700">{customer.orders.length}</strong>
+              Total Bills Recorded: <strong className="text-slate-700 dark:text-zinc-300">{customer.orders.length}</strong>
             </p>
             <p>
-              Total Payments (Jama): <strong className="text-slate-700">{customer.payments.length}</strong>
+              Total Payments (Jama): <strong className="text-slate-700 dark:text-zinc-300">{customer.payments.length}</strong>
             </p>
             {customer.notes && (
-              <div className="mt-2 p-2 bg-slate-100 rounded-lg text-slate-600 italic">
+              <div className="mt-2 p-2 bg-slate-100 dark:bg-zinc-800 rounded text-slate-600 dark:text-zinc-300 italic text-[11px]">
                 &ldquo;{customer.notes}&rdquo;
               </div>
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tabs: Ledger Statement | Orders | Payments */}
-      <div className="kb-card overflow-hidden">
-        <div className="flex items-center border-b border-slate-200 bg-slate-50/70 px-4 gap-2 no-print">
+      <div className="space-y-3">
+        <div className="flex items-center border-b border-slate-200 dark:border-zinc-800 gap-1 no-print">
           <button
             onClick={() => setActiveTab("ledger")}
-            className={`py-3.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2.5 px-4 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === "ledger"
-                ? "border-emerald-600 text-emerald-800 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-emerald-600 text-emerald-800 dark:text-emerald-400"
+                : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-3.5 h-3.5" />
             <span>Bahi-Khata Ledger Statement ({customer.ledgerEntries.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("orders")}
-            className={`py-3.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2.5 px-4 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === "orders"
-                ? "border-emerald-600 text-emerald-800 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-emerald-600 text-emerald-800 dark:text-emerald-400"
+                : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <Receipt className="w-4 h-4" />
+            <Receipt className="w-3.5 h-3.5" />
             <span>Counter Bills ({customer.orders.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("payments")}
-            className={`py-3.5 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2.5 px-4 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === "payments"
-                ? "border-emerald-600 text-emerald-800 bg-white"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+                ? "border-emerald-600 text-emerald-800 dark:text-emerald-400"
+                : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="w-3.5 h-3.5" />
             <span>Payment Receipts ({customer.payments.length})</span>
           </button>
         </div>
 
         {/* Tab 1: Khata Ledger Statement */}
         {activeTab === "ledger" && (
-          <div className="p-4 overflow-x-auto">
+          <div>
             {customer.ledgerEntries.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-sm">
-                No ledger transactions recorded yet. Record a bill or payment.
-              </div>
+              <TableEmptyState
+                colSpan={5}
+                title="No ledger transactions recorded yet"
+                description="Record a counter bill or credit payment to generate statements."
+              />
             ) : (
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] font-semibold">
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Particulars / Description</th>
-                    <th className="py-2.5 px-3 text-right text-rose-600">Debit (Bill / Udhaar)</th>
-                    <th className="py-2.5 px-3 text-right text-emerald-600">Credit (Payment / Jama)</th>
-                    <th className="py-2.5 px-3 text-right font-bold text-slate-800">Running Balance</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-mono">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Particulars / Description</TableHead>
+                    <TableHead className="text-right text-rose-600 dark:text-rose-400">Debit (Bill / Udhaar)</TableHead>
+                    <TableHead className="text-right text-emerald-600 dark:text-emerald-400">Credit (Payment / Jama)</TableHead>
+                    <TableHead className="text-right">Running Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {customer.ledgerEntries.map((l) => (
-                    <tr key={l.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-3 text-slate-600 whitespace-nowrap font-sans">
+                    <TableRow key={l.id}>
+                      <TableCell className="text-slate-600 dark:text-zinc-400 whitespace-nowrap text-xs">
                         {formatDateTime(l.entryDate)}
-                      </td>
-                      <td className="py-3 px-3 text-slate-800 font-sans font-medium">
+                      </TableCell>
+                      <TableCell className="text-slate-800 dark:text-zinc-200 font-medium text-xs">
                         {l.description}
-                      </td>
-                      <td className="py-3 px-3 text-right text-rose-600 font-bold tabular-nums">
+                      </TableCell>
+                      <TableCell className="text-right text-rose-600 dark:text-rose-400 font-bold tabular-nums text-xs font-mono">
                         {l.debitAmount > 0 ? formatCurrency(l.debitAmount) : "—"}
-                      </td>
-                      <td className="py-3 px-3 text-right text-emerald-600 font-bold tabular-nums">
+                      </TableCell>
+                      <TableCell className="text-right text-emerald-600 dark:text-emerald-400 font-bold tabular-nums text-xs font-mono">
                         {l.creditAmount > 0 ? formatCurrency(l.creditAmount) : "—"}
-                      </td>
-                      <td className="py-3 px-3 text-right font-bold tabular-nums text-slate-900">
+                      </TableCell>
+                      <TableCell className="text-right font-bold tabular-nums text-slate-900 dark:text-zinc-100 text-xs font-mono">
                         {formatCurrency(l.runningBalance)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         )}
 
         {/* Tab 2: Orders / Counter Bills */}
         {activeTab === "orders" && (
-          <div className="p-4 space-y-3">
+          <div className="space-y-3">
             {customer.orders.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-sm">
+              <Card className="p-8 text-center text-xs text-slate-400">
                 No counter bills recorded for this customer yet.
-              </div>
+              </Card>
             ) : (
               customer.orders.map((o) => (
-                <div
+                <Card
                   key={o.id}
-                  className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-all bg-white"
+                  className="p-4 space-y-3"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-zinc-800">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold font-mono text-sm text-slate-900">{o.orderNumber}</span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                        <span className="font-semibold font-mono text-xs text-slate-900 dark:text-zinc-100">{o.orderNumber}</span>
+                        <Badge
+                          variant={
                             o.paymentType === "DEBIT"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              ? "success"
                               : o.paymentType === "PARTIAL"
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-rose-50 text-rose-700 border border-rose-200"
-                          }`}
+                              ? "warning"
+                              : "error"
+                          }
                         >
                           {o.paymentType === "DEBIT" ? "Fully Paid (Debit)" : o.paymentType === "PARTIAL" ? "Partial Paid" : "Unpaid (Credit)"}
-                        </span>
+                        </Badge>
                       </div>
-                      <span className="text-xs text-slate-400">{formatDateTime(o.orderDate)}</span>
+                      <span className="text-[11px] text-slate-400 dark:text-zinc-500">{formatDateTime(o.orderDate)}</span>
                     </div>
 
                     <div className="text-right font-mono">
-                      <span className="text-xs text-slate-400">Total Bill: </span>
-                      <span className="text-base font-bold text-slate-900">{formatCurrency(o.totalAmount)}</span>
+                      <span className="text-xs text-slate-400 dark:text-zinc-500">Total Bill: </span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{formatCurrency(o.totalAmount)}</span>
                       {o.paymentType === "PARTIAL" && (
-                        <p className="text-xs text-amber-700">
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 tabular-nums">
                           Paid: {formatCurrency(o.paidAmount)} | Udhaar: {formatCurrency(o.creditAmount)}
                         </p>
                       )}
@@ -548,10 +569,10 @@ export default function CustomerDetailPage() {
                   </div>
 
                   {/* Itemized Line Items */}
-                  <div className="mt-3 overflow-x-auto">
+                  <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left">
                       <thead>
-                        <tr className="text-[10px] uppercase text-slate-400 font-semibold border-b border-slate-100">
+                        <tr className="text-[10px] uppercase text-slate-400 dark:text-zinc-500 font-medium border-b border-slate-100 dark:border-zinc-800">
                           <th className="py-1">Item Code</th>
                           <th className="py-1">Description</th>
                           <th className="py-1 text-center">Qty</th>
@@ -559,22 +580,22 @@ export default function CustomerDetailPage() {
                           <th className="py-1 text-right">Line Total</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 font-mono">
+                      <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80 font-mono">
                         {o.items.map((item) => (
                           <tr key={item.id}>
-                            <td className="py-1.5 text-slate-500">{item.customItemId}</td>
-                            <td className="py-1.5 text-slate-900 font-sans font-medium">{item.name}</td>
-                            <td className="py-1.5 text-center text-slate-700">
+                            <td className="py-1.5 text-slate-500 dark:text-zinc-400 text-[11px]">{item.customItemId}</td>
+                            <td className="py-1.5 text-slate-900 dark:text-zinc-100 font-sans font-medium">{item.name}</td>
+                            <td className="py-1.5 text-center text-slate-700 dark:text-zinc-300">
                               {item.quantity} {item.unit}
                             </td>
-                            <td className="py-1.5 text-right text-slate-700">{formatCurrency(item.pricePerUnit)}</td>
-                            <td className="py-1.5 text-right font-bold text-slate-900">{formatCurrency(item.lineTotal)}</td>
+                            <td className="py-1.5 text-right text-slate-700 dark:text-zinc-300 tabular-nums">{formatCurrency(item.pricePerUnit)}</td>
+                            <td className="py-1.5 text-right font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{formatCurrency(item.lineTotal)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </Card>
               ))
             )}
           </div>
@@ -582,167 +603,158 @@ export default function CustomerDetailPage() {
 
         {/* Tab 3: Payments */}
         {activeTab === "payments" && (
-          <div className="p-4 overflow-x-auto">
+          <div>
             {customer.payments.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-sm">
-                No payment receipts recorded yet.
-              </div>
+              <TableEmptyState
+                colSpan={5}
+                title="No payment receipts recorded yet"
+                description="Use Record Payment (Jama) button to log customer debt clearance."
+              />
             ) : (
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider text-[11px] font-semibold">
-                    <th className="py-2.5 px-3">Receipt Ref</th>
-                    <th className="py-2.5 px-3">Payment Date</th>
-                    <th className="py-2.5 px-3">Method</th>
-                    <th className="py-2.5 px-3">Notes</th>
-                    <th className="py-2.5 px-3 text-right text-emerald-600 font-bold">Amount Paid (Jama)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-mono">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Receipt Ref</TableHead>
+                    <TableHead>Payment Date</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="text-right text-emerald-600 dark:text-emerald-400">Amount Paid (Jama)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {customer.payments.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-3 font-bold text-slate-900">{p.paymentRef}</td>
-                      <td className="py-3 px-3 text-slate-600 font-sans">{formatDateTime(p.paidAt)}</td>
-                      <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[10px]">
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono font-semibold text-slate-900 dark:text-zinc-100 text-xs">{p.paymentRef}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-zinc-400 text-xs">{formatDateTime(p.paidAt)}</TableCell>
+                      <TableCell>
+                        <Badge variant="neutral">
                           {p.method}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-slate-600 font-sans">{p.notes || "—"}</td>
-                      <td className="py-3 px-3 text-right text-emerald-600 font-bold text-sm">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-600 dark:text-zinc-400 text-xs">{p.notes || "—"}</TableCell>
+                      <TableCell className="text-right text-emerald-600 dark:text-emerald-400 font-bold text-xs font-mono tabular-nums">
                         {formatCurrency(p.amount)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         )}
       </div>
 
       {/* Record Payment (Jama) Modal */}
-      {isPayModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs no-print">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-modal max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <IndianRupee className="w-5 h-5 text-emerald-600" />
-                <span>Record Khata Jama / Payment</span>
-              </h3>
+      <Modal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        title="Record Khata Jama / Payment"
+      >
+        <form onSubmit={handleRecordPayment} className="space-y-4">
+          <div className="p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-md border border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-zinc-400">Customer Current Udhaar:</span>
+            <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm tabular-nums">
+              {formatCurrency(customer.currentBalance)}
+            </span>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+              Payment Amount (₹) <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="e.g. 500"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+              className="w-full h-9 px-3 rounded-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 font-mono text-sm font-bold text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+              Payment Mode
+            </label>
+            <div className="grid grid-cols-3 gap-2">
               <button
-                onClick={() => setIsPayModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                type="button"
+                onClick={() => setPayMethod("CASH")}
+                className={`py-2 px-3 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors ${
+                  payMethod === "CASH"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-600 text-emerald-800 dark:text-emerald-400"
+                    : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                }`}
               >
-                <X className="w-5 h-5" />
+                <IndianRupee className="w-4 h-4" />
+                <span>Cash</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPayMethod("GOOGLE_PAY_UPI")}
+                className={`py-2 px-3 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors ${
+                  payMethod === "GOOGLE_PAY_UPI"
+                    ? "bg-blue-50 dark:bg-blue-950/40 border-blue-600 text-blue-800 dark:text-blue-400"
+                    : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <QrCode className="w-4 h-4 text-blue-600" />
+                <span>Google Pay UPI</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPayMethod("GOOGLE_PAY_QR")}
+                className={`py-2 px-3 rounded-md border text-xs font-medium flex flex-col items-center gap-1 transition-colors ${
+                  payMethod === "GOOGLE_PAY_QR"
+                    ? "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-600 text-indigo-800 dark:text-indigo-400"
+                    : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                }`}
+              >
+                <CreditCard className="w-4 h-4 text-indigo-600" />
+                <span>G-Pay QR</span>
               </button>
             </div>
-
-            <form onSubmit={handleRecordPayment} className="space-y-4 mt-4">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Customer Current Udhaar:</span>
-                <span className="font-mono font-bold text-rose-600 text-sm">
-                  {formatCurrency(customer.currentBalance)}
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                  Payment Amount (₹) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="e.g. 500"
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  className="kb-input font-mono text-base font-bold"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                  Payment Mode
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPayMethod("CASH")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                      payMethod === "CASH"
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <IndianRupee className="w-4 h-4" />
-                    <span>Cash</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPayMethod("GOOGLE_PAY_UPI")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                      payMethod === "GOOGLE_PAY_UPI"
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <QrCode className="w-4 h-4 text-blue-600" />
-                    <span>Google Pay UPI</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPayMethod("GOOGLE_PAY_QR")}
-                    className={`py-2 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
-                      payMethod === "GOOGLE_PAY_QR"
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <CreditCard className="w-4 h-4 text-indigo-600" />
-                    <span>G-Pay QR</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                  Receipt Notes
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Paid in cash at weekly market"
-                  value={payNotes}
-                  onChange={(e) => setPayNotes(e.target.value)}
-                  className="kb-input"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsPayModalOpen(false)}
-                  className="kb-btn-secondary"
-                  disabled={submittingPay}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingPay || !payAmount}
-                  className="kb-btn-primary"
-                >
-                  {submittingPay ? "Saving..." : "Record Jama (Credit)"}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1">
+              Receipt Notes
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Paid in cash at weekly market"
+              value={payNotes}
+              onChange={(e) => setPayNotes(e.target.value)}
+              className="w-full h-9 px-3 rounded-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={() => setIsPayModalOpen(false)}
+              disabled={submittingPay}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={submittingPay}
+              disabled={submittingPay || !payAmount}
+            >
+              Record Jama (Credit)
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
-

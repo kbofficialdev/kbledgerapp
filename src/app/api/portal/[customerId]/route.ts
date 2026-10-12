@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCustomerSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,12 @@ export async function GET(
         { success: false, error: "Customer ID is required" },
         { status: 400 }
       );
+    }
+
+    // Role-based authorization: caller must be an authorized admin or the authenticated customer themselves
+    const auth = await requireCustomerSession(req, customerId);
+    if (!auth.authorized) {
+      return auth.response!;
     }
 
     const customer = await prisma.customer.findUnique({
@@ -119,7 +127,7 @@ export async function GET(
   } catch (error: any) {
     console.error("Portal API error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to load customer portal data" },
+      { success: false, error: sanitizeApiError(error, "Failed to load customer portal data.") },
       { status: 500 }
     );
   }

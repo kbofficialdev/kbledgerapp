@@ -81,11 +81,7 @@ export default function PresentationPage() {
       title: "KB Khata & Fashions",
       subtitle: "Full-Stack Software Testing, Quality Assurance & Security Verification",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-14 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl relative overflow-hidden shadow-2xl">
-          {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
+        <div className="flex flex-col justify-between h-full p-8 md:p-14 bg-slate-900 text-white rounded-2xl border border-slate-800">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider mb-6">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -130,7 +126,7 @@ export default function PresentationPage() {
       title: "Executive Testing Scorecard",
       subtitle: "High-level summary of automated verification results across all engineering layers",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200">
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -207,7 +203,7 @@ export default function PresentationPage() {
                   <a
                     href="/reports/KB_Khata_Official_Software_Testing_Report.pdf"
                     target="_blank"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Official PDF Report
@@ -238,7 +234,7 @@ export default function PresentationPage() {
       title: "System Architecture & Test Scope",
       subtitle: "Six integrated core modules tested under realistic village retail commerce workloads",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200">
           <div>
             <div className="mb-6">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">
@@ -248,7 +244,7 @@ export default function PresentationPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs mb-3">
                   01
                 </div>
@@ -259,7 +255,7 @@ export default function PresentationPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs mb-3">
                   02
                 </div>
@@ -270,7 +266,7 @@ export default function PresentationPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-xs mb-3">
                   03
                 </div>
@@ -281,7 +277,7 @@ export default function PresentationPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs mb-3">
                   04
                 </div>
@@ -292,7 +288,7 @@ export default function PresentationPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs mb-3">
                   05
                 </div>
@@ -303,7 +299,7 @@ export default function PresentationPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-all shadow-sm">
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs mb-3">
                   06
                 </div>
@@ -329,7 +325,7 @@ export default function PresentationPage() {
       title: "Comprehensive Test Execution Matrix",
       subtitle: "Detailed breakdown of all 7 test suites and their execution status",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div>
             <div className="mb-4">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">
@@ -394,7 +390,7 @@ export default function PresentationPage() {
       title: "Security & Penetration Assessment",
       subtitle: "Hardened defense against OWASP Top 10 vulnerabilities, payment tampering, and biometric spoofing",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200">
           <div>
             <div className="mb-6">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md">
@@ -479,7 +475,7 @@ export default function PresentationPage() {
       title: "Performance & Stress Benchmarking",
       subtitle: "Sub-millisecond ledger math and sub-50ms API latencies under stress",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200">
           <div>
             <div className="mb-6">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md">
@@ -568,7 +564,7 @@ export default function PresentationPage() {
       title: "Production Readiness & AWS Roadmap",
       subtitle: "Structured transition plan following verified quality sign-off",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-white rounded-2xl border border-slate-200">
           <div>
             <div className="mb-6">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">
@@ -637,7 +633,7 @@ export default function PresentationPage() {
       title: "Formal Sign-off Certificate",
       subtitle: "Official Release Approval & Verification Stamps",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl border border-slate-800 shadow-2xl">
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-slate-900 text-white rounded-2xl border border-slate-800">
           <div>
             <div className="text-center max-w-2xl mx-auto mb-8">
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
@@ -710,7 +706,7 @@ export default function PresentationPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between py-6 px-4 md:px-8">
       {/* Top Controller Bar */}
-      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <div className="max-w-6xl w-full mx-auto mb-4 flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -745,7 +741,7 @@ export default function PresentationPage() {
           <a
             href="/reports/KB_Khata_Official_Software_Testing_Report.pdf"
             target="_blank"
-            className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-700 transition-colors shadow-sm"
+            className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-700 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             Official PDF Report
@@ -754,7 +750,7 @@ export default function PresentationPage() {
           <a
             href="/reports/KB_Khata_Testing_Presentation.pptx"
             download
-            className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-blue-700 transition-colors shadow-sm"
+            className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-blue-700 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             Download PPTX
@@ -768,10 +764,10 @@ export default function PresentationPage() {
       </div>
 
       {/* Bottom Slide Navigator & Drawer */}
-      <div className="max-w-6xl w-full mx-auto mt-4 flex items-center justify-between gap-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+      <div className="max-w-6xl w-full mx-auto mt-4 flex items-center justify-between gap-4 bg-white p-3 rounded-xl border border-slate-200">
         <button
           onClick={() => setCurrentSlide((prev) => (prev > 0 ? prev - 1 : slides.length - 1))}
-          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
           title="Previous slide (Left Arrow)"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -785,7 +781,7 @@ export default function PresentationPage() {
               onClick={() => setCurrentSlide(idx)}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
                 idx === currentSlide
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >

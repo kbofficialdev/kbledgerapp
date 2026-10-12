@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
 
@@ -57,7 +62,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching villages:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch villages" },
+      { success: false, error: sanitizeApiError(error, "Failed to fetch villages.") },
       { status: 500 }
     );
   }
@@ -65,6 +70,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const { name, taluk, district, pincode, notes } = body;
 
@@ -104,7 +112,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Error creating village:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to create village" },
+      { success: false, error: sanitizeApiError(error, "Failed to create village.") },
       { status: 500 }
     );
   }

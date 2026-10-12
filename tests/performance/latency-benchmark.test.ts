@@ -31,6 +31,11 @@ export async function runPerformanceBenchmarkTests(): Promise<{
   let globalP50 = 0;
   let globalP95 = 0;
 
+  const authHeaders = {
+    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
+    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+  };
+
   // Benchmark 1: API Response Latency for GET /api/villages (20 samples)
   await (async () => {
     const start = performance.now();
@@ -40,7 +45,7 @@ export async function runPerformanceBenchmarkTests(): Promise<{
 
       for (let i = 0; i < SAMPLES; i++) {
         const reqStart = performance.now();
-        const res = await fetch(`${BASE_URL}/api/villages`);
+        const res = await fetch(`${BASE_URL}/api/villages`, { headers: authHeaders });
         if (res.status !== 200) throw new Error(`API failed on sample ${i}`);
         await res.json();
         latencies.push(performance.now() - reqStart);
@@ -74,7 +79,7 @@ export async function runPerformanceBenchmarkTests(): Promise<{
     }
   })();
 
-  // Benchmark 2: GPay Intent & QR Code generation speed (10 samples)
+  // Benchmark 2: Cashfree Order & Payment Session generation speed (10 samples)
   await (async () => {
     const start = performance.now();
     try {
@@ -83,32 +88,38 @@ export async function runPerformanceBenchmarkTests(): Promise<{
 
       for (let i = 0; i < SAMPLES; i++) {
         const reqStart = performance.now();
-        const res = await fetch(`${BASE_URL}/api/payments/gpay/intent`, {
+        const res = await fetch(`${BASE_URL}/api/payments/cashfree/create-order`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount: 150 + i * 10, orderNumber: `BENCH-${i}` }),
+          headers: {
+            Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderAmount: 150 + i * 10,
+            customerDetails: { customerPhone: "9876543210" },
+          }),
         });
-        if (res.status !== 200) throw new Error(`GPay intent failed on sample ${i}`);
+        if (res.status !== 200) throw new Error(`Cashfree create-order failed on sample ${i}`);
         await res.json();
         latencies.push(performance.now() - reqStart);
       }
 
       const stats = calculatePercentiles(latencies);
-      if (stats.p95 > 2000) {
-        throw new Error(`GPay generation P95 ${stats.p95}ms exceeded 2000ms`);
+      if (stats.p95 > 2500) {
+        throw new Error(`Cashfree generation P95 ${stats.p95}ms exceeded 2500ms`);
       }
 
       tests.push({
-        name: `Dynamic GPay Intent & QR Code Generation (P50: ${stats.p50}ms, P95: ${stats.p95}ms)`,
+        name: `Dynamic Cashfree Order & Session Generation (P50: ${stats.p50}ms, P95: ${stats.p95}ms)`,
         suite: "Performance & Stress Benchmarking",
         category: "PERFORMANCE",
         passed: true,
         durationMs: performance.now() - start,
-        details: `Delivers counter checkout QR code in median ${stats.p50}ms.`,
+        details: `Delivers Cashfree payment session in median ${stats.p50}ms.`,
       });
     } catch (e: any) {
       tests.push({
-        name: "Dynamic GPay Intent & QR Code Generation speed",
+        name: "Dynamic Cashfree Order & Session Generation speed",
         suite: "Performance & Stress Benchmarking",
         category: "PERFORMANCE",
         passed: false,

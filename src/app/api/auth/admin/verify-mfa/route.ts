@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyOtp } from "@/lib/email";
+import { createAdminToken, setAdminCookie } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -24,14 +26,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: verification.message }, { status: 401 });
     }
 
-    // Success: Generate admin session token
-    const sessionToken = `kb_adm_mfa_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    // Success: Generate cryptographically signed admin session token
+    const sessionToken = await createAdminToken(username);
 
     await prisma.systemAuditLog.create({
       data: {
         actor: username,
         action: "ADMIN_MFA_LOGIN_SUCCESS",
-        metadata: { sessionToken: sessionToken.slice(0, 16) },
+        metadata: { sessionTokenSnippet: sessionToken.slice(0, 16) },
       },
     });
 
@@ -46,17 +48,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set("kb_admin_session", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: "/",
-    });
+    setAdminCookie(response, sessionToken);
 
     return response;
   } catch (error: any) {
     console.error("[Admin MFA Verification Error]:", error);
-    return NextResponse.json({ error: error.message || "Failed to verify admin MFA." }, { status: 500 });
+    return NextResponse.json(
+      { error: sanitizeApiError(error, "Failed to verify administrator security code.") },
+      { status: 500 }
+    );
   }
 }
 

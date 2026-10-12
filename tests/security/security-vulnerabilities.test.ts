@@ -7,13 +7,18 @@ export async function runSecurityVulnerabilityTests(): Promise<TestSuiteResult> 
   const tests: TestResult[] = [];
   const suiteStart = performance.now();
 
+  const authHeaders = {
+    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
+    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+  };
+
   // Test 1: SQL Injection Immunity via Prisma ORM Parameterized Queries
   await (async () => {
     const start = performance.now();
     try {
       const maliciousPayload = "' OR '1'='1' --";
       const encoded = encodeURIComponent(maliciousPayload);
-      const res = await fetch(`${BASE_URL}/api/customers?search=${encoded}`);
+      const res = await fetch(`${BASE_URL}/api/customers?search=${encoded}`, { headers: authHeaders });
       if (res.status !== 200) {
         throw new Error(`Unexpected server error on SQLi payload: ${res.status}`);
       }
@@ -48,12 +53,12 @@ export async function runSecurityVulnerabilityTests(): Promise<TestSuiteResult> 
     try {
       const ddlPayload = "'; DROP TABLE \"Customer\"; --";
       const encoded = encodeURIComponent(ddlPayload);
-      const res = await fetch(`${BASE_URL}/api/villages?q=${encoded}`);
+      const res = await fetch(`${BASE_URL}/api/villages?q=${encoded}`, { headers: authHeaders });
       if (res.status !== 200) {
         throw new Error(`Server returned status ${res.status}`);
       }
       // Verify database table is completely intact
-      const verifyRes = await fetch(`${BASE_URL}/api/customers`);
+      const verifyRes = await fetch(`${BASE_URL}/api/customers`, { headers: authHeaders });
       if (verifyRes.status !== 200) {
         throw new Error("Critical database failure after DDL injection attempt!");
       }

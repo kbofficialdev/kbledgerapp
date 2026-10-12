@@ -95,7 +95,7 @@ export default function CarbonPrintReceiptPage() {
 
         <button
           onClick={handlePrint}
-          className="kb-btn-primary text-xs py-1.5 px-3"
+          className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
         >
           <Printer className="w-3.5 h-3.5" />
           <span>Print Slip (80mm)</span>
@@ -103,7 +103,7 @@ export default function CarbonPrintReceiptPage() {
       </div>
 
       {/* 80mm Exact POS / Carbon Print Voucher Surface */}
-      <div className="print-receipt-container bg-white w-full max-w-[80mm] p-4 text-black font-mono text-[11px] leading-tight shadow-md border border-slate-300">
+      <div className="print-receipt-container bg-white w-full max-w-[80mm] p-4 text-black font-mono text-[11px] leading-tight border border-slate-300">
         {/* Store Header */}
         <div className="text-center pb-2">
           <div className="text-sm font-extrabold tracking-wider uppercase">KB KHATA STORE</div>

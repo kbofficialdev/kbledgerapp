@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOtp, sendOtpEmail } from "@/lib/email";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("[Admin Send OTP Error]:", error);
-    return NextResponse.json({ error: error.message || "Failed to dispatch admin OTP." }, { status: 500 });
+    return NextResponse.json(
+      { error: sanitizeApiError(error, "Failed to dispatch administrator security code.") },
+      { status: 500 }
+    );
   }
 }

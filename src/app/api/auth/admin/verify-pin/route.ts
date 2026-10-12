@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOtp, sendOtpEmail } from "@/lib/email";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,7 +54,11 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("[Admin Verify PIN Error]:", error);
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Failed to verify administrative PIN.") },
+      { status: 500 }
+    );
   }
 }
 

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateCustomItemId, generateOrderNumber } from "@/lib/utils";
+import { requireAdminSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(req.url);
     const villageId = searchParams.get("villageId")?.trim();
     const customerId = searchParams.get("customerId")?.trim();
@@ -94,7 +99,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch orders" },
+      { success: false, error: sanitizeApiError(error, "Failed to load orders.") },
       { status: 500 }
     );
   }
@@ -102,6 +107,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const {
       villageId,
@@ -113,6 +121,9 @@ export async function POST(req: NextRequest) {
       notes,
       merchantTxnId,
       gpayTransactionId,
+      cashfreeOrderId,
+      cashfreePaymentId,
+      paymentSessionId,
       upiRefId,
       bankRrn,
       payerVpa,
@@ -217,25 +228,51 @@ export async function POST(req: NextRequest) {
         include: { items: true },
       });
 
-      // 2. If payment was made (Debit or Partial Paid), record Payment
+      // 2. If payment was made (Debit or Partial Paid), record or link Payment
       let paymentRecord = null;
       if (finalPaidAmount > 0) {
-        paymentRecord = await tx.payment.create({
-          data: {
-            paymentRef: `PAY-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
-            orderId: order.id,
-            customerId,
-            amount: finalPaidAmount,
-            method: paymentMethod,
-            status: "SUCCESS",
-            merchantTxnId: merchantTxnId || null,
-            gpayTransactionId: gpayTransactionId || null,
-            upiRefId: upiRefId || null,
-            bankRrn: bankRrn || null,
-            payerVpa: payerVpa || null,
-            notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
-          },
-        });
+        if (cashfreeOrderId) {
+          const existingPayment = await tx.payment.findUnique({
+            where: { cashfreeOrderId },
+          });
+          if (existingPayment) {
+            paymentRecord = await tx.payment.update({
+              where: { id: existingPayment.id },
+              data: {
+                orderId: order.id,
+                amount: finalPaidAmount,
+                status: "SUCCESS",
+                method: paymentMethod || "CASHFREE_ELEMENTS",
+                cashfreePaymentId: cashfreePaymentId || existingPayment.cashfreePaymentId,
+                paymentSessionId: paymentSessionId || existingPayment.paymentSessionId,
+                paidAt: new Date(),
+                notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
+              },
+            });
+          }
+        }
+
+        if (!paymentRecord) {
+          paymentRecord = await tx.payment.create({
+            data: {
+              paymentRef: `PAY-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
+              orderId: order.id,
+              customerId,
+              amount: finalPaidAmount,
+              method: paymentMethod,
+              status: "SUCCESS",
+              cashfreeOrderId: cashfreeOrderId || null,
+              cashfreePaymentId: cashfreePaymentId || null,
+              paymentSessionId: paymentSessionId || null,
+              merchantTxnId: merchantTxnId || null,
+              gpayTransactionId: gpayTransactionId || null,
+              upiRefId: upiRefId || null,
+              bankRrn: bankRrn || null,
+              payerVpa: payerVpa || null,
+              notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
+            },
+          });
+        }
       }
 
       // 3. Update Customer Current Balance:
@@ -298,7 +335,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Error creating order:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to record order" },
+      { success: false, error: sanitizeApiError(error, "Failed to record order. Please verify input data and try again.") },
       { status: 500 }
     );
   }

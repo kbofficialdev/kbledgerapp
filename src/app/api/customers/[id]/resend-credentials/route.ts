@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendCustomerWelcomeEmail } from "@/lib/email";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export async function POST(
   } catch (error: any) {
     console.error("[Resend Credentials Error]:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to resend credentials." },
+      { error: sanitizeApiError(error, "Failed to resend credentials. Please verify store email settings.") },
       { status: 500 }
     );
   }

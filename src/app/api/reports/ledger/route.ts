@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(req.url);
     const villageId = searchParams.get("villageId")?.trim();
     const customerId = searchParams.get("customerId")?.trim();
@@ -104,6 +109,9 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error fetching ledger reports:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Failed to generate ledger report.") },
+      { status: 500 }
+    );
   }
 }

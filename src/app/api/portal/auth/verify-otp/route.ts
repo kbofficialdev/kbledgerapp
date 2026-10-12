@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyOtp } from "@/lib/email";
+import { createCustomerToken, setCustomerCookie } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -36,25 +38,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: verification.message }, { status: 401 });
     }
 
-    // Set secure customer session cookie (optional) & return redirect target
+    // Generate cryptographically signed customer session token
+    const sessionToken = await createCustomerToken(customer.id);
+
     const response = NextResponse.json({
       success: true,
       customerId: customer.id,
       customerName: customer.name,
-      portalUrl: `/portal/${customer.id}`,
+      customerCode: customer.customerCode,
+      portalUrl: "/portal",
+      sessionToken,
     });
 
-    response.cookies.set("kb_customer_session", customer.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: "/",
-    });
+    setCustomerCookie(response, sessionToken);
 
     return response;
   } catch (error: any) {
     console.error("[Portal Verify OTP Error]:", error);
-    return NextResponse.json({ error: error.message || "Failed to verify OTP." }, { status: 500 });
+    return NextResponse.json(
+      { error: sanitizeApiError(error, "Failed to verify authentication code. Please try again.") },
+      { status: 500 }
+    );
   }
 }
-

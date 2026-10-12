@@ -1,15 +1,38 @@
 import * as fs from "fs";
 import * as path from "path";
-import { runPaymentPolicyTests } from "./unit/payment-policies.test";
-import { runBiometricsTests } from "./unit/biometrics.test";
-import { runTeluguVoiceTests } from "./unit/voice-telugu.test";
-import { runLedgerMathTests } from "./unit/ledger-math.test";
-import { runApiContractTests } from "./integration/api-contracts.test";
-import { runSecurityVulnerabilityTests } from "./security/security-vulnerabilities.test";
-import { runPerformanceBenchmarkTests } from "./performance/latency-benchmark.test";
+
+// Pre-load .env for test suite runner
+const envPath = path.resolve(process.cwd(), ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx > 0) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      let val = trimmed.slice(eqIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
+
 import { TestReportSummary, TestSuiteResult } from "./types";
 
 async function main() {
+  const { runPaymentPolicyTests } = await import("./unit/payment-policies.test");
+  const { runBiometricsTests } = await import("./unit/biometrics.test");
+  const { runTeluguVoiceTests } = await import("./unit/voice-telugu.test");
+  const { runLedgerMathTests } = await import("./unit/ledger-math.test");
+  const { runApiContractTests } = await import("./integration/api-contracts.test");
+  const { runSecurityVulnerabilityTests } = await import("./security/security-vulnerabilities.test");
+  const { runPerformanceBenchmarkTests } = await import("./performance/latency-benchmark.test");
+
   console.log("\n==========================================================================");
   console.log("       KB KHATA & FASHIONS - FULL STACK SOFTWARE TESTING HARNESS          ");
   console.log("        IEEE 829 Compliant Automated Verification & Audit Suite           ");

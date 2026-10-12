@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Enrollment error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: sanitizeApiError(error, "Biometric registration failed. Please try again.") },
+      { status: 500 }
+    );
   }
 }

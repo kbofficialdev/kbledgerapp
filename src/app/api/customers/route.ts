@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateCustomerCode } from "@/lib/utils";
 import { sendCustomerWelcomeEmail } from "@/lib/email";
+import { requireAdminSession } from "@/lib/auth-session";
+import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
     const villageId = searchParams.get("villageId")?.trim() || "";
@@ -70,7 +75,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch customers" },
+      { success: false, error: sanitizeApiError(error, "Failed to fetch customers.") },
       { status: 500 }
     );
   }
@@ -78,6 +83,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const {
       villageId,
@@ -105,11 +113,53 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!mobile || !mobile.trim()) {
+    const cleanMobile = mobile.trim().replace(/\D/g, "");
+    if (!cleanMobile || cleanMobile.length < 10) {
       return NextResponse.json(
-        { success: false, error: "Customer mobile number is required" },
+        { success: false, error: "Valid 10-digit mobile number is required" },
         { status: 400 }
       );
+    }
+
+    // Check unique mobile constraint
+    const existingMobile = await prisma.customer.findFirst({
+      where: { mobile: cleanMobile },
+    });
+    if (existingMobile) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Mobile number ${cleanMobile} is already registered with customer "${existingMobile.name}" (${existingMobile.customerCode}). Duplicate mobile numbers are not allowed.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Check unique email constraint if email provided
+    let cleanEmail: string | null = null;
+    if (email && typeof email === "string" && email.trim()) {
+      const parsedEmail = email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(parsedEmail)) {
+        return NextResponse.json(
+          { success: false, error: "Please provide a valid email address format (e.g. name@domain.com)" },
+          { status: 400 }
+        );
+      }
+
+      const existingEmail = await prisma.customer.findFirst({
+        where: { email: parsedEmail },
+      });
+      if (existingEmail) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Email address "${parsedEmail}" is already registered with customer "${existingEmail.name}" (${existingEmail.customerCode}). Duplicate email addresses are not allowed.`,
+          },
+          { status: 409 }
+        );
+      }
+      cleanEmail = parsedEmail;
     }
 
     // Verify village exists
@@ -144,9 +194,9 @@ export async function POST(req: NextRequest) {
         data: {
           customerCode,
           name: name.trim(),
-          mobile: mobile.trim(),
+          mobile: cleanMobile,
           altMobile: altMobile?.trim() || null,
-          email: email?.trim() || null,
+          email: cleanEmail,
           address: address?.trim() || null,
           villageId,
           creditLimit: Number(creditLimit || 0),
@@ -191,7 +241,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Error creating customer:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to create customer" },
+      { success: false, error: sanitizeApiError(error, "Failed to create customer. Please ensure mobile/email are valid and unique.") },
       { status: 500 }
     );
   }
