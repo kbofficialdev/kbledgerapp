@@ -30,9 +30,7 @@ export async function askGeminiAssistant({
   temperature?: number;
   image?: { data: string; mimeType: string };
 }): Promise<string> {
-  const apiKey =
-    process.env.GEMINI_API_KEY ||
-    "";
+  const apiKey = process.env.GEMINI_API_KEY || "";
 
   const baseInstruction =
     systemInstruction ||

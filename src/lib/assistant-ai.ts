@@ -41,9 +41,7 @@ Formatting Requirements:
 `;
 
 function getApiKey(): string {
-  const key =
-    process.env.GEMINI_API_KEY ||
-    "";
+  const key = process.env.GEMINI_API_KEY || "";
   if (!key) {
     throw new Error("Missing GEMINI_API_KEY server configuration.");
   }
