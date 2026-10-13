@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       isAuthenticated: Boolean(adminSession),
       username: adminSession?.username || null,
       role: adminSession ? "ADMIN" : null,
-      adminEmail: process.env.EMAIL_USER || "noreply.kb.app@gmail.com",
+      adminEmail: admin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || null,
       hasEnrolledAdmin: Boolean(admin),
     });
   } catch (error: any) {
@@ -29,4 +29,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

@@ -8,35 +8,62 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { otp, pin, username = "kbadmin" } = await req.json();
+    const { otp, pin, username } = await req.json();
 
     let isValid = false;
+    let resolvedUsername = username || "kbadmin";
 
-    // Check emergency PIN fallback if provided
+    const admins = await prisma.adminProfile.findMany({
+      where: { role: "ADMIN" },
+    });
+
+    if (admins.length > 0 && !username) {
+      resolvedUsername = admins[0].username;
+    }
+
+    // Check emergency PIN fallback if provided (against DB AdminProfile or .env)
     if (pin && typeof pin === "string") {
-      const masterPin = process.env.ADMIN_EMERGENCY_PIN || "172900";
-      const admin = await prisma.adminProfile.findFirst({
-        where: { role: "ADMIN" },
-      });
-      if (pin.trim() === masterPin || (admin?.fallbackPinHash && pin.trim() === admin.fallbackPinHash)) {
+      const cleanPin = pin.trim();
+      const envEmergencyPin = process.env.ADMIN_EMERGENCY_PIN;
+      const envFallbackPin = process.env.ADMIN_FALLBACK_PIN;
+      const matchedByPin = admins.find(
+        (a) => a.fallbackPinHash && a.fallbackPinHash === cleanPin
+      );
+      if (
+        (envEmergencyPin && cleanPin === envEmergencyPin) ||
+        (envFallbackPin && cleanPin === envFallbackPin) ||
+        matchedByPin
+      ) {
         isValid = true;
+        if (matchedByPin) {
+          resolvedUsername = matchedByPin.username;
+        }
       }
     }
 
     // Check OTP code if provided
     if (!isValid && otp && typeof otp === "string" && otp.trim().length === 6) {
-      const verification = verifyOtp("admin_mfa", otp.trim());
-      if (verification.valid) {
+      const cleanOtp = otp.trim();
+      const matchedByPin = admins.find(
+        (a) => a.fallbackPinHash && a.fallbackPinHash === cleanOtp
+      );
+      if (matchedByPin) {
         isValid = true;
+        resolvedUsername = matchedByPin.username;
       } else {
-        return NextResponse.json({ error: verification.message }, { status: 401 });
+        const verification = verifyOtp("admin_mfa", cleanOtp);
+        if (verification.valid) {
+          isValid = true;
+        } else {
+          return NextResponse.json({ error: verification.message }, { status: 401 });
+        }
       }
     }
 
     if (!isValid) {
       await prisma.systemAuditLog.create({
         data: {
-          actor: username,
+          actor: resolvedUsername,
           action: "ADMIN_LOGIN_FAILED",
           metadata: { reason: "Invalid OTP or PIN code" },
         },
@@ -50,11 +77,11 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent");
     const sessionId = `adm_sess_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const ttlSeconds = 24 * 3600;
-    const sessionToken = await createAdminToken(username, ttlSeconds, ipAddress, sessionId);
+    const sessionToken = await createAdminToken(resolvedUsername, ttlSeconds, ipAddress, sessionId);
 
     // Enforce "One IP, One Session, One Account"
     await registerActiveSessionInDb({
-      identifier: username,
+      identifier: resolvedUsername,
       role: "ADMIN",
       token: sessionToken,
       ipAddress,
@@ -64,7 +91,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.systemAuditLog.create({
       data: {
-        actor: username,
+        actor: resolvedUsername,
         action: "ADMIN_LOGIN_SUCCESS",
         metadata: { sessionTokenSnippet: sessionToken.slice(0, 16), ipAddress },
         ipAddress,
@@ -78,7 +105,7 @@ export async function POST(req: NextRequest) {
       adminUrl: "/admin",
       sessionToken,
       admin: {
-        username,
+        username: resolvedUsername,
         role: "ADMIN",
         lastLoginAt: new Date(),
       },

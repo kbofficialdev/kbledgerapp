@@ -11,7 +11,14 @@ export async function POST(req: NextRequest) {
       where: { role: "ADMIN" },
     });
 
-    const adminEmail = process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
+    const adminEmail = admin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    if (!adminEmail) {
+      return NextResponse.json(
+        { error: "No administrator email is configured." },
+        { status: 400 }
+      );
+    }
+
     const otp = generateOtp("admin_mfa");
 
     await sendOtpEmail({

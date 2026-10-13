@@ -10,10 +10,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const requestedIdentifier = (body.identifier || body.email || body.mobile || "").trim();
 
-    const admin = await prisma.adminProfile.findFirst({
-      where: { role: "ADMIN" },
-    });
-
     if (!requestedIdentifier) {
       return NextResponse.json(
         { error: "Administrator email, mobile number, or username is required." },
@@ -21,32 +17,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cleanDigits = requestedIdentifier.replace(/\D/g, "");
-    const isMatch =
-      (admin?.email && admin.email.toLowerCase() === requestedIdentifier.toLowerCase()) ||
-      (admin?.mobile && cleanDigits.length >= 10 && admin.mobile.includes(cleanDigits)) ||
-      (admin?.username && admin.username.toLowerCase() === requestedIdentifier.toLowerCase());
+    const admins = await prisma.adminProfile.findMany({
+      where: { role: "ADMIN" },
+    });
 
-    if (!isMatch) {
+    const cleanDigits = requestedIdentifier.replace(/\D/g, "");
+    const matchedAdmin = admins.find(
+      (admin) =>
+        (admin.email && admin.email.toLowerCase() === requestedIdentifier.toLowerCase()) ||
+        (admin.mobile && cleanDigits.length >= 10 && admin.mobile.includes(cleanDigits)) ||
+        (admin.username && admin.username.toLowerCase() === requestedIdentifier.toLowerCase())
+    );
+
+    if (!matchedAdmin) {
       return NextResponse.json(
         { error: "No administrator account matches this identifier. Please verify." },
         { status: 404 }
       );
     }
 
-    const adminEmail = admin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || "bhavithkumar9394@gmail.com";
+    const adminEmail = matchedAdmin.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    if (!adminEmail) {
+      return NextResponse.json(
+        { error: "Administrator account does not have a verified email configured." },
+        { status: 400 }
+      );
+    }
+
     const otp = generateOtp("admin_mfa");
 
     await sendOtpEmail({
       to: adminEmail,
-      name: admin?.username || "KB Store Admin",
+      name: matchedAdmin.username || "KB Store Admin",
       otp,
       role: "ADMIN",
     });
 
     await prisma.systemAuditLog.create({
       data: {
-        actor: admin?.username || "kbadmin",
+        actor: matchedAdmin.username || "kbadmin",
         action: "ADMIN_LOGIN_OTP_DISPATCHED",
         metadata: { dispatchedTo: adminEmail },
       },
@@ -58,6 +67,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: `Security OTP dispatched to ${maskedEmail}`,
       maskedEmail,
+      username: matchedAdmin.username,
     });
   } catch (error: any) {
     console.error("[Admin Send OTP Error]:", error);
@@ -67,4 +77,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

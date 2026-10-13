@@ -273,7 +273,7 @@ export default function PresentationPage() {
                 <h4 className="text-sm font-bold text-slate-900">Biometric Webcam MFA</h4>
                 <div className="text-[11px] font-mono font-semibold text-violet-600 mb-2">128-D Cosine / Euclidean + SMTP</div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Webcam facial embeddings with similarity &ge; 0.80 and distance &le; 0.45, paired with 6-digit email OTP (noreply.kb.app@gmail.com).
+                  Webcam facial embeddings with similarity &ge; 0.80 and distance &le; 0.45, paired with 6-digit email OTP.
                 </p>
               </div>
 

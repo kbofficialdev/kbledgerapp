@@ -1,19 +1,24 @@
 import nodemailer from "nodemailer";
 
-// In-memory OTP storage with TTL (10 minutes)
-interface OtpRecord {
+// Global in-memory OTP storage with TTL (10 minutes) shared across all Next.js route bundles
+export interface OtpRecord {
   code: string;
   expiresAt: number;
   attempts: number;
 }
 
-const otpStore = new Map<string, OtpRecord>();
+const globalForOtp = globalThis as unknown as {
+  __kbOtpStore?: Map<string, OtpRecord>;
+};
+
+const otpStore = globalForOtp.__kbOtpStore ?? new Map<string, OtpRecord>();
+globalForOtp.__kbOtpStore = otpStore;
 
 export function getMailTransporter() {
   const host = process.env.EMAIL_SERVER_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.EMAIL_SERVER_PORT || "465", 10);
-  const user = process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
-  const pass = process.env.EMAIL_PASS || "rpdlqvcrzyuygewi";
+  const user = process.env.EMAIL_USER || "";
+  const pass = process.env.EMAIL_PASS || "";
 
   return nodemailer.createTransport({
     host,
@@ -24,6 +29,12 @@ export function getMailTransporter() {
       pass,
     },
   });
+}
+
+function getDefaultFromAddress(): string {
+  if (process.env.EMAIL_FROM) return process.env.EMAIL_FROM;
+  if (process.env.EMAIL_USER) return `KB Khata & Fashions <${process.env.EMAIL_USER}>`;
+  return "KB Khata & Fashions";
 }
 
 /**
@@ -40,10 +51,12 @@ export function generateOtp(identifier: string): string {
  * Verify OTP
  */
 export function verifyOtp(identifier: string, enteredCode: string): { valid: boolean; message: string } {
-  const masterPin = process.env.ADMIN_EMERGENCY_PIN || "172900";
+  const emergencyPin = process.env.ADMIN_EMERGENCY_PIN;
+  const fallbackPin = process.env.ADMIN_FALLBACK_PIN;
   const key = identifier.toLowerCase().trim();
+  const cleanCode = enteredCode.trim();
 
-  if (enteredCode.trim() === masterPin) {
+  if ((emergencyPin && cleanCode === emergencyPin) || (fallbackPin && cleanCode === fallbackPin)) {
     otpStore.delete(key);
     return { valid: true, message: "Master authentication code verified successfully." };
   }
@@ -65,7 +78,7 @@ export function verifyOtp(identifier: string, enteredCode: string): { valid: boo
     return { valid: false, message: "Too many failed attempts. Please request a new OTP." };
   }
 
-  if (record.code !== enteredCode.trim()) {
+  if (record.code !== cleanCode) {
     return { valid: false, message: "Invalid OTP. Please check the 6-digit code and try again." };
   }
 
@@ -96,7 +109,7 @@ export async function sendCustomerWelcomeEmail({
 }): Promise<boolean> {
   try {
     const transporter = getMailTransporter();
-    const from = process.env.EMAIL_FROM || "KB Khata & Fashions <noreply.kb.app@gmail.com>";
+    const from = getDefaultFromAddress();
 
     const html = `
 <!DOCTYPE html>
@@ -118,7 +131,7 @@ export async function sendCustomerWelcomeEmail({
     <div style="padding: 28px;">
       <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 0;">నమస్కారం ${customerName} గారు,</h2>
       <p style="font-size: 14px; line-height: 1.6; color: #475569;">
-        KB Khata & Fashions నందు మీ కస్టమర్ ఖాతా విజయవంతంగా తెరవబడింది. మీ కొనుగోలు బిల్లులు, రశీదులు మరియు ఉద్ధార లెడ్జర్ వివరాలు మీ వ్యక్తిగత కస్టమర్ పోర్టల్ ద్వారా ఎప్పుడైనా చూసుకోవచ్చు మరియు Google Pay ద్వారా సులభంగా చెల్లించవచ్చు.
+        KB Khata & Fashions నందు మీ కస్టమర్ ఖాతా విజయవంతంగా తెరవబడింది. మీ కొనుగోలు బిల్లులు, రశీదులు మరియు ఉద్ధార లెడ్జర్ వివరాలు మీ వ్యక్తిగత కస్టమర్ పోర్టల్ ద్వారా ఎప్పుడైనా చూసుకోవచ్చు మరియు ఆన్‌లైన్ ద్వారా సులభంగా చెల్లించవచ్చు.
       </p>
 
       <!-- Account Summary Bento -->
@@ -160,7 +173,7 @@ export async function sendCustomerWelcomeEmail({
 
     <!-- Footer -->
     <div style="padding: 18px 28px; background: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
-      <p style="margin: 0;">KB Khata & Fashions Store • Google Pay: kbfashions.eazypay@icici</p>
+      <p style="margin: 0;">KB Khata & Fashions Store • Tandoor, Mancherial Dist</p>
       <p style="margin: 4px 0 0 0;">ఈ ఇమెయిల్ ఆటోమేటిక్‌గా పంపబడింది. దయచేసి దీనికి సమాధానం ఇవ్వవద్దు.</p>
     </div>
   </div>
@@ -199,7 +212,7 @@ export async function sendOtpEmail({
 }): Promise<boolean> {
   try {
     const transporter = getMailTransporter();
-    const from = process.env.EMAIL_FROM || "KB Khata & Fashions <noreply.kb.app@gmail.com>";
+    const from = getDefaultFromAddress();
     const isOwner = role === "ADMIN";
 
     const subject = isOwner
@@ -255,5 +268,88 @@ export async function sendOtpEmail({
   } catch (error) {
     console.error("[Email Error] Failed to send OTP email:", error);
     return false;
+  }
+}
+
+/**
+ * Send Custom Store Email (Used by Admin AI Agent & Executive Notifications)
+ */
+export async function sendCustomStoreEmail({
+  to,
+  recipientName,
+  subject,
+  bodyText,
+  badgeText = "Official Store Notice",
+  attachments = [],
+}: {
+  to: string;
+  recipientName?: string;
+  subject: string;
+  bodyText: string;
+  badgeText?: string;
+  attachments?: Array<{ filename: string; content: Buffer | string; contentType?: string }>;
+}): Promise<{ sent: boolean; error?: string }> {
+  try {
+    const transporter = getMailTransporter();
+    const from = getDefaultFromAddress();
+    const formattedParagraphs = bodyText
+      .split(/\n+/)
+      .filter((line) => line.trim().length > 0)
+      .map(
+        (line) =>
+          `<p style="font-size: 14px; line-height: 1.65; color: #334155; margin: 0 0 12px 0;">${line}</p>`
+      )
+      .join("");
+
+    const portalUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #e2e8f0;">
+    <div style="background: #09090b; padding: 28px 24px; color: #ffffff;">
+      <div style="display: inline-block; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.12); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">
+        ${badgeText}
+      </div>
+      <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.3px;">KB Fashions &amp; Khata</h1>
+      <p style="margin: 4px 0 0 0; font-size: 12px; color: #a1a1aa;">Executive Ledger &amp; Commerce Desk • Tandoor, Mancherial Dist</p>
+    </div>
+    <div style="padding: 28px 24px;">
+      ${
+        recipientName
+          ? `<h2 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 14px 0;">Namaste ${recipientName},</h2>`
+          : ""
+      }
+      ${formattedParagraphs}
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e8f0; text-align: center;">
+        <a href="${portalUrl}/customer/login" style="display: inline-block; background: #09090b; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 13px; padding: 12px 24px; border-radius: 10px;">
+          View Khata Statement Online →
+        </a>
+      </div>
+    </div>
+    <div style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
+      Dispatched by KB Fashions &amp; Khata Autonomous AI Operations Agent
+    </div>
+  </div>
+</body>
+</html>`;
+
+    await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      attachments,
+    });
+
+    return { sent: true };
+  } catch (error: any) {
+    console.error("[Custom Email Dispatch Error]:", error);
+    return { sent: false, error: error?.message || "SMTP dispatch failed" };
   }
 }

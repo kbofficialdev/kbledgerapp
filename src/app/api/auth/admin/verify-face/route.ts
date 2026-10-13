@@ -86,7 +86,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Match Succeeded: Dispatch MFA OTP to Admin Email
-    const adminEmail = admin.email || process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
+    const adminEmail = admin.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    if (!adminEmail) {
+      return NextResponse.json(
+        { success: false, error: "Administrator email not configured." },
+        { status: 400 }
+      );
+    }
     const otp = generateOtp("admin_mfa");
     await sendOtpEmail({
       to: adminEmail,

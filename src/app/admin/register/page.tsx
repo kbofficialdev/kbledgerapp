@@ -27,8 +27,8 @@ export default function AdminRegisterPage() {
   const [isRegistrationAllowed, setIsRegistrationAllowed] = useState(true);
 
   // Form State
-  const [username, setUsername] = useState("kbadmin");
-  const [fallbackPin, setFallbackPin] = useState("123456");
+  const [username, setUsername] = useState("");
+  const [fallbackPin, setFallbackPin] = useState("");
   const [streamActive, setStreamActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [capturedVector, setCapturedVector] = useState<number[] | null>(null);

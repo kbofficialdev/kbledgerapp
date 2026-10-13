@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           username: username.trim(),
           isFaceEnrolled: true,
           faceDescriptor: faceDescriptor,
-          fallbackPinHash: fallbackPin || process.env.ADMIN_FALLBACK_PIN || "123456",
+          fallbackPinHash: fallbackPin || process.env.ADMIN_FALLBACK_PIN || null,
         },
       });
     } else {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
           role: "ADMIN",
           isFaceEnrolled: true,
           faceDescriptor: faceDescriptor,
-          fallbackPinHash: fallbackPin || process.env.ADMIN_FALLBACK_PIN || "123456",
+          fallbackPinHash: fallbackPin || process.env.ADMIN_FALLBACK_PIN || null,
         },
       });
     }

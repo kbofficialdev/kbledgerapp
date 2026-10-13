@@ -8,9 +8,24 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { pin } = body;
 
-    const expectedPin = process.env.ADMIN_FALLBACK_PIN || "123456";
+    const admins = await prisma.adminProfile.findMany({
+      where: { role: "ADMIN" },
+    });
 
-    if (!pin || pin.trim() !== expectedPin) {
+    const cleanPin = (pin || "").trim();
+    const envFallbackPin = process.env.ADMIN_FALLBACK_PIN;
+    const envEmergencyPin = process.env.ADMIN_EMERGENCY_PIN;
+    const matchedAdmin = admins.find(
+      (a) => a.fallbackPinHash && a.fallbackPinHash === cleanPin
+    );
+
+    const isValidPin =
+      Boolean(cleanPin) &&
+      ((envFallbackPin && cleanPin === envFallbackPin) ||
+        (envEmergencyPin && cleanPin === envEmergencyPin) ||
+        Boolean(matchedAdmin));
+
+    if (!isValidPin) {
       await prisma.systemAuditLog.create({
         data: {
           actor: "ANONYMOUS_PIN_LOGIN",
@@ -24,11 +39,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const adminEmail = process.env.EMAIL_USER || "noreply.kb.app@gmail.com";
+    const activeAdmin = matchedAdmin || admins[0];
+    const adminEmail = activeAdmin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    if (!adminEmail) {
+      return NextResponse.json(
+        { success: false, error: "No administrator email configured for OTP dispatch." },
+        { status: 400 }
+      );
+    }
+
     const otp = generateOtp("admin_mfa");
     await sendOtpEmail({
       to: adminEmail,
-      name: "KB Store Admin",
+      name: activeAdmin?.username || "KB Store Admin",
       otp,
       role: "ADMIN",
     });
@@ -48,7 +71,7 @@ export async function POST(req: NextRequest) {
       requiresMfa: true,
       maskedEmail,
       admin: {
-        username: "kbadmin",
+        username: activeAdmin?.username || "kbadmin",
         role: "ADMIN",
         loginMethod: "EMERGENCY_PIN",
       },
@@ -61,4 +84,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -387,7 +387,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
                       type="text"
                       autoFocus
                       required
-                      placeholder="e.g. 6303185141 or your@email.com"
+                      placeholder="Enter registered mobile number or email"
                       value={custIdentifier}
                       onChange={(e) => setCustIdentifier(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 text-sm focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white transition-colors font-mono"
@@ -534,7 +534,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
                 <form onSubmit={handleSendAdminOtp} className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      Store Administrator Email or Mobile
+                      Store Administrator Email, Mobile, or Username
                     </label>
                     <div className="relative">
                       <input
@@ -542,7 +542,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
                         required
                         value={adminEmail}
                         onChange={(e) => setAdminEmail(e.target.value)}
-                        placeholder="e.g. bhavithkumar9394@gmail.com"
+                        placeholder="Enter administrator email, mobile, or username"
                         className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white transition-colors"
                       />
                       <Mail className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
