@@ -75,21 +75,28 @@ export class CashfreeGatewayService {
   async createOrder(params: CreateOrderParams): Promise<CashfreeOrderResponse> {
     const url = `${this.baseUrl}/orders`;
 
-    // Cashfree requires numeric phone formatted to 10 digits
-    const cleanedPhone = (params.customerDetails.customerPhone || "9999999999")
+    const cleanedPhone = String(params.customerDetails.customerPhone || "")
       .replace(/[^0-9]/g, "")
-      .slice(-10) || "9999999999";
+      .slice(-10);
+
+    if (cleanedPhone.length !== 10) {
+      throw new Error("A valid 10-digit customer mobile number from the database is required for Cashfree checkout.");
+    }
+
+    const customerDetailsPayload: Record<string, string> = {
+      customer_id: params.customerDetails.customerId,
+      customer_name: params.customerDetails.customerName || "Customer",
+      customer_phone: cleanedPhone,
+    };
+    if (params.customerDetails.customerEmail) {
+      customerDetailsPayload.customer_email = params.customerDetails.customerEmail;
+    }
 
     const payload = {
       order_id: params.orderId,
       order_amount: Math.round(params.orderAmount * 100) / 100,
       order_currency: params.orderCurrency || "INR",
-      customer_details: {
-        customer_id: params.customerDetails.customerId || `cust_${Date.now()}`,
-        customer_name: params.customerDetails.customerName || "KB Customer",
-        customer_email: params.customerDetails.customerEmail || "customer@kbkhata.store",
-        customer_phone: cleanedPhone,
-      },
+      customer_details: customerDetailsPayload,
       order_meta: {
         return_url:
           params.returnUrl ||
@@ -97,7 +104,6 @@ export class CashfreeGatewayService {
         notify_url:
           params.notifyUrl ||
           `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payments/cashfree/webhook`,
-        payment_methods: "upi,cc,dc,nb",
       },
       order_note: params.orderNote || "KB Khata & Fashions Store Order",
     };

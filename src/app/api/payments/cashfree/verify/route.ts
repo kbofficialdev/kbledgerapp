@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cashfreeGateway } from "@/lib/cashfree";
 import { authGuard } from "@/lib/auth";
-import { executeAcidPaymentSettlement } from "@/lib/acid-ledger";
+import { settleCashfreePaymentRecord } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -32,14 +32,15 @@ export async function POST(req: NextRequest) {
     const cfPayments = await cashfreeGateway.getOrderPayments(orderId);
 
     const isPaid = cfOrder.order_status === "PAID";
-    const successfulPayment = cfPayments.find((p) => p.payment_status === "SUCCESS") || cfPayments[0];
+    const successfulPayment =
+      cfPayments.find((p) => p.payment_status === "SUCCESS") || cfPayments[0];
 
     // 2. Fetch existing Payment record from DB
     const existingPayment = await prisma.payment.findUnique({
       where: { cashfreeOrderId: orderId },
       include: {
         customer: true,
-        order: true,
+        order: { include: { items: true } },
       },
     });
 
@@ -49,7 +50,9 @@ export async function POST(req: NextRequest) {
         verified: isPaid,
         orderStatus: cfOrder.order_status,
         orderAmount: cfOrder.order_amount,
-        message: isPaid ? "Payment confirmed on Cashfree gateway." : `Order status is ${cfOrder.order_status}.`,
+        message: isPaid
+          ? "Payment confirmed on Cashfree gateway."
+          : `Order status is ${cfOrder.order_status}.`,
       });
     }
 
@@ -59,28 +62,30 @@ export async function POST(req: NextRequest) {
         success: true,
         verified: true,
         payment: existingPayment,
+        order: existingPayment.order || null,
         orderStatus: "PAID",
         message: "Payment already verified and credited.",
       });
     }
 
-    // If Cashfree confirms payment was successful, atomically update database via ACID Ledger Engine
+    // 3. If Cashfree confirms payment was successful, atomically settle via unified Cashfree Reconciler
+    //    (Handles both Counter Billing Drafts and Debt Clearance idempotently)
+    let settlementResult: any = null;
     if (isPaid) {
-      await executeAcidPaymentSettlement({
-        customerId: existingPayment.customerId,
-        orderId: existingPayment.orderId || null,
-        amount: Number(existingPayment.amount),
-        method: "CASHFREE_ELEMENTS",
-        cashfreeOrderId: orderId,
-        cashfreePaymentId: successfulPayment?.cf_payment_id ? String(successfulPayment.cf_payment_id) : undefined,
+      settlementResult = await settleCashfreePaymentRecord({
+        cfOrderId: orderId,
+        cfPaymentId: successfulPayment?.cf_payment_id
+          ? String(successfulPayment.cf_payment_id)
+          : undefined,
         bankRrn: successfulPayment?.bank_reference || undefined,
-        rawGatewayResponse: (successfulPayment as any) || (cfOrder as any),
-        notes: `Cashfree Payment (${orderId}) — Online Collection`,
+        gatewayPayload: (successfulPayment as any) || (cfOrder as any),
+        sourceNote: `Cashfree Payment (${orderId}) — Online Collection`,
       });
     }
 
     const updatedPayment = await prisma.payment.findUnique({
       where: { id: existingPayment.id },
+      include: { order: { include: { items: true } } },
     });
 
     return NextResponse.json({
@@ -89,8 +94,11 @@ export async function POST(req: NextRequest) {
       orderStatus: cfOrder.order_status,
       orderAmount: cfOrder.order_amount,
       payment: updatedPayment,
+      order: settlementResult?.order || updatedPayment?.order || null,
       paymentDetails: successfulPayment || null,
-      message: isPaid ? "Payment confirmed on Cashfree gateway." : `Order status: ${cfOrder.order_status}`,
+      message: isPaid
+        ? "Payment confirmed on Cashfree gateway."
+        : `Order status: ${cfOrder.order_status}`,
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -99,4 +107,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

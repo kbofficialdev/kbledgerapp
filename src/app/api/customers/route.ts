@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { generateCustomerCode } from "@/lib/utils";
 import { sendCustomerWelcomeEmail } from "@/lib/email";
 import { requireAdminSession } from "@/lib/auth-session";
+import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +13,19 @@ export async function GET(req: NextRequest) {
     const auth = await requireAdminSession(req);
     if (!auth.authorized) return auth.response!;
 
+    await reconcilePendingCashfreePayments();
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
     const villageId = searchParams.get("villageId")?.trim() || "";
-    const filter = searchParams.get("filter")?.trim() || ""; // "with_balance", "zero_balance"
+    const filter = searchParams.get("filter")?.trim() || ""; // "with_balance", "zero_balance", "blacklisted", "all"
 
     const whereClause: any = {
-      isActive: true,
+      ...(filter === "blacklisted"
+        ? { isActive: false }
+        : filter === "all"
+          ? {}
+          : { isActive: true }),
       ...(villageId ? { villageId } : {}),
       ...(search
         ? {
@@ -66,6 +73,7 @@ export async function GET(req: NextRequest) {
       creditLimit: Number(c.creditLimit),
       currentBalance: Number(c.currentBalance),
       notes: c.notes,
+      isActive: c.isActive,
       orderCount: c._count.orders,
       paymentCount: c._count.payments,
       createdAt: c.createdAt,
@@ -177,7 +185,6 @@ export async function POST(req: NextRequest) {
     let customerCode = body.customerCode?.trim();
     if (!customerCode) {
       customerCode = generateCustomerCode(village.code);
-      // Ensure uniqueness
       const exists = await prisma.customer.findUnique({
         where: { customerCode },
       });
@@ -204,7 +211,6 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // If initial balance was brought forward from paper book:
       if (initBal > 0) {
         await tx.ledgerEntry.create({
           data: {
@@ -221,7 +227,6 @@ export async function POST(req: NextRequest) {
       return newCust;
     });
 
-    // Automatically send credentials to customer's email if provided
     if (customer.email) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const portalUrl = `${appUrl}/portal/${customer.id}`;

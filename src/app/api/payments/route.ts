@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession, requireCustomerSession } from "@/lib/auth-session";
 import { extractClientIp } from "@/lib/session-db";
 import { executeAcidPaymentSettlement } from "@/lib/acid-ledger";
+import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -97,8 +98,12 @@ export async function GET(req: NextRequest) {
       if (!adminAuth.authorized) return adminAuth.response!;
     }
 
+    await reconcilePendingCashfreePayments();
+
     const payments = await prisma.payment.findMany({
-      where: customerId ? { customerId } : {},
+      where: customerId
+        ? { customerId, status: "SUCCESS" }
+        : { status: "SUCCESS", customer: { isActive: true } },
       include: {
         customer: {
           select: { name: true, customerCode: true, village: { select: { name: true } } },

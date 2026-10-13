@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-session";
 import { extractClientIp } from "@/lib/session-db";
 import { executeAcidOrderCreation } from "@/lib/acid-ledger";
+import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await requireAdminSession(req);
     if (!auth.authorized) return auth.response!;
+
+    await reconcilePendingCashfreePayments();
 
     const { searchParams } = new URL(req.url);
     const villageId = searchParams.get("villageId")?.trim();
@@ -29,6 +32,7 @@ export async function GET(req: NextRequest) {
         { orderNumber: id },
       ];
     } else {
+      whereClause.customer = { isActive: true };
       if (villageId) whereClause.villageId = villageId;
       if (customerId) whereClause.customerId = customerId;
       if (paymentType && ["CREDIT", "DEBIT", "PARTIAL"].includes(paymentType)) {

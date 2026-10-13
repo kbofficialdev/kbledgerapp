@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -60,26 +62,54 @@ export async function PUT(
     if (!auth.authorized) return auth.response!;
 
     const body = await req.json();
-    const { name, taluk, district, pincode, notes } = body;
+    const { name, code, taluk, district, pincode, notes, isActive } = body;
+
+    let cleanCode: string | undefined = undefined;
+    if (code && typeof code === "string" && code.trim()) {
+      const candidate = code.trim().toUpperCase();
+      const existing = await prisma.village.findFirst({
+        where: { code: candidate, id: { not: params.id } },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: `Village code "${candidate}" is already in use by "${existing.name}".` },
+          { status: 409 }
+        );
+      }
+      cleanCode = candidate;
+    }
 
     const village = await prisma.village.update({
       where: { id: params.id },
       data: {
         ...(name ? { name: name.trim() } : {}),
+        ...(cleanCode ? { code: cleanCode } : {}),
         taluk: taluk !== undefined ? taluk?.trim() || null : undefined,
         district: district !== undefined ? district?.trim() || null : undefined,
         pincode: pincode !== undefined ? pincode?.trim() || null : undefined,
         notes: notes !== undefined ? notes?.trim() || null : undefined,
+        ...(typeof isActive === "boolean" ? { isActive } : {}),
       },
     });
 
-    return NextResponse.json({ success: true, village });
+    return NextResponse.json({
+      success: true,
+      village,
+      message: "Village profile updated successfully.",
+    });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to update village.") },
       { status: 500 }
     );
   }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
+  return PUT(req, context);
 }
 
 export async function DELETE(
@@ -90,35 +120,43 @@ export async function DELETE(
     const auth = await requireAdminSession(req);
     if (!auth.authorized) return auth.response!;
 
-    // Check if customers exist
-    const customerCount = await prisma.customer.count({
+    const activeCustomerCount = await prisma.customer.count({
       where: { villageId: params.id, isActive: true },
     });
 
-    if (customerCount > 0) {
+    if (activeCustomerCount > 0) {
       return NextResponse.json(
         {
           success: false,
-          error: `Cannot delete village with ${customerCount} active customer accounts. Deactivate or reassign customers first.`,
+          error: `Cannot delete village with ${activeCustomerCount} active customer accounts. Reassign or delete those customers first.`,
         },
         { status: 400 }
       );
     }
 
-    await prisma.village.update({
-      where: { id: params.id },
-      data: { isActive: false },
+    const totalCustomerCount = await prisma.customer.count({
+      where: { villageId: params.id },
     });
+
+    if (totalCustomerCount === 0) {
+      await prisma.village.delete({
+        where: { id: params.id },
+      });
+    } else {
+      await prisma.village.update({
+        where: { id: params.id },
+        data: { isActive: false },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Village archived successfully",
+      message: "Village deleted successfully.",
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: sanitizeApiError(error, "Failed to archive village.") },
+      { success: false, error: sanitizeApiError(error, "Failed to delete village.") },
       { status: 500 }
     );
   }
 }
-

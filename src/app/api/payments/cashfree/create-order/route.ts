@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       orderMeta = {},
       billingDraft,
       note,
-      orderType, // "BILLING_ORDER" | "DEBT_CLEARANCE"
+      orderType,
     } = body;
 
     const parsedAmount = Number(amount ?? orderAmount);
@@ -34,10 +34,23 @@ export async function POST(req: NextRequest) {
     }
 
     const principal = await authGuard.resolvePrincipal(req);
-    const effCustomerId = customerId || customerDetails.customerId || principal.customerId;
-    const effCustomerName = customerName || customerDetails.customerName || "KB Customer";
-    const effCustomerPhone = customerPhone || customerDetails.customerPhone || "9999999999";
-    const effCustomerEmail = customerEmail || customerDetails.customerEmail || "customer@kbkhata.store";
+    const effectiveBillingDraft = billingDraft || orderMeta?.billingDraft || null;
+    const effectiveOrderType =
+      orderType ||
+      orderMeta?.orderType ||
+      (effectiveBillingDraft ? "COUNTER_BILL" : "DEBT_CLEARANCE");
+    const effectiveOrderIds = Array.isArray(orderIds)
+      ? orderIds
+      : Array.isArray(orderMeta?.orderIds)
+        ? orderMeta.orderIds
+        : [];
+
+    const effCustomerId =
+      customerId ||
+      customerDetails.customerId ||
+      effectiveBillingDraft?.customerId ||
+      principal.customerId;
+    const effCustomerPhone = customerPhone || customerDetails.customerPhone || "";
 
     const isAuthorized =
       principal.isAuthenticated() ||
@@ -51,7 +64,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Resolve Customer in DB by ID or phone so webhook always has customerId
+    // Resolve Customer in DB by ID or phone so webhook always has customerId and real contact details
     let customer = null;
     if (effCustomerId) {
       customer = await prisma.customer
@@ -60,7 +73,7 @@ export async function POST(req: NextRequest) {
         })
         .catch(() => null);
     }
-    if (!customer && effCustomerPhone && effCustomerPhone !== "9999999999") {
+    if (!customer && effCustomerPhone) {
       const cleanedMobile = String(effCustomerPhone).replace(/\D/g, "").slice(-10);
       if (cleanedMobile.length === 10) {
         customer = await prisma.customer
@@ -71,6 +84,37 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (!customer) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Customer account not found in database. Please select a valid registered customer.",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (!customer.isActive) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This customer account is disabled/blacklisted and cannot initiate payments.",
+        },
+        { status: 403 }
+      );
+    }
+
+    // Resolve email strictly from customer record or active admin record in DB (never hardcoded)
+    let resolvedEmail = customer.email || customerEmail || customerDetails.customerEmail || undefined;
+    if (!resolvedEmail) {
+      const activeAdmin = await prisma.adminProfile
+        .findFirst({
+          select: { email: true },
+        })
+        .catch(() => null);
+      resolvedEmail = activeAdmin?.email || undefined;
+    }
+
     // Generate unique Cashfree order ID
     const cfOrderId = orderId || `CF_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
     const paymentRef = `PAY_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
@@ -78,17 +122,19 @@ export async function POST(req: NextRequest) {
     const effectiveNote =
       note ||
       orderMeta?.notes ||
-      (orderType === "DEBT_CLEARANCE" ? "Khata Debt Clearance" : "KB Khata Online Payment");
+      (effectiveOrderType === "COUNTER_BILL"
+        ? `Counter Bill for ${customer.name}`
+        : `Khata Debt Clearance for ${customer.name}`);
 
     // Call Cashfree REST API to create the order & payment_session_id
     const cfResponse = await cashfreeGateway.createOrder({
       orderId: cfOrderId,
       orderAmount: parsedAmount,
       customerDetails: {
-        customerId: customer?.id || effCustomerId || `cust_${Date.now()}`,
-        customerName: customer?.name || effCustomerName,
-        customerPhone: customer?.mobile || effCustomerPhone,
-        customerEmail: customer?.email || effCustomerEmail,
+        customerId: customer.id,
+        customerName: customer.name || customerName || customerDetails.customerName,
+        customerPhone: customer.mobile,
+        customerEmail: resolvedEmail,
       },
       orderNote: effectiveNote,
       returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/${
@@ -104,37 +150,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Record initial PENDING payment with full webhook recovery metadata in PostgreSQL
-    if (customer) {
-      const validOrderId =
-        orderId && !String(orderId).startsWith("CF_")
+    // Record initial PENDING payment with full webhook & midway-exit recovery metadata in PostgreSQL
+    const validOrderId =
+      orderId && !String(orderId).startsWith("CF_")
+        ? await prisma.order
+            .findUnique({ where: { id: orderId }, select: { id: true } })
+            .then((o) => o?.id || null)
+            .catch(() => null)
+        : effectiveOrderIds.length === 1
           ? await prisma.order
-              .findUnique({ where: { id: orderId }, select: { id: true } })
+              .findUnique({ where: { id: effectiveOrderIds[0] }, select: { id: true } })
               .then((o) => o?.id || null)
               .catch(() => null)
           : null;
 
-      await prisma.payment.create({
-        data: {
-          paymentRef,
-          cashfreeOrderId: cfOrderId,
-          paymentSessionId: cfResponse.payment_session_id,
-          customerId: customer.id,
-          orderId: validOrderId,
-          amount: parsedAmount,
-          method: "CASHFREE_ELEMENTS",
-          status: "PENDING",
-          notes: effectiveNote,
-          rawGatewayResponse: {
-            webhookState: "PENDING_CHECKOUT",
-            createdAt: new Date().toISOString(),
-            orderType: orderType || "DEBT_CLEARANCE",
-            selectedOrderIds: Array.isArray(orderIds) ? orderIds : [],
-            billingDraft: billingDraft || null,
-          },
+    await prisma.payment.create({
+      data: {
+        paymentRef,
+        cashfreeOrderId: cfOrderId,
+        paymentSessionId: cfResponse.payment_session_id,
+        customerId: customer.id,
+        orderId: validOrderId,
+        amount: parsedAmount,
+        method: "CASHFREE_ELEMENTS",
+        status: "PENDING",
+        notes: effectiveNote,
+        rawGatewayResponse: {
+          webhookState: "PENDING_CHECKOUT",
+          createdAt: new Date().toISOString(),
+          orderType: effectiveOrderType,
+          selectedOrderIds: effectiveOrderIds,
+          billingDraft: effectiveBillingDraft,
         },
-      });
-    }
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -74,27 +74,55 @@ export default function PresentationPage() {
   const execTime = testSummary?.totalDurationMs ? `${testSummary.totalDurationMs.toFixed(1)} ms` : "775.4 ms";
 
   const slides = [
-    // Slide 1: Title & Overview
+    // Slide 1: Title, Overview & Official 30-Second Company Launch Film
     {
       id: "cover",
-      title: "KB Khata & Fashions",
-      subtitle: "Full-Stack Software Testing, Quality Assurance & Security Verification",
+      title: "KB Khata & Fashions — Official Launch",
+      subtitle: "Full-Stack Software Testing, Quality Assurance & Official 30s Launch Film",
       render: () => (
-        <div className="flex flex-col justify-between h-full p-8 md:p-14 bg-slate-900 text-white rounded-2xl border border-slate-800">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider mb-6">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              IEEE 829 Software Test Documentation Standard
+        <div className="flex flex-col justify-between h-full p-8 md:p-12 bg-slate-900 text-white rounded-2xl border border-slate-800">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold uppercase tracking-wider mb-5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Official Company Launch &amp; IEEE 829 Verification
+              </div>
+              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
+                KB Khata &amp; Fashions
+              </h1>
+              <p className="text-lg md:text-xl font-light text-slate-300 mb-3">
+                Next-Gen Rural Fintech &amp; Smart Retail Ledger Platform
+              </p>
+              <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
+                Watch our official 30-second launch film featuring Standard Indian English voiceover, real-time ACID Bahi-Khata ledger sync, dedicated Cashfree Custom Elements gateway, and LangGraph + Gemini executive AI.
+              </p>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
-              KB Khata &amp; Fashions
-            </h1>
-            <p className="text-xl md:text-2xl font-light text-slate-300 max-w-3xl mb-4">
-              Full-Stack Software Engineering Testing &amp; Security Verification Deck
-            </p>
-            <p className="text-sm md:text-base text-slate-400 max-w-2xl leading-relaxed">
-              Comprehensive automated verification of Bahi-Khata ledger balance arithmetic, Google Pay Business UPI integration, webcam biometric facial recognition, Telugu acoustic voice callouts, and Gemini AI business advisor.
-            </p>
+
+            <div className="lg:col-span-6">
+              <div className="rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-black shadow-2xl">
+                <video
+                  src="/videos/kb-khata-launch.mp4"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full aspect-video object-cover"
+                >
+                  Your browser does not support HTML5 video.
+                </video>
+                <div className="px-4 py-2 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-300">
+                  <span className="font-semibold text-emerald-400">
+                    ● Official 30s Launch Film (Standard Indian English Voiceover)
+                  </span>
+                  <a
+                    href="/videos/kb-khata-launch.mp4"
+                    download="KB_Khata_Official_Launch_Video_30s.mp4"
+                    className="text-white hover:text-emerald-300 underline font-bold"
+                  >
+                    Download MP4
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800">
@@ -107,8 +135,8 @@ export default function PresentationPage() {
               <div className="text-base font-bold text-white mt-1">PostgreSQL 16 (:5433)</div>
             </div>
             <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
-              <div className="text-[11px] font-bold tracking-wider uppercase text-slate-400">Application Stack</div>
-              <div className="text-base font-bold text-white mt-1">Next.js 14 App Router</div>
+              <div className="text-[11px] font-bold tracking-wider uppercase text-slate-400">Payment Gateway</div>
+              <div className="text-base font-bold text-white mt-1">Cashfree v3 Elements</div>
             </div>
             <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-600/60">
               <div className="text-[11px] font-bold tracking-wider uppercase text-emerald-400">Audit Status</div>

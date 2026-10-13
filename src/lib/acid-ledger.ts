@@ -216,8 +216,8 @@ export async function executeAcidOrderCreation(input: AcidOrderInput) {
             const currentBal = roundCurrency(customer.currentBalance);
             return {
               order: existingOrder,
-              payment: existingCfPayment,
-              previousBalance: roundCurrency(currentBal - roundCurrency(existingOrder.creditAmount)),
+              paymentRecord: existingCfPayment,
+              balanceBefore: roundCurrency(currentBal - roundCurrency(existingOrder.creditAmount)),
               newBalance: currentBal,
               idempotent: true,
             };
@@ -281,6 +281,8 @@ export async function executeAcidOrderCreation(input: AcidOrderInput) {
                 method: paymentMethod,
                 cashfreePaymentId: input.cashfreePaymentId || existingPayment.cashfreePaymentId,
                 paymentSessionId: input.paymentSessionId || existingPayment.paymentSessionId,
+                bankRrn: input.bankRrn || existingPayment.bankRrn,
+                gatewayResponseCode: "SUCCESS",
                 paidAt: new Date(),
                 notes: input.notes
                   ? `Counter bill payment for ${orderNumber} - ${input.notes}`

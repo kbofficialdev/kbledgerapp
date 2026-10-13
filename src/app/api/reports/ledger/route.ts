@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-session";
+import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest) {
     const auth = await requireAdminSession(req);
     if (!auth.authorized) return auth.response!;
 
+    // Automatically reconcile any pending Cashfree orders (e.g. if user paid and exited midway)
+    await reconcilePendingCashfreePayments();
+
     const { searchParams } = new URL(req.url);
     const villageId = searchParams.get("villageId")?.trim();
     const customerId = searchParams.get("customerId")?.trim();
@@ -18,12 +22,15 @@ export async function GET(req: NextRequest) {
     const entryType = searchParams.get("entryType")?.trim();
     const search = searchParams.get("search")?.trim();
 
-    const whereClause: any = {};
+    const whereClause: any = {
+      customer: {
+        isActive: true,
+        ...(villageId ? { villageId } : {}),
+      },
+    };
 
     if (customerId) {
       whereClause.customerId = customerId;
-    } else if (villageId) {
-      whereClause.customer = { villageId };
     }
 
     if (entryType && ["BILL_DEBIT", "PAYMENT_CREDIT", "ADJUSTMENT"].includes(entryType)) {

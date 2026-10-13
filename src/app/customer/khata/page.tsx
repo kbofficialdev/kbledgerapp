@@ -77,8 +77,8 @@ export default function CustomerKhataPage() {
   const [customPartialAmount, setCustomPartialAmount] = useState<string>("");
   const [submittingPayment, setSubmittingPayment] = useState(false);
 
-  // Cashfree Modal State
-  const [cashfreeModalOpen, setCashfreeModalOpen] = useState(false);
+  // Cashfree Dedicated Tab State
+  const [cashfreeTabActive, setCashfreeTabActive] = useState(false);
   const [cashfreeSessionId, setCashfreeSessionId] = useState<string | null>(null);
   const [cashfreeOrderId, setCashfreeOrderId] = useState<string | null>(null);
   const [pendingPaymentAmount, setPendingPaymentAmount] = useState<number>(0);
@@ -143,6 +143,8 @@ export default function CustomerKhataPage() {
 
   // Toggle order checkbox
   const toggleOrderSelection = (id: string) => {
+    setCashfreeSessionId(null);
+    setCashfreeOrderId(null);
     if (selectedOrderIds.includes(id)) {
       setSelectedOrderIds(selectedOrderIds.filter((item) => item !== id));
     } else {
@@ -151,6 +153,8 @@ export default function CustomerKhataPage() {
   };
 
   const selectAllOutstanding = () => {
+    setCashfreeSessionId(null);
+    setCashfreeOrderId(null);
     if (selectedOrderIds.length === outstandingOrders.length) {
       setSelectedOrderIds([]);
     } else {
@@ -182,7 +186,7 @@ export default function CustomerKhataPage() {
           customerId: customer.id,
           customerName: customer.name,
           customerPhone: customer.mobile,
-          customerEmail: customer.email || "support@kbkhata.in",
+          customerEmail: customer.email || undefined,
         },
         orderMeta: {
           orderType: "KHATA_SETTLEMENT",
@@ -205,7 +209,7 @@ export default function CustomerKhataPage() {
       setPendingPaymentAmount(effectivePaymentAmount);
       setCashfreeSessionId(orderData.payment_session_id);
       setCashfreeOrderId(orderData.order_id);
-      setCashfreeModalOpen(true);
+      setCashfreeTabActive(true);
       return {
         paymentSessionId: orderData.payment_session_id,
         orderId: orderData.order_id,
@@ -218,18 +222,9 @@ export default function CustomerKhataPage() {
     }
   };
 
-  // Launch Cashfree Payment Checkout
-  const handleInitiateCashfree = async () => {
-    await createCashfreeSession();
-    const el = document.getElementById("kb-khata-inline-cashfree");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  };
-
   // Handle Cashfree Success Callback
   const handleCashfreeSuccess = async (cfOrderId: string, cfPaymentId?: string) => {
-    setCashfreeModalOpen(false);
+    setCashfreeTabActive(false);
     try {
       setSubmittingPayment(true);
       const settledAmount = pendingPaymentAmount || effectivePaymentAmount;
@@ -255,6 +250,8 @@ export default function CustomerKhataPage() {
         );
         setSelectedOrderIds([]);
         setCustomPartialAmount("");
+        setCashfreeSessionId(null);
+        setCashfreeOrderId(null);
         fetchKhata();
       } else {
         toast.authError(settleData.error || "Failed to record settlement.", "Ledger Error");
@@ -362,165 +359,243 @@ export default function CustomerKhataPage() {
       {/* 3. MULTI-ORDER PAYMENT SECTION */}
       {outstandingOrders.length > 0 && (
         <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/30 p-5 sm:p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500 text-white">
-                  <BrandCashfreeIcon className="w-4 h-4" />
-                </div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Multi-Order Online Payment (Cashfree Gateway)
-                </h2>
-              </div>
-              <p className="text-xs text-slate-600 mt-1">
-                Select one or multiple bills below. You can pay the full amount or a custom partial payment.
-              </p>
-            </div>
-
+          {/* Stepper Tabs */}
+          <div className="flex items-center gap-2 border-b border-amber-200 pb-3">
             <button
-              onClick={selectAllOutstanding}
-              className="text-xs font-bold text-amber-900 hover:text-amber-950 underline self-start sm:self-auto"
+              type="button"
+              onClick={() => setCashfreeTabActive(false)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                !cashfreeTabActive
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+              }`}
             >
-              {selectedOrderIds.length === outstandingOrders.length ? "Deselect All" : "Select All Unpaid"}
+              1. Select Unpaid Bills ({selectedOrderIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedOrderIds.length === 0) {
+                  toast.authError("Select at least one unpaid bill first.", "Selection Required");
+                  return;
+                }
+                setCashfreeTabActive(true);
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                cashfreeTabActive
+                  ? "bg-amber-600 text-white shadow-xs"
+                  : "bg-white text-amber-800 border border-amber-200 hover:bg-amber-50"
+              }`}
+            >
+              <BrandCashfreeIcon className="w-3.5 h-3.5" />
+              <span>2. Cashfree Payment Options Tab</span>
             </button>
           </div>
 
-          {/* Orders Selection Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {outstandingOrders.map((order) => {
-              const isSelected = selectedOrderIds.includes(order.id);
-              return (
-                <div
-                  key={order.id}
-                  onClick={() => toggleOrderSelection(order.id)}
-                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                    isSelected
-                      ? "border-amber-500 bg-white shadow-sm"
-                      : "border-slate-200 bg-white/70 hover:border-slate-300"
-                  }`}
+          {!cashfreeTabActive ? (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-500 text-white">
+                      <BrandCashfreeIcon className="w-4 h-4" />
+                    </div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Multi-Order Online Payment (Step 1: Select Bills)
+                    </h2>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Select one or multiple bills below, then advance to the dedicated Cashfree Payment Options tab.
+                  </p>
+                </div>
+
+                <button
+                  onClick={selectAllOutstanding}
+                  className="text-xs font-bold text-amber-900 hover:text-amber-950 underline self-start sm:self-auto"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {}} // Handled by container onClick
-                        className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
-                      />
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 font-mono">
-                          {order.orderNumber}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          {formatDateTime(order.orderDate)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs font-mono font-bold text-rose-600">
-                        {formatCurrency(order.creditAmount)}
-                      </div>
-                      <span className="text-[9px] uppercase font-bold text-slate-400">Due</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
-                    <span>Total Bill: {formatCurrency(order.totalAmount)}</span>
-                    <span className="font-medium text-emerald-700">
-                      Paid: {formatCurrency(order.paidAmount)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Selected Orders Settlement Controls Bar */}
-          {selectedOrderIds.length > 0 && (
-            <div className="p-4 rounded-xl bg-white border border-amber-300 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <div className="text-xs font-bold text-slate-900">
-                  Selected <span className="text-amber-700 font-mono">{selectedOrderIds.length}</span> orders • Total Due:{" "}
-                  <span className="font-mono text-rose-600 text-sm font-black">
-                    {formatCurrency(totalSelectedDebt)}
-                  </span>
-                </div>
-
-                {/* Settlement Mode Switcher */}
-                <div className="flex items-center gap-3 text-xs">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="FULL"
-                      checked={paymentMode === "FULL"}
-                      onChange={() => setPaymentMode("FULL")}
-                      className="text-amber-600"
-                    />
-                    <span className="font-semibold text-slate-800">Pay Full Selected</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="paymentMode"
-                      value="PARTIAL"
-                      checked={paymentMode === "PARTIAL"}
-                      onChange={() => {
-                        setPaymentMode("PARTIAL");
-                        if (!customPartialAmount) {
-                          setCustomPartialAmount(String(Math.floor(totalSelectedDebt / 2)));
-                        }
-                      }}
-                      className="text-amber-600"
-                    />
-                    <span className="font-semibold text-slate-800">Custom Partial Payment</span>
-                  </label>
-                </div>
+                  {selectedOrderIds.length === outstandingOrders.length ? "Deselect All" : "Select All Unpaid"}
+                </button>
               </div>
 
-              {/* Partial Amount Input if selected */}
-              {paymentMode === "PARTIAL" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                      Online Amount to Pay Now (₹)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max={totalSelectedDebt}
-                      step="any"
-                      value={customPartialAmount}
-                      onChange={(e) => setCustomPartialAmount(e.target.value)}
-                      placeholder="e.g. 1000"
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                      Remaining Balance after Payment (₹)
-                    </label>
-                    <div className="px-3 py-1.5 rounded-lg bg-slate-100 text-sm font-mono font-bold text-rose-600">
-                      {formatCurrency(projectedBalance)}
+              {/* Orders Selection Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {outstandingOrders.map((order) => {
+                  const isSelected = selectedOrderIds.includes(order.id);
+                  return (
+                    <div
+                      key={order.id}
+                      onClick={() => toggleOrderSelection(order.id)}
+                      className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-amber-500 bg-white shadow-sm"
+                          : "border-slate-200 bg-white/70 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                          />
+                          <div>
+                            <div className="text-xs font-bold text-slate-900 font-mono">
+                              {order.orderNumber}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {formatDateTime(order.orderDate)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-mono font-bold text-rose-600">
+                            {formatCurrency(order.creditAmount)}
+                          </div>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">Due</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+                        <span>Total Bill: {formatCurrency(order.totalAmount)}</span>
+                        <span className="font-medium text-emerald-700">
+                          Paid: {formatCurrency(order.paidAmount)}
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Selected Orders Settlement Controls Bar */}
+              {selectedOrderIds.length > 0 && (
+                <div className="p-4 rounded-xl bg-white border border-amber-300 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="text-xs font-bold text-slate-900">
+                      Selected <span className="text-amber-700 font-mono">{selectedOrderIds.length}</span> orders • Total Due:{" "}
+                      <span className="font-mono text-rose-600 text-sm font-black">
+                        {formatCurrency(totalSelectedDebt)}
+                      </span>
+                    </div>
+
+                    {/* Settlement Mode Switcher */}
+                    <div className="flex items-center gap-3 text-xs">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentMode"
+                          value="FULL"
+                          checked={paymentMode === "FULL"}
+                          onChange={() => {
+                            setPaymentMode("FULL");
+                            setCashfreeSessionId(null);
+                            setCashfreeOrderId(null);
+                          }}
+                          className="text-amber-600"
+                        />
+                        <span className="font-semibold text-slate-800">Pay Full Selected</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentMode"
+                          value="PARTIAL"
+                          checked={paymentMode === "PARTIAL"}
+                          onChange={() => {
+                            setPaymentMode("PARTIAL");
+                            setCashfreeSessionId(null);
+                            setCashfreeOrderId(null);
+                            if (!customPartialAmount) {
+                              setCustomPartialAmount(String(Math.floor(totalSelectedDebt / 2)));
+                            }
+                          }}
+                          className="text-amber-600"
+                        />
+                        <span className="font-semibold text-slate-800">Custom Partial Payment</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Partial Amount Input if selected */}
+                  {paymentMode === "PARTIAL" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                          Online Amount to Pay Now (₹)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max={totalSelectedDebt}
+                          step="any"
+                          value={customPartialAmount}
+                          onChange={(e) => {
+                            setCustomPartialAmount(e.target.value);
+                            setCashfreeSessionId(null);
+                            setCashfreeOrderId(null);
+                          }}
+                          placeholder="e.g. 1000"
+                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                          Remaining Balance after Payment (₹)
+                        </label>
+                        <div className="px-3 py-1.5 rounded-lg bg-slate-100 text-sm font-mono font-bold text-rose-600">
+                          {formatCurrency(projectedBalance)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setCashfreeTabActive(true)}
+                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+                    >
+                      <BrandCashfreeIcon className="w-4 h-4" />
+                      <span>Proceed to Cashfree Payment Options Tab ({formatCurrency(effectivePaymentAmount)}) →</span>
+                    </button>
                   </div>
                 </div>
               )}
-
-              {/* In-Page BookMyShow-Style Cashfree Custom Elements Panel */}
-              <div id="kb-khata-inline-cashfree" className="pt-2">
-                <CashfreeCheckoutModal
-                  isOpen={true}
-                  paymentSessionId={cashfreeSessionId || ""}
-                  orderId={cashfreeOrderId || ""}
-                  amount={effectivePaymentAmount}
-                  customerName={customer.name}
-                  customerMobile={customer.mobile}
-                  onCreateSession={createCashfreeSession}
-                  onSuccess={handleCashfreeSuccess}
-                  onFailure={(err) => toast.authError(String(err), "Payment Failed")}
-                />
+            </>
+          ) : (
+            /* DEDICATED TAB 2: CASHFREE PAYMENT OPTIONS TAB */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-amber-200">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">
+                    Step 2 of 2 • Dedicated Cashfree Payment Options Tab
+                  </span>
+                  <div className="text-xs font-bold text-slate-900 mt-0.5">
+                    Settling {selectedOrderIds.length} bill(s) • Amount:{" "}
+                    <span className="font-mono text-emerald-700">{formatCurrency(effectivePaymentAmount)}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCashfreeTabActive(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700"
+                >
+                  ← Change Bill Selection
+                </button>
               </div>
+
+              <CashfreeCheckoutModal
+                isOpen={true}
+                paymentSessionId={cashfreeSessionId || ""}
+                orderId={cashfreeOrderId || ""}
+                amount={effectivePaymentAmount}
+                customerName={customer.name}
+                customerMobile={customer.mobile}
+                onBackToSelection={() => setCashfreeTabActive(false)}
+                onCreateSession={createCashfreeSession}
+                onSuccess={handleCashfreeSuccess}
+                onFailure={(err) => toast.authError(String(err), "Payment Failed")}
+              />
             </div>
           )}
         </div>
@@ -775,7 +850,7 @@ export default function CustomerKhataPage() {
                     <div>
                       <div className="text-xl font-black tracking-tight text-slate-900">KB KHATA & FASHIONS</div>
                       <div className="text-xs text-slate-600">Main Road, Tandoor, Dist: Mancherial, Telangana</div>
-                      <div className="text-xs text-slate-600">Support: support@kbkhata.in • +91 6303185141</div>
+                      <div className="text-xs text-slate-600">Support: kb.official.admin@gmail.com • +91 6303185141</div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-mono font-black px-2 py-0.5 bg-slate-100 border border-slate-300 inline-block uppercase">

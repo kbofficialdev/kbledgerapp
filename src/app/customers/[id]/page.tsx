@@ -20,7 +20,10 @@ import {
   QrCode,
   Smartphone,
   Send,
-  Archive,
+  Edit3,
+  Ban,
+  Trash2,
+  ShieldCheck,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { CustomerAvatar } from "@/components/common/Avatars";
@@ -81,6 +84,17 @@ interface PaymentRecord {
   notes?: string;
 }
 
+interface VillageOption {
+  id: string;
+  name: string;
+  code: string;
+  taluka?: string | null;
+  district?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  notes?: string | null;
+}
+
 interface CustomerDetail {
   id: string;
   customerCode: string;
@@ -90,9 +104,10 @@ interface CustomerDetail {
   email?: string;
   address?: string;
   villageId: string;
-  village: { id: string; name: string; code: string };
+  village: VillageOption;
   creditLimit: number;
   currentBalance: number;
+  isActive: boolean;
   notes?: string;
   createdAt: string;
   orders: Order[];
@@ -106,6 +121,7 @@ export default function CustomerDetailPage() {
   const router = useRouter();
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
+  const [villages, setVillages] = useState<VillageOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ledger" | "orders" | "payments">("ledger");
 
@@ -115,29 +131,207 @@ export default function CustomerDetailPage() {
   const [payMethod, setPayMethod] = useState<"CASH" | "GOOGLE_PAY_UPI" | "GOOGLE_PAY_QR">("CASH");
   const [payNotes, setPayNotes] = useState("");
   const [submittingPay, setSubmittingPay] = useState(false);
-  const [archiving, setArchiving] = useState(false);
+
+  // Edit Profile / Village / Delete Modals
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditVillageModalOpen, setIsEditVillageModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [payFeedback, setPayFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
 
-  const handleArchiveCustomer = async () => {
-    if (!customer || archiving) return;
-    if (!window.confirm(`Are you sure you want to archive customer "${customer.name}"? This action requires zero pending balance.`)) {
-      return;
-    }
+  const [editForm, setEditForm] = useState({
+    villageId: "",
+    name: "",
+    mobile: "",
+    altMobile: "",
+    email: "",
+    address: "",
+    creditLimit: "5000",
+    notes: "",
+  });
+
+  const [editVillageForm, setEditVillageForm] = useState({
+    name: "",
+    code: "",
+    taluka: "",
+    district: "",
+    state: "",
+    pincode: "",
+    notes: "",
+  });
+
+  const fetchCustomer = async () => {
     try {
-      setArchiving(true);
-      const res = await fetch(`/api/customers/${customer.id}`, { method: "DELETE" });
+      setLoading(true);
+      await fetch("/api/payments/cashfree/webhook?reconcilePending=true").catch(() => {});
+      const [res, vRes] = await Promise.all([
+        fetch(`/api/customers/${customerId}`),
+        fetch("/api/villages"),
+      ]);
+      const data = await res.json();
+      const vData = await vRes.json().catch(() => ({ villages: [] }));
+      if (vData.villages) {
+        setVillages(vData.villages);
+      }
+      if (data.success && data.customer) {
+        const c: CustomerDetail = data.customer;
+        setCustomer(c);
+        setEditForm({
+          villageId: c.villageId,
+          name: c.name,
+          mobile: c.mobile,
+          altMobile: c.altMobile || "",
+          email: c.email || "",
+          address: c.address || "",
+          creditLimit: String(c.creditLimit ?? 5000),
+          notes: c.notes || "",
+        });
+        if (c.village) {
+          setEditVillageForm({
+            name: c.village.name,
+            code: c.village.code,
+            taluka: c.village.taluka || "",
+            district: c.village.district || "",
+            state: c.village.state || "Telangana",
+            pincode: c.village.pincode || "",
+            notes: c.village.notes || "",
+          });
+        }
+      }
+    } catch {
+      // handled by empty state
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (customerId) fetchCustomer();
+  }, [customerId]);
+
+  const handleToggleBlacklist = async () => {
+    if (!customer || actionLoading) return;
+    const willBlacklist = customer.isActive !== false;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/customers/${customer.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: willBlacklist ? "BLACKLIST" : "ACTIVATE",
+        }),
+      });
       const data = await res.json();
       if (data.success) {
-        setPayFeedback({ type: "success", message: data.message || "Customer archived successfully." });
-        setTimeout(() => router.push("/customers"), 1200);
+        setPayFeedback({
+          type: "success",
+          message:
+            data.message ||
+            (willBlacklist
+              ? "Customer account blacklisted & disabled."
+              : "Customer account re-activated."),
+        });
+        fetchCustomer();
       } else {
-        setPayFeedback({ type: "error", message: data.error || "Failed to archive customer." });
+        setPayFeedback({ type: "error", message: data.error || "Failed to update account status." });
       }
     } catch (err: any) {
       setPayFeedback({ type: "error", message: err.message || "Network error" });
     } finally {
-      setArchiving(false);
+      setActionLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!customer || actionLoading) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/customers/${customer.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsDeleteModalOpen(false);
+        setPayFeedback({
+          type: "success",
+          message: data.message || "Customer permanently deleted from database.",
+        });
+        setTimeout(() => router.push("/admin/customers"), 900);
+      } else {
+        setPayFeedback({ type: "error", message: data.error || "Failed to delete customer." });
+      }
+    } catch (err: any) {
+      setPayFeedback({ type: "error", message: err.message || "Network error" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customer || actionLoading) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/customers/${customer.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          villageId: editForm.villageId,
+          name: editForm.name.trim(),
+          mobile: editForm.mobile.trim(),
+          altMobile: editForm.altMobile.trim() || null,
+          email: editForm.email.trim() || null,
+          address: editForm.address.trim() || null,
+          creditLimit: parseFloat(editForm.creditLimit) || 0,
+          notes: editForm.notes.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsEditModalOpen(false);
+        setPayFeedback({ type: "success", message: "Customer profile updated successfully!" });
+        fetchCustomer();
+      } else {
+        setPayFeedback({ type: "error", message: data.error || "Failed to update customer profile." });
+      }
+    } catch (err: any) {
+      setPayFeedback({ type: "error", message: err.message || "Network error" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateVillage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customer?.village || actionLoading) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/villages/${customer.village.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editVillageForm.name.trim(),
+          code: editVillageForm.code.trim().toUpperCase(),
+          taluka: editVillageForm.taluka.trim() || null,
+          district: editVillageForm.district.trim() || null,
+          state: editVillageForm.state.trim() || null,
+          pincode: editVillageForm.pincode.trim() || null,
+          notes: editVillageForm.notes.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsEditVillageModalOpen(false);
+        setPayFeedback({ type: "success", message: "Village territory profile updated!" });
+        fetchCustomer();
+      } else {
+        setPayFeedback({ type: "error", message: data.error || "Failed to update village profile." });
+      }
+    } catch (err: any) {
+      setPayFeedback({ type: "error", message: err.message || "Network error" });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -158,24 +352,6 @@ export default function CustomerDetailPage() {
       setSendingEmail(false);
     }
   };
-
-  const fetchCustomer = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/customers/${customerId}`);
-      const data = await res.json();
-      if (data.success) {
-        setCustomer(data.customer);
-      }
-    } catch (err) {
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (customerId) fetchCustomer();
-  }, [customerId]);
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,15 +404,19 @@ export default function CustomerDetailPage() {
       <Card className="p-12 text-center">
         <Users className="w-12 h-12 text-slate-300 dark:text-zinc-600 mx-auto mb-3" />
         <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100">Customer Not Found</h3>
-        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 mb-4">The requested customer account does not exist or was archived.</p>
-        <Link href="/customers">
+        <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 mb-4">
+          The requested customer account does not exist or has been permanently deleted.
+        </p>
+        <Link href="/admin/customers">
           <Button variant="primary" size="md">
-            Back to Customers
+            Back to Customers Directory
           </Button>
         </Link>
       </Card>
     );
   }
+
+  const isBlacklisted = customer.isActive === false;
 
   return (
     <div className="space-y-6">
@@ -244,7 +424,7 @@ export default function CustomerDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print pb-4 border-b border-slate-200 dark:border-zinc-800">
         <div className="flex items-center gap-3">
           <Link
-            href="/customers"
+            href="/admin/customers"
             className="p-2 bg-white dark:bg-zinc-900 rounded-md border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -253,9 +433,12 @@ export default function CustomerDetailPage() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">{customer.name}</h1>
-              <Badge variant="neutral">
-                {customer.customerCode}
-              </Badge>
+              <Badge variant="neutral">{customer.customerCode}</Badge>
+              {isBlacklisted ? (
+                <Badge variant="error">BLACKLISTED / DISABLED</Badge>
+              ) : (
+                <Badge variant="success">ACTIVE ACCOUNT</Badge>
+              )}
               <VoiceCalloutButton
                 payload={{
                   customerName: customer.name,
@@ -269,7 +452,16 @@ export default function CustomerDetailPage() {
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 flex items-center gap-2 flex-wrap">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Village: <strong>{customer.village.name}</strong> ({customer.village.code})</span>
+                <span>
+                  Village: <strong>{customer.village.name}</strong> ({customer.village.code})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsEditVillageModalOpen(true)}
+                  className="ml-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-purple-600 hover:text-purple-800 underline"
+                >
+                  <Edit3 className="w-3 h-3" /> Edit Village
+                </button>
               </span>
               {customer.email && (
                 <span className="flex items-center gap-1 font-mono text-slate-400 dark:text-zinc-500">
@@ -282,7 +474,17 @@ export default function CustomerDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {customer.email && (
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Edit3}
+            onClick={() => setIsEditModalOpen(true)}
+            title="Edit Customer Profile Details"
+          >
+            Edit Profile
+          </Button>
+
+          {customer.email && !isBlacklisted && (
             <Button
               variant="outline"
               size="sm"
@@ -317,36 +519,60 @@ export default function CustomerDetailPage() {
             Print Khata
           </Button>
 
+          {!isBlacklisted && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={IndianRupee}
+              className="border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400"
+              onClick={() => {
+                setPayAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : "");
+                setIsPayModalOpen(true);
+              }}
+            >
+              Record Payment (Jama)
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
-            icon={IndianRupee}
-            className="border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400"
-            onClick={() => {
-              setPayAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : "");
-              setIsPayModalOpen(true);
-            }}
+            icon={isBlacklisted ? ShieldCheck : Ban}
+            onClick={handleToggleBlacklist}
+            disabled={actionLoading}
+            loading={actionLoading}
+            className={
+              isBlacklisted
+                ? "border-emerald-300 text-emerald-800 bg-emerald-50"
+                : "border-amber-300 text-amber-800 bg-amber-50"
+            }
+            title={
+              isBlacklisted
+                ? "Re-Activate Customer Account"
+                : "Blacklist / Disable Customer Account (revokes login & hides from active ledgers)"
+            }
           >
-            Record Payment (Jama)
+            {isBlacklisted ? "Activate Account" : "Blacklist / Disable"}
           </Button>
 
           <Button
             variant="destructive"
             size="sm"
-            icon={Archive}
-            onClick={handleArchiveCustomer}
-            disabled={archiving}
-            loading={archiving}
-            title="Archive customer account (must have zero balance)"
+            icon={Trash2}
+            onClick={() => setIsDeleteModalOpen(true)}
+            disabled={actionLoading}
+            title="Permanently Delete Customer & All Records from Database"
           >
-            Archive
+            Delete Account
           </Button>
 
-          <Link href={`/orders/new?customerId=${customer.id}&villageId=${customer.villageId}`}>
-            <Button variant="primary" size="sm" icon={Plus}>
-              New Bill
-            </Button>
-          </Link>
+          {!isBlacklisted && (
+            <Link href={`/admin/billing?customerId=${customer.id}&villageId=${customer.villageId}`}>
+              <Button variant="primary" size="sm" icon={Plus}>
+                New Bill
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -533,10 +759,7 @@ export default function CustomerDetailPage() {
               </Card>
             ) : (
               customer.orders.map((o) => (
-                <Card
-                  key={o.id}
-                  className="p-4 space-y-3"
-                >
+                <Card key={o.id} className="p-4 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-zinc-800">
                     <div>
                       <div className="flex items-center gap-2">
@@ -626,9 +849,7 @@ export default function CustomerDetailPage() {
                       <TableCell className="font-mono font-semibold text-slate-900 dark:text-zinc-100 text-xs">{p.paymentRef}</TableCell>
                       <TableCell className="text-slate-600 dark:text-zinc-400 text-xs">{formatDateTime(p.paidAt)}</TableCell>
                       <TableCell>
-                        <Badge variant="neutral">
-                          {p.method}
-                        </Badge>
+                        <Badge variant="neutral">{p.method}</Badge>
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-zinc-400 text-xs">{p.notes || "—"}</TableCell>
                       <TableCell className="text-right text-emerald-600 dark:text-emerald-400 font-bold text-xs font-mono tabular-nums">
@@ -753,6 +974,235 @@ export default function CustomerDetailPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Customer Profile Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={`Edit Customer Profile (${customer.customerCode})`}
+      >
+        <form onSubmit={handleUpdateCustomer} className="space-y-3.5 text-xs">
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Village Territory *</label>
+            <select
+              value={editForm.villageId}
+              onChange={(e) => setEditForm({ ...editForm, villageId: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-slate-900"
+              required
+            >
+              {villages.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name} ({v.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Full Name *</label>
+            <input
+              type="text"
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Mobile *</label>
+              <input
+                type="tel"
+                value={editForm.mobile}
+                onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Alternate Mobile</label>
+              <input
+                type="tel"
+                value={editForm.altMobile}
+                onChange={(e) => setEditForm({ ...editForm, altMobile: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Address / Landmark</label>
+            <input
+              type="text"
+              value={editForm.address}
+              onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Credit Limit (₹)</label>
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={editForm.creditLimit}
+                onChange={(e) => setEditForm({ ...editForm, creditLimit: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Internal Notes</label>
+              <input
+                type="text"
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <Button type="button" variant="outline" size="md" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="md" loading={actionLoading} disabled={actionLoading}>
+              Save Profile Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Village Profile Modal */}
+      <Modal
+        isOpen={isEditVillageModalOpen}
+        onClose={() => setIsEditVillageModalOpen(false)}
+        title={`Edit Village Territory (${customer.village.code})`}
+      >
+        <form onSubmit={handleUpdateVillage} className="space-y-3.5 text-xs">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="block font-semibold text-slate-700 mb-1">Village Name *</label>
+              <input
+                type="text"
+                value={editVillageForm.name}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, name: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Code *</label>
+              <input
+                type="text"
+                maxLength={5}
+                value={editVillageForm.code}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, code: e.target.value.toUpperCase() })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono uppercase text-slate-900"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Mandal / Taluka</label>
+              <input
+                type="text"
+                value={editVillageForm.taluka}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, taluka: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">District</label>
+              <input
+                type="text"
+                value={editVillageForm.district}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, district: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">State</label>
+              <input
+                type="text"
+                value={editVillageForm.state}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, state: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-900"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Pincode</label>
+              <input
+                type="text"
+                value={editVillageForm.pincode}
+                onChange={(e) => setEditVillageForm({ ...editVillageForm, pincode: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-slate-900"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <Button type="button" variant="outline" size="md" onClick={() => setIsEditVillageModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="md" loading={actionLoading} disabled={actionLoading}>
+              Save Village Profile
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Permanent Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Permanently Delete Customer Account"
+      >
+        <div className="space-y-4 text-xs text-slate-700">
+          <p>
+            Are you sure you want to permanently delete{" "}
+            <strong className="text-slate-900">{customer.name}</strong> ({customer.customerCode})?
+          </p>
+          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 space-y-1">
+            <div className="font-bold">Irreversible Database Deletion</div>
+            <p>
+              This action permanently deletes the customer, their login credentials, all counter bills, payment receipts, and ledger entries from PostgreSQL. To temporarily disable access or hide from active ledgers, use <strong>Blacklist / Disable</strong> instead.
+            </p>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button type="button" variant="outline" size="md" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="md"
+              onClick={handlePermanentDelete}
+              loading={actionLoading}
+              disabled={actionLoading}
+            >
+              Delete Permanently
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

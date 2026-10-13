@@ -29,9 +29,10 @@ export async function GET(req: NextRequest) {
       },
       include: {
         _count: {
-          select: { customers: true, orders: true },
+          select: { orders: true },
         },
         customers: {
+          where: { isActive: true },
           select: { currentBalance: true },
         },
       },
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
         district: v.district,
         pincode: v.pincode,
         notes: v.notes,
-        customerCount: v._count.customers,
+        customerCount: v.customers.length,
         orderCount: v._count.orders,
         totalOutstanding,
         createdAt: v.createdAt,
@@ -82,15 +83,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Auto-generate code if not explicitly provided
-    let code = body.code?.trim();
+    let code = body.code?.trim()?.toUpperCase();
     if (!code) {
       const count = await prisma.village.count();
       const prefix = name.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase() || "VIL";
       code = `VIL-${prefix}-${String(count + 1).padStart(3, "0")}`;
     }
 
-    // Check if code already exists
     const existing = await prisma.village.findUnique({ where: { code } });
     if (existing) {
       code = `${code}-${Math.floor(100 + Math.random() * 900)}`;

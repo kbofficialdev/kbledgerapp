@@ -13,6 +13,8 @@ import {
   Landmark,
   Wallet,
   ChevronRight,
+  ArrowLeft,
+  AtSign,
 } from "lucide-react";
 
 declare global {
@@ -24,35 +26,43 @@ declare global {
 export interface CashfreeInlineElementsProps {
   isOpen?: boolean;
   onClose?: () => void;
+  onBackToSelection?: () => void;
   orderId?: string;
   paymentSessionId?: string;
   amount: number;
   customerName?: string;
   customerMobile?: string;
+  environment?: "sandbox" | "production";
   onCreateSession?: () => Promise<{ paymentSessionId: string; orderId: string } | null>;
-  onSuccess?: (orderId: string, paymentId?: string) => void;
+  onSuccess?: (orderId: string, paymentId?: string, verifiedOrder?: any) => void;
   onFailure?: (error: any) => void;
   onPaymentSuccess?: (paymentData: any) => void;
   onPaymentFailure?: (error: any) => void;
 }
 
-type PaymentMethodTab = "UPI" | "UPI_QR" | "CARD" | "NETBANKING" | "WALLET";
+type PaymentMethodTab =
+  | "UPI_ID"
+  | "UPI_QR"
+  | "UPI_APP"
+  | "CARD"
+  | "NETBANKING"
+  | "WALLET";
 
 const UPI_APPS = [
-  { id: "gpay", label: "Google Pay", badge: "GPay" },
-  { id: "phonepe", label: "PhonePe", badge: "PhonePe" },
-  { id: "paytm", label: "Paytm UPI", badge: "Paytm" },
-  { id: "bhim", label: "BHIM UPI", badge: "BHIM" },
+  { id: "gpay", label: "Google Pay", sub: "Instant UPI Intent" },
+  { id: "phonepe", label: "PhonePe", sub: "PhonePe UPI App" },
+  { id: "paytm", label: "Paytm UPI", sub: "Paytm UPI Transfer" },
+  { id: "bhim", label: "BHIM UPI", sub: "NPCI BHIM App" },
 ] as const;
 
 const NETBANKING_BANKS = [
-  { code: "TESTR", name: "Cashfree Test Bank (Sandbox)", tag: "Instant Test" },
   { code: "HDFCR", name: "HDFC Bank", tag: "Popular" },
   { code: "SBINR", name: "State Bank of India (SBI)", tag: "Popular" },
   { code: "ICICR", name: "ICICI Bank", tag: "Popular" },
   { code: "UTIBR", name: "Axis Bank", tag: "Popular" },
   { code: "KKBKR", name: "Kotak Mahindra Bank", tag: "NetBanking" },
   { code: "PUNBR", name: "Punjab National Bank", tag: "NetBanking" },
+  { code: "TESTR", name: "Cashfree Test Bank", tag: "Sandbox" },
 ] as const;
 
 const WALLET_PROVIDERS = [
@@ -125,11 +135,14 @@ export function buildCashfreeElementOptions(
 
 export default function CashfreeCheckoutModal({
   isOpen = true,
+  onClose,
+  onBackToSelection,
   orderId: propOrderId = "",
   paymentSessionId: propSessionId = "",
   amount,
-  customerName = "Customer",
-  customerMobile = "9999999999",
+  customerName = "",
+  customerMobile = "",
+  environment = "sandbox",
   onCreateSession,
   onSuccess,
   onFailure,
@@ -137,7 +150,7 @@ export default function CashfreeCheckoutModal({
   onPaymentFailure,
 }: CashfreeInlineElementsProps) {
   const [sdkLoaded, setSdkLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<PaymentMethodTab>("UPI");
+  const [activeTab, setActiveTab] = useState<PaymentMethodTab>("UPI_ID");
   const [activeSessionId, setActiveSessionId] = useState<string>(propSessionId);
   const [activeOrderId, setActiveOrderId] = useState<string>(propOrderId);
   const [creatingSession, setCreatingSession] = useState(false);
@@ -149,18 +162,27 @@ export default function CashfreeCheckoutModal({
   const [processingPay, setProcessingPay] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+  const [mountRetryCount, setMountRetryCount] = useState(0);
 
-  // Method-specific state
-  const [vpaPreset, setVpaPreset] = useState("testsuccess@gocash");
-  const [selectedBankCode, setSelectedBankCode] = useState<string>("TESTR");
+  // Method-specific selection state (single active custom element per tab)
+  const [selectedUpiApp, setSelectedUpiApp] = useState<string>("gpay");
+  const [selectedBankCode, setSelectedBankCode] = useState<string>("HDFCR");
   const [selectedWalletId, setSelectedWalletId] = useState<string>("phonepe");
 
   const cashfreeInstanceRef = useRef<any>(null);
   const activeComponentsRef = useRef<any[]>([]);
   const payableComponentRef = useRef<any>(null);
   const saveCardComponentRef = useRef<any>(null);
-  const upiAppComponentsRef = useRef<Record<string, any>>({});
   const completedRef = useRef(false);
+  const inFlightVerifyRef = useRef(false);
+
+  // Stable refs for values/callbacks so state updates NEVER destroy mounted Cashfree iframes
+  const amountRef = useRef(amount);
+  const customerNameRef = useRef(customerName);
+  const customerMobileRef = useRef(customerMobile);
+  amountRef.current = amount;
+  customerNameRef.current = customerName;
+  customerMobileRef.current = customerMobile;
 
   useEffect(() => {
     if (propSessionId) setActiveSessionId(propSessionId);
@@ -171,27 +193,25 @@ export default function CashfreeCheckoutModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    if (window.Cashfree) {
-      cashfreeInstanceRef.current = window.Cashfree({ mode: "sandbox" });
-      setSdkLoaded(true);
-      return;
-    }
+    const initSdk = () => {
+      if (window.Cashfree) {
+        if (!cashfreeInstanceRef.current) {
+          cashfreeInstanceRef.current = window.Cashfree({ mode: environment });
+        }
+        setSdkLoaded(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (initSdk()) return;
 
     const scriptId = "cashfree-elements-v3";
     const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
     if (existing) {
-      if (window.Cashfree) {
-        cashfreeInstanceRef.current = window.Cashfree({ mode: "sandbox" });
-        setSdkLoaded(true);
-      } else {
-        existing.addEventListener("load", () => {
-          if (window.Cashfree) {
-            cashfreeInstanceRef.current = window.Cashfree({ mode: "sandbox" });
-            setSdkLoaded(true);
-          }
-        });
-      }
-      return;
+      const onLoad = () => initSdk();
+      existing.addEventListener("load", onLoad);
+      return () => existing.removeEventListener("load", onLoad);
     }
 
     const script = document.createElement("script");
@@ -199,18 +219,15 @@ export default function CashfreeCheckoutModal({
     script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
     script.async = true;
     script.onload = () => {
-      if (window.Cashfree) {
-        cashfreeInstanceRef.current = window.Cashfree({ mode: "sandbox" });
-        setSdkLoaded(true);
-      }
+      initSdk();
     };
     script.onerror = () => {
       setElementError("Unable to load Cashfree payment elements. Check your internet connection.");
     };
     document.body.appendChild(script);
-  }, [isOpen]);
+  }, [isOpen, environment]);
 
-  // Helper to ensure a valid Cashfree payment_session_id exists before calling cashfree.pay()
+  // Helper to ensure a valid Cashfree payment_session_id exists
   const ensureSession = useCallback(async (): Promise<{
     paymentSessionId: string;
     orderId: string;
@@ -237,11 +254,26 @@ export default function CashfreeCheckoutModal({
     }
   }, [activeSessionId, activeOrderId, onCreateSession]);
 
-  // 2. Webhook-Backed Verification & Reconciliation
+  // Auto-initialize session on open if not yet created so QR and elements have session ready
+  const autoSessionTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (!isOpen) {
+      autoSessionTriggeredRef.current = false;
+      return;
+    }
+    if (!activeSessionId && !activeOrderId && onCreateSession && !autoSessionTriggeredRef.current) {
+      autoSessionTriggeredRef.current = true;
+      ensureSession().catch(() => {});
+    }
+  }, [isOpen, activeSessionId, activeOrderId, onCreateSession, ensureSession]);
+
+  // 2. Webhook-Backed Verification & Reconciliation (Strictly single-flight & idempotent)
   const checkWebhookAndOrderStatus = useCallback(
     async (silent = false, targetOrderId?: string) => {
       const ordId = targetOrderId || activeOrderId;
-      if (!ordId || completedRef.current) return false;
+      if (!ordId || completedRef.current || inFlightVerifyRef.current) return false;
+
+      inFlightVerifyRef.current = true;
       if (!silent) setVerifying(true);
 
       try {
@@ -251,10 +283,18 @@ export default function CashfreeCheckoutModal({
         const data = await res.json();
 
         if (data.verified || data.orderStatus === "PAID") {
-          completedRef.current = true;
-          setVerifiedSuccess(true);
-          if (onPaymentSuccess) onPaymentSuccess(data);
-          if (onSuccess) onSuccess(ordId, data.paymentId || data.payment?.cashfreePaymentId);
+          if (!completedRef.current) {
+            completedRef.current = true;
+            setVerifiedSuccess(true);
+            if (onPaymentSuccess) onPaymentSuccess(data);
+            if (onSuccess) {
+              onSuccess(
+                ordId,
+                data.paymentId || data.payment?.cashfreePaymentId,
+                data.order || null
+              );
+            }
+          }
           return true;
         }
 
@@ -266,10 +306,18 @@ export default function CashfreeCheckoutModal({
           });
           const vData = await vRes.json();
           if (vData.verified) {
-            completedRef.current = true;
-            setVerifiedSuccess(true);
-            if (onPaymentSuccess) onPaymentSuccess(vData);
-            if (onSuccess) onSuccess(ordId, vData.payment?.cashfreePaymentId || vData.payment?.cf_payment_id);
+            if (!completedRef.current) {
+              completedRef.current = true;
+              setVerifiedSuccess(true);
+              if (onPaymentSuccess) onPaymentSuccess(vData);
+              if (onSuccess) {
+                onSuccess(
+                  ordId,
+                  vData.payment?.cashfreePaymentId || vData.payment?.cf_payment_id,
+                  vData.order || null
+                );
+              }
+            }
             return true;
           } else {
             setElementError(
@@ -280,6 +328,7 @@ export default function CashfreeCheckoutModal({
       } catch (err: any) {
         if (!silent && onPaymentFailure) onPaymentFailure(err);
       } finally {
+        inFlightVerifyRef.current = false;
         if (!silent) setVerifying(false);
       }
       return false;
@@ -350,7 +399,6 @@ export default function CashfreeCheckoutModal({
     activeComponentsRef.current = [];
     payableComponentRef.current = null;
     saveCardComponentRef.current = null;
-    upiAppComponentsRef.current = {};
     setElementReady(false);
     setElementComplete(false);
     setDetectedCardBrand(null);
@@ -364,7 +412,7 @@ export default function CashfreeCheckoutModal({
     return url.toString();
   }, []);
 
-  // Execute cashfree.pay() for a specific Cashfree Element component
+  // Execute cashfree.pay() for the active Cashfree Element component
   const executeComponentPayment = useCallback(
     async (targetComponent?: any) => {
       const compToPay = targetComponent || payableComponentRef.current;
@@ -429,70 +477,63 @@ export default function CashfreeCheckoutModal({
     ]
   );
 
+  const executePaymentRef = useRef(executeComponentPayment);
+  executePaymentRef.current = executeComponentPayment;
+
+  const ensureSessionRef = useRef(ensureSession);
+  ensureSessionRef.current = ensureSession;
+
+  const checkWebhookRef = useRef(checkWebhookAndOrderStatus);
+  checkWebhookRef.current = checkWebhookAndOrderStatus;
+
+  const getReturnUrlRef = useRef(getReturnUrl);
+  getReturnUrlRef.current = getReturnUrl;
+
   // 5. Mount Customized Cashfree Elements In-Page per Active Method Tab
+  //    Strictly depends ONLY on tab/selection primitives so session state updates NEVER unmount iframes
   useEffect(() => {
     if (!isOpen || !sdkLoaded || !cashfreeInstanceRef.current) return;
 
+    let cancelled = false;
     destroyMountedElements();
     setElementError(null);
 
     const cf = cashfreeInstanceRef.current;
     const timer = setTimeout(() => {
+      if (cancelled) return;
       try {
-        if (activeTab === "UPI") {
-          // A. Mount UPI App Custom Elements (GPay, PhonePe, Paytm, BHIM)
-          for (const app of UPI_APPS) {
-            const appNode = document.getElementById(`cf-inline-upi-app-${app.id}`);
-            if (appNode) {
-              appNode.innerHTML = "";
-              const upiAppComp = cf.create(
-                "upiApp",
-                buildCashfreeElementOptions({
-                  upiApp: app.id,
-                  buttonText: app.label,
-                  buttonIcon: true,
-                })
-              );
-              upiAppComp.on("click", () => {
-                executeComponentPayment(upiAppComp);
-              });
-              upiAppComp.on("loaderror", (data: any) => {
-                if (data?.error?.message) setElementError(data.error.message);
-              });
-              upiAppComp.mount(`#cf-inline-upi-app-${app.id}`);
-              upiAppComponentsRef.current[app.id] = upiAppComp;
-              activeComponentsRef.current.push(upiAppComp);
-            }
-          }
-
-          // B. Mount UPI Collect (VPA Input) Custom Element
+        if (activeTab === "UPI_ID") {
           const container = document.getElementById("cf-inline-upi-collect");
-          if (container) {
-            container.innerHTML = "";
-            const upiCollectComp = cf.create(
-              "upiCollect",
-              buildCashfreeElementOptions({
-                placeholder: "Enter UPI ID (e.g. 9876543210@ybl)",
-                upiId: vpaPreset,
-              })
-            );
+          if (!container) return;
+          container.innerHTML = "";
 
-            upiCollectComp.on("ready", () => {
-              setElementReady(true);
-              setElementComplete(Boolean(vpaPreset));
-            });
-            upiCollectComp.on("change", (data: any) => {
+          const upiCollectComp = cf.create(
+            "upiCollect",
+            buildCashfreeElementOptions({
+              placeholder: "Enter UPI ID (e.g. yourname@okaxis)",
+            })
+          );
+
+          upiCollectComp.on("ready", () => {
+            if (!cancelled) setElementReady(true);
+          });
+          upiCollectComp.on("change", (data: any) => {
+            if (!cancelled) {
               setElementComplete(Boolean(data?.complete));
               setElementError(data?.error?.message || null);
-            });
-            upiCollectComp.on("loaderror", (data: any) => {
-              setElementError(data?.error?.message || "Failed to initialize UPI Collect element.");
-            });
+            }
+          });
+          upiCollectComp.on("loaderror", (data: any) => {
+            if (!cancelled) {
+              setElementError(
+                data?.error?.message || "UPI ID element failed to load. Click Retry Mount below."
+              );
+            }
+          });
 
-            upiCollectComp.mount("#cf-inline-upi-collect");
-            payableComponentRef.current = upiCollectComp;
-            activeComponentsRef.current.push(upiCollectComp);
-          }
+          upiCollectComp.mount("#cf-inline-upi-collect");
+          payableComponentRef.current = upiCollectComp;
+          activeComponentsRef.current.push(upiCollectComp);
         } else if (activeTab === "UPI_QR") {
           const container = document.getElementById("cf-inline-upi-qr");
           if (!container) return;
@@ -501,48 +542,85 @@ export default function CashfreeCheckoutModal({
           const qrComp = cf.create(
             "upiQr",
             buildCashfreeElementOptions({
-              size: "210px",
+              size: "220px",
             })
           );
 
           qrComp.on("ready", () => {
-            setElementReady(true);
-            setElementComplete(true);
+            if (!cancelled) {
+              setElementReady(true);
+              setElementComplete(true);
+            }
           });
           qrComp.on("change", (data: any) => {
-            if (data?.error?.message) {
+            if (!cancelled && data?.error?.message) {
               setElementError(data.error.message);
             }
           });
           qrComp.on("loaderror", (data: any) => {
-            setElementError(data?.error?.message || "Failed to load UPI QR element.");
+            if (!cancelled) {
+              setElementError(data?.error?.message || "Failed to load UPI QR element.");
+            }
           });
 
           qrComp.mount("#cf-inline-upi-qr");
           payableComponentRef.current = qrComp;
           activeComponentsRef.current.push(qrComp);
 
-          // Automatically trigger QR generation once session is available
           (async () => {
-            const sessionInfo = await ensureSession();
-            if (sessionInfo && cashfreeInstanceRef.current) {
+            const sessionInfo = await ensureSessionRef.current();
+            if (!cancelled && sessionInfo && cashfreeInstanceRef.current) {
               cashfreeInstanceRef.current
                 .pay({
                   paymentMethod: qrComp,
                   paymentSessionId: sessionInfo.paymentSessionId,
-                  returnUrl: getReturnUrl(sessionInfo.orderId),
+                  returnUrl: getReturnUrlRef.current(sessionInfo.orderId),
                   redirect: "if_required",
                 })
                 .then((res: any) => {
+                  if (cancelled) return;
                   if (res?.error) {
                     setElementError(res.error.message || "QR generation error");
                   } else if (res?.paymentDetails) {
-                    checkWebhookAndOrderStatus(false, sessionInfo.orderId);
+                    checkWebhookRef.current(false, sessionInfo.orderId);
                   }
                 })
                 .catch(() => {});
             }
           })();
+        } else if (activeTab === "UPI_APP") {
+          const appContainer = document.getElementById("cf-inline-upi-app-single");
+          if (!appContainer) return;
+          appContainer.innerHTML = "";
+
+          const appObj = UPI_APPS.find((a) => a.id === selectedUpiApp) || UPI_APPS[0];
+          const upiAppComp = cf.create(
+            "upiApp",
+            buildCashfreeElementOptions({
+              upiApp: appObj.id,
+              buttonText: `Pay ₹${Number(amountRef.current).toLocaleString("en-IN")} with ${appObj.label}`,
+              buttonIcon: true,
+            })
+          );
+
+          upiAppComp.on("ready", () => {
+            if (!cancelled) {
+              setElementReady(true);
+              setElementComplete(true);
+            }
+          });
+          upiAppComp.on("click", () => {
+            executePaymentRef.current(upiAppComp);
+          });
+          upiAppComp.on("loaderror", (data: any) => {
+            if (!cancelled && data?.error?.message) {
+              setElementError(data.error.message);
+            }
+          });
+
+          upiAppComp.mount("#cf-inline-upi-app-single");
+          payableComponentRef.current = upiAppComp;
+          activeComponentsRef.current.push(upiAppComp);
         } else if (activeTab === "CARD") {
           const numEl = document.getElementById("cf-inline-card-number");
           const holderEl = document.getElementById("cf-inline-card-holder");
@@ -567,8 +645,8 @@ export default function CashfreeCheckoutModal({
           const cardHolderComp = cf.create(
             "cardHolder",
             buildCashfreeElementOptions({
-              placeholder: "Name on Card",
-              cardHolder: customerName || "Customer",
+              placeholder: "Cardholder Full Name",
+              ...(customerNameRef.current ? { cardHolder: customerNameRef.current } : {}),
             })
           );
           const cardExpiryComp = cf.create("cardExpiry", buildCashfreeElementOptions());
@@ -584,8 +662,11 @@ export default function CashfreeCheckoutModal({
             );
           }
 
-          cardNumberComp.on("ready", () => setElementReady(true));
+          cardNumberComp.on("ready", () => {
+            if (!cancelled) setElementReady(true);
+          });
           cardNumberComp.on("change", (data: any) => {
+            if (cancelled) return;
             if (data?.value?.brand) {
               setDetectedCardBrand(String(data.value.brand).toUpperCase());
             }
@@ -593,6 +674,7 @@ export default function CashfreeCheckoutModal({
             setElementError(data?.error?.message || null);
           });
           cardCvvComp.on("change", (data: any) => {
+            if (cancelled) return;
             if (data?.complete) setElementComplete(true);
             if (data?.error?.message) setElementError(data.error.message);
           });
@@ -626,20 +708,22 @@ export default function CashfreeCheckoutModal({
             "netbanking",
             buildCashfreeElementOptions({
               netbankingBankName: bankObj.code,
-              buttonText: `Redirect & Pay ₹${Number(amount).toLocaleString("en-IN")} via ${bankObj.name}`,
+              buttonText: `Redirect & Pay ₹${Number(amountRef.current).toLocaleString("en-IN")} via ${bankObj.name}`,
               buttonIcon: true,
             })
           );
 
           nbComp.on("ready", () => {
-            setElementReady(true);
-            setElementComplete(true);
+            if (!cancelled) {
+              setElementReady(true);
+              setElementComplete(true);
+            }
           });
           nbComp.on("click", () => {
-            executeComponentPayment(nbComp);
+            executePaymentRef.current(nbComp);
           });
           nbComp.on("loaderror", (data: any) => {
-            if (data?.error?.message) setElementError(data.error.message);
+            if (!cancelled && data?.error?.message) setElementError(data.error.message);
           });
 
           nbComp.mount("#cf-inline-netbanking");
@@ -652,28 +736,31 @@ export default function CashfreeCheckoutModal({
 
           const walletObj =
             WALLET_PROVIDERS.find((w) => w.id === selectedWalletId) || WALLET_PROVIDERS[0];
-          const cleanPhone =
-            (customerMobile || "9999999999").replace(/\D/g, "").slice(-10) || "9999999999";
+          const cleanPhone = String(customerMobileRef.current || "")
+            .replace(/\D/g, "")
+            .slice(-10);
 
           const walletComp = cf.create(
             "wallet",
             buildCashfreeElementOptions({
               provider: walletObj.id,
-              phone: cleanPhone,
-              buttonText: `Pay ₹${Number(amount).toLocaleString("en-IN")} with ${walletObj.name}`,
+              ...(cleanPhone.length === 10 ? { phone: cleanPhone } : {}),
+              buttonText: `Pay ₹${Number(amountRef.current).toLocaleString("en-IN")} with ${walletObj.name}`,
               buttonIcon: true,
             })
           );
 
           walletComp.on("ready", () => {
-            setElementReady(true);
-            setElementComplete(true);
+            if (!cancelled) {
+              setElementReady(true);
+              setElementComplete(true);
+            }
           });
           walletComp.on("click", () => {
-            executeComponentPayment(walletComp);
+            executePaymentRef.current(walletComp);
           });
           walletComp.on("loaderror", (data: any) => {
-            if (data?.error?.message) setElementError(data.error.message);
+            if (!cancelled && data?.error?.message) setElementError(data.error.message);
           });
 
           walletComp.mount("#cf-inline-wallet");
@@ -681,11 +768,14 @@ export default function CashfreeCheckoutModal({
           activeComponentsRef.current.push(walletComp);
         }
       } catch (err: any) {
-        setElementError(err?.message || "Error mounting Cashfree custom element.");
+        if (!cancelled) {
+          setElementError(err?.message || "Error mounting Cashfree custom element.");
+        }
       }
-    }, 60);
+    }, 80);
 
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       destroyMountedElements();
     };
@@ -693,17 +783,11 @@ export default function CashfreeCheckoutModal({
     isOpen,
     sdkLoaded,
     activeTab,
-    vpaPreset,
+    selectedUpiApp,
     selectedBankCode,
     selectedWalletId,
-    customerName,
-    customerMobile,
-    amount,
+    mountRetryCount,
     destroyMountedElements,
-    ensureSession,
-    getReturnUrl,
-    executeComponentPayment,
-    checkWebhookAndOrderStatus,
   ]);
 
   if (!isOpen) return null;
@@ -715,16 +799,22 @@ export default function CashfreeCheckoutModal({
     icon: React.ComponentType<{ className?: string }>;
   }> = [
     {
-      id: "UPI",
-      label: "Pay by any UPI App",
-      sublabel: "GPay, PhonePe, Paytm, UPI ID",
-      icon: Smartphone,
+      id: "UPI_ID",
+      label: "UPI ID / VPA Collect",
+      sublabel: "Enter UPI ID & approve in app",
+      icon: AtSign,
     },
     {
       id: "UPI_QR",
       label: "Scan UPI QR Code",
-      sublabel: "Instant QR scan & pay",
+      sublabel: "Scan with GPay, PhonePe, Paytm",
       icon: QrCode,
+    },
+    {
+      id: "UPI_APP",
+      label: "Pay by UPI App",
+      sublabel: "GPay, PhonePe, Paytm, BHIM",
+      icon: Smartphone,
     },
     {
       id: "CARD",
@@ -735,7 +825,7 @@ export default function CashfreeCheckoutModal({
     {
       id: "NETBANKING",
       label: "Net Banking",
-      sublabel: "All major Indian banks",
+      sublabel: "HDFC, SBI, ICICI, Axis & more",
       icon: Landmark,
     },
     {
@@ -746,32 +836,44 @@ export default function CashfreeCheckoutModal({
     },
   ];
 
+  const handleBackAction = onBackToSelection || onClose;
+
   return (
     <div className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      {/* Top Bar: BookMyShow-style In-Page Payment Options Header */}
-      <div className="px-4 sm:px-5 py-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center">
+      {/* Top Bar: Dedicated Payment Options Tab Header */}
+      <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {handleBackAction && (
+            <button
+              type="button"
+              onClick={handleBackAction}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back</span>
+            </button>
+          )}
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
             <h3 className="text-sm font-bold tracking-tight text-white">
-              Payment Options (Cashfree Custom Elements)
+              Cashfree Payment Options (Custom Elements)
             </h3>
             <p className="text-[11px] text-slate-300">
-              Select a payment method below • Webhook-Protected Auto Settlement
+              Choose a payment method on the left • Webhook-Protected Auto Ledger Sync
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {activeOrderId && (
             <span className="hidden sm:inline-block text-[11px] font-mono text-slate-300 bg-white/10 px-2.5 py-1 rounded-md">
-              Ref: {activeOrderId.slice(0, 18)}
+              Order: {activeOrderId}
             </span>
           )}
           <div className="text-right">
             <span className="text-[10px] uppercase tracking-wider text-slate-300 block">
-              Payable Now
+              Payable Amount
             </span>
             <span className="text-base font-mono font-bold text-emerald-400">
               ₹{Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -780,7 +882,7 @@ export default function CashfreeCheckoutModal({
         </div>
       </div>
 
-      {/*Verified Banner if Settled */}
+      {/* Verified Banner if Settled */}
       {verifiedSuccess ? (
         <div className="p-8 text-center space-y-3 bg-emerald-50/50">
           <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
@@ -790,12 +892,12 @@ export default function CashfreeCheckoutModal({
             Payment Verified &amp; Recorded in Khata Ledger
           </h4>
           <p className="text-xs text-slate-600 max-w-md mx-auto">
-            Your payment of ₹{Number(amount).toLocaleString("en-IN")} has been confirmed via Cashfree Webhook and committed to your account.
+            Your payment of ₹{Number(amount).toLocaleString("en-IN")} has been confirmed via Cashfree Webhook and committed to the Bahi-Khata ledger.
           </p>
         </div>
       ) : (
-        /* BookMyShow Split Layout: Left Payment Method Rail + Right Custom Element Canvas */
-        <div className="grid grid-cols-1 md:grid-cols-12 min-h-[360px]">
+        /* Split Layout: Left Payment Method Rail + Right Custom Element Canvas */
+        <div className="grid grid-cols-1 md:grid-cols-12 min-h-[390px]">
           {/* Left Rail: Payment Methods List (4 cols on desktop) */}
           <div className="md:col-span-4 bg-slate-50 border-b md:border-b-0 md:border-r border-slate-200 flex md:flex-col overflow-x-auto">
             {navOptions.map((opt) => {
@@ -806,7 +908,7 @@ export default function CashfreeCheckoutModal({
                   key={opt.id}
                   type="button"
                   onClick={() => setActiveTab(opt.id)}
-                  className={`flex items-center justify-between gap-3 px-4 py-3.5 text-left border-b border-slate-200/80 transition-colors shrink-0 md:shrink ${
+                  className={`flex items-center justify-between gap-3 px-4 py-3.5 text-left border-b border-slate-200/80 transition-colors shrink-0 md:shrink cursor-pointer ${
                     isSelected
                       ? "bg-white text-slate-900 font-bold border-l-4 border-l-slate-900 shadow-2xs"
                       : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
@@ -840,96 +942,71 @@ export default function CashfreeCheckoutModal({
           </div>
 
           {/* Right Canvas: Mounted Cashfree Custom Elements (8 cols on desktop) */}
-          <div className="md:col-span-8 p-4 sm:p-6 flex flex-col justify-between space-y-5 bg-white">
+          <div className="md:col-span-8 p-5 sm:p-6 flex flex-col justify-between space-y-5 bg-white">
             <div className="space-y-4">
               {elementError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-700">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <div className="flex-1">{elementError}</div>
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start justify-between gap-2.5 text-xs text-rose-700">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div className="flex-1">{elementError}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMountRetryCount((c) => c + 1)}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-700 font-semibold text-[11px] hover:bg-rose-100 shrink-0 cursor-pointer"
+                  >
+                    Retry Mount
+                  </button>
                 </div>
               )}
 
-              {/* TAB 1: UPI APPS & UPI ID (upiApp + upiCollect custom elements) */}
-              {activeTab === "UPI" && (
-                <div className="space-y-5">
-                  <div>
-                    <div className="text-xs font-bold text-slate-800 mb-2">
-                      1. Instant Pay with UPI App (Cashfree upiApp Elements)
+              {/* TAB 1: UPI ID / VPA COLLECT (Isolated upiCollect custom element) */}
+              {activeTab === "UPI_ID" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        Pay via UPI ID / Virtual Payment Address
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Enter your registered UPI ID below and approve the collect request in your UPI app.
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 mb-3">
-                      Click any UPI app below to open or redirect to the Cashfree UPI authorization page:
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {UPI_APPS.map((app) => (
-                        <div
-                          key={app.id}
-                          className="rounded-xl border border-slate-200 bg-slate-50/60 hover:border-slate-400 transition-colors p-1.5 min-h-[46px] flex items-center justify-center"
-                        >
-                          <div id={`cf-inline-upi-app-${app.id}`} className="w-full" />
-                        </div>
-                      ))}
-                    </div>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 shrink-0">
+                      upiCollect Element
+                    </span>
                   </div>
 
-                  <div className="border-t border-slate-200 pt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-800">
-                        2. Or Enter UPI ID / VPA (Cashfree upiCollect Element)
-                      </label>
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        Instant Collect
-                      </span>
-                    </div>
-
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 block">
+                      Customer UPI ID / VPA
+                    </label>
                     <div
                       id="cf-inline-upi-collect"
-                      className="w-full min-h-[46px] rounded-xl border border-slate-300 bg-white px-2 py-1 focus-within:border-slate-900 transition-colors"
+                      className="w-full min-h-[48px] rounded-xl border border-slate-300 bg-white px-2.5 py-1 focus-within:border-slate-900 transition-colors"
                     />
-
-                    {/* Quick Sandbox VPA Presets */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[10px] text-slate-400 font-medium mr-1">
-                        Test VPAs:
-                      </span>
-                      {["testsuccess@gocash", "9999999999@paytm", "customer@okaxis"].map(
-                        (vpa) => (
-                          <button
-                            key={vpa}
-                            type="button"
-                            onClick={() => setVpaPreset(vpa)}
-                            className={`text-[11px] font-mono px-2 py-0.5 rounded-md border transition-colors ${
-                              vpaPreset === vpa
-                                ? "bg-slate-900 text-white border-slate-900"
-                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                            }`}
-                          >
-                            {vpa}
-                          </button>
-                        )
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => executeComponentPayment()}
-                      disabled={processingPay || creatingSession || !elementReady}
-                      className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>
-                        {processingPay || creatingSession
-                          ? "Processing UPI Collect Request..."
-                          : `Verify & Pay ₹${Number(amount).toLocaleString("en-IN")} via UPI ID`}
-                      </span>
-                    </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => executeComponentPayment()}
+                    disabled={processingPay || creatingSession || !elementReady}
+                    className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>
+                      {processingPay || creatingSession
+                        ? "Sending UPI Collect Request..."
+                        : `Verify & Pay ₹${Number(amount).toLocaleString("en-IN")} via UPI ID`}
+                    </span>
+                  </button>
                 </div>
               )}
 
-              {/* TAB 2: SCAN UPI QR CODE (upiQr custom element) */}
+              {/* TAB 2: SCAN UPI QR CODE (Isolated upiQr custom element) */}
               {activeTab === "UPI_QR" && (
                 <div className="flex flex-col sm:flex-row items-center gap-6 py-2">
-                  <div className="p-3 rounded-2xl border-2 border-slate-200 bg-white shadow-xs flex items-center justify-center min-w-[230px] min-h-[230px]">
+                  <div className="p-3 rounded-2xl border-2 border-slate-200 bg-white shadow-xs flex items-center justify-center min-w-[240px] min-h-[240px]">
                     <div
                       id="cf-inline-upi-qr"
                       className="flex items-center justify-center"
@@ -944,22 +1021,83 @@ export default function CashfreeCheckoutModal({
                       Scan with Google Pay, PhonePe, Paytm or any UPI App
                     </h4>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Open any UPI app on your mobile phone and scan this QR code. The page will automatically detect payment completion via Cashfree webhook.
+                      Open any UPI app on your mobile phone and scan this QR code. Even if you close this tab after paying, the Cashfree webhook automatically updates the Bahi-Khata ledger.
                     </p>
                     <button
                       type="button"
                       onClick={() => executeComponentPayment()}
                       disabled={processingPay || creatingSession}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-semibold transition-colors"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-semibold transition-colors cursor-pointer"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Refresh / Load QR Code</span>
+                      <span>Generate / Refresh QR Code</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* TAB 3: DEBIT / CREDIT CARD (cardNumber, cardHolder, cardExpiry, cardCvv, savePaymentInstrument) */}
+              {/* TAB 3: UPI APPS (Isolated single upiApp custom element) */}
+              {activeTab === "UPI_APP" && (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Select Your Preferred UPI App
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Choose a UPI application below to mount its dedicated Cashfree UPI intent element:
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {UPI_APPS.map((app) => {
+                      const isSelected = selectedUpiApp === app.id;
+                      return (
+                        <button
+                          key={app.id}
+                          type="button"
+                          onClick={() => setSelectedUpiApp(app.id)}
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-slate-900 bg-slate-900 text-white font-bold"
+                              : "border-slate-200 bg-slate-50/70 text-slate-800 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{app.label}</div>
+                          <div
+                            className={`text-[10px] mt-0.5 ${
+                              isSelected ? "text-slate-300" : "text-slate-500"
+                            }`}
+                          >
+                            {app.sub}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 space-y-2.5">
+                    <div
+                      id="cf-inline-upi-app-single"
+                      className="w-full min-h-[50px] rounded-xl border border-slate-300 bg-slate-50 p-1.5 flex items-center justify-center"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => executeComponentPayment()}
+                      disabled={processingPay || creatingSession}
+                      className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>
+                        {processingPay || creatingSession
+                          ? "Launching UPI App Authorization..."
+                          : `Proceed with ${UPI_APPS.find((a) => a.id === selectedUpiApp)?.label || "UPI App"} (₹${Number(amount).toLocaleString("en-IN")})`}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: DEBIT / CREDIT CARD (cardNumber, cardHolder, cardExpiry, cardCvv, savePaymentInstrument) */}
               {activeTab === "CARD" && (
                 <div className="space-y-3.5">
                   <div className="flex items-center justify-between">
@@ -1020,7 +1158,7 @@ export default function CashfreeCheckoutModal({
                     type="button"
                     onClick={() => executeComponentPayment()}
                     disabled={processingPay || creatingSession || !elementReady}
-                    className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>
@@ -1032,7 +1170,7 @@ export default function CashfreeCheckoutModal({
                 </div>
               )}
 
-              {/* TAB 4: NET BANKING (netbanking custom element) */}
+              {/* TAB 5: NET BANKING (netbanking custom element) */}
               {activeTab === "NETBANKING" && (
                 <div className="space-y-4">
                   <div>
@@ -1052,7 +1190,7 @@ export default function CashfreeCheckoutModal({
                           key={bank.code}
                           type="button"
                           onClick={() => setSelectedBankCode(bank.code)}
-                          className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
+                          className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
                             isSelected
                               ? "border-slate-900 bg-slate-900 text-white font-semibold"
                               : "border-slate-200 bg-slate-50/60 text-slate-800 hover:border-slate-300"
@@ -1091,7 +1229,7 @@ export default function CashfreeCheckoutModal({
                       type="button"
                       onClick={() => executeComponentPayment()}
                       disabled={processingPay || creatingSession}
-                      className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                     >
                       <Landmark className="w-3.5 h-3.5" />
                       <span>
@@ -1104,19 +1242,21 @@ export default function CashfreeCheckoutModal({
                 </div>
               )}
 
-              {/* TAB 5: MOBILE WALLETS (wallet custom element) */}
+              {/* TAB 6: MOBILE WALLETS (wallet custom element) */}
               {activeTab === "WALLET" && (
                 <div className="space-y-4">
                   <div>
                     <span className="text-xs font-bold text-slate-800 block mb-1">
                       Select Mobile Wallet Provider
                     </span>
-                    <p className="text-[11px] text-slate-500">
-                      Linked Mobile Number:{" "}
-                      <span className="font-mono font-semibold text-slate-700">
-                        {customerMobile || "9999999999"}
-                      </span>
-                    </p>
+                    {customerMobile && (
+                      <p className="text-[11px] text-slate-500">
+                        Registered Mobile Number:{" "}
+                        <span className="font-mono font-semibold text-slate-700">
+                          {customerMobile}
+                        </span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -1127,7 +1267,7 @@ export default function CashfreeCheckoutModal({
                           key={w.id}
                           type="button"
                           onClick={() => setSelectedWalletId(w.id)}
-                          className={`p-3 rounded-xl border text-left transition-all ${
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                             isSelected
                               ? "border-slate-900 bg-slate-900 text-white font-bold"
                               : "border-slate-200 bg-slate-50/60 text-slate-800 hover:border-slate-300"
@@ -1155,7 +1295,7 @@ export default function CashfreeCheckoutModal({
                       type="button"
                       onClick={() => executeComponentPayment()}
                       disabled={processingPay || creatingSession}
-                      className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                     >
                       <Wallet className="w-3.5 h-3.5" />
                       <span>

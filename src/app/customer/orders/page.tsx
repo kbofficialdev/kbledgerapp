@@ -431,7 +431,7 @@ export default function CustomerOrdersPage() {
                     <div>
                       <div className="text-xl font-black tracking-tight text-slate-900">KB KHATA & FASHIONS</div>
                       <div className="text-xs text-slate-600">Main Road, Tandoor, Dist: Mancherial, Telangana</div>
-                      <div className="text-xs text-slate-600">Support: support@kbkhata.in • +91 6303185141</div>
+                      <div className="text-xs text-slate-600">Support: kb.official.admin@gmail.com • +91 6303185141</div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-mono font-black px-2 py-0.5 bg-slate-100 border border-slate-300 inline-block">
