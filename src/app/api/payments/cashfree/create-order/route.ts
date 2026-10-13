@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { cashfreeGateway } from "@/lib/cashfree";
 import { authGuard } from "@/lib/auth";
 import { sanitizeApiError } from "@/lib/api-error";
+import { PaymentTokenService } from "@/modules/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -185,12 +186,35 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Generate cryptographically signed checkout session token for dedicated checkout page
+    const token = PaymentTokenService.signCheckoutToken({
+      orderId: cfOrderId,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.mobile,
+      customerEmail: resolvedEmail,
+      amount: parsedAmount,
+      currency: cfResponse.order_currency || "INR",
+      orderType: effectiveOrderType,
+      paymentSessionId: cfResponse.payment_session_id,
+      gateway: "CASHFREE",
+      environment: cashfreeGateway.getEnvironment(),
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout/success?orderId=${encodeURIComponent(cfOrderId)}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout/failed?orderId=${encodeURIComponent(cfOrderId)}`,
+      notes: effectiveNote,
+      ttlSeconds: 1200,
+    });
+
+    const checkoutUrl = `/checkout/pay?token=${encodeURIComponent(token)}`;
+
     return NextResponse.json({
       success: true,
       orderId: cfOrderId,
       order_id: cfOrderId,
       paymentSessionId: cfResponse.payment_session_id,
       payment_session_id: cfResponse.payment_session_id,
+      token,
+      checkoutUrl,
       cfOrderId,
       cf_order_id: cfResponse.cf_order_id || cfOrderId,
       amount: parsedAmount,

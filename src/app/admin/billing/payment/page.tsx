@@ -12,6 +12,7 @@ import {
   ChevronRight,
   IndianRupee,
   ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { CustomerAvatar } from "@/components/common/Avatars";
@@ -301,6 +302,65 @@ export default function BillingPaymentPage() {
     const created = await createCashfreeOrderSession();
     if (created) {
       setActivePaymentTab("CASHFREE_OPTIONS");
+    }
+  };
+
+  // Navigate to Dedicated Secure Checkout Page (/checkout/pay) with cryptographic token
+  const handleProceedToSecureCheckout = async () => {
+    try {
+      setSubmitting(true);
+      const targetAmount = settlementOption === "CASHFREE_PARTIAL" ? paidAmount : draft.grandTotal;
+      if (targetAmount <= 0) {
+        throw new Error("Online payment amount must be greater than zero.");
+      }
+
+      const orderPayload = {
+        orderAmount: targetAmount,
+        orderCurrency: "INR",
+        customerDetails: {
+          customerId: draft.customerId,
+          customerName: draft.customerName,
+          customerPhone: draft.customerMobile,
+        },
+        billingDraft: {
+          villageId: draft.villageId,
+          customerId: draft.customerId,
+          items: draft.items,
+          paymentType: settlementOption === "CASHFREE_PARTIAL" ? "PARTIAL" : "DEBIT",
+          paidAmount: targetAmount,
+          notes: draft.notes,
+        },
+        orderMeta: {
+          orderType: "COUNTER_BILL",
+          billingDraft: {
+            villageId: draft.villageId,
+            customerId: draft.customerId,
+            items: draft.items,
+            paymentType: settlementOption === "CASHFREE_PARTIAL" ? "PARTIAL" : "DEBIT",
+            paidAmount: targetAmount,
+            notes: draft.notes,
+          },
+          notes: `Counter bill for ${draft.customerName} - ${draft.items.length} items (${settlementOption === "CASHFREE_PARTIAL" ? "Partial" : "Full"})`,
+        },
+      };
+
+      const res = await fetch("/api/payments/cashfree/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderPayload),
+      });
+
+      const data = await res.json();
+      if (!data.success || (!data.checkoutUrl && !data.token)) {
+        throw new Error(data.error || "Failed to initialize secure checkout session");
+      }
+
+      const checkoutUrl = data.checkoutUrl || `/checkout/pay?token=${encodeURIComponent(data.token)}`;
+      router.push(checkoutUrl);
+    } catch (err: any) {
+      toast.authError(err.message || "Failed to initialize checkout session", "Checkout Error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -638,24 +698,37 @@ export default function BillingPaymentPage() {
                   </div>
 
                   {settlementOption === "CASHFREE_GATEWAY" && (
-                    <div className="mt-3 pt-3 border-t border-amber-200 flex items-center justify-between gap-3">
+                    <div className="mt-3 pt-3 border-t border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <span className="text-xs text-amber-900 font-medium">
-                        Ready to open Cashfree Custom Elements in the next tab
+                        Instant digital settlement via UPI QR, GPay/PhonePe, Cards or NetBanking
                       </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenCashfreeTab();
-                        }}
-                        disabled={submitting}
-                        className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        <span>
-                          {submitting ? "Initializing Gateway..." : "Open Payment Options Tab"}
-                        </span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProceedToSecureCheckout();
+                          }}
+                          disabled={submitting}
+                          className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>
+                            {submitting ? "Securing Session..." : "Open Dedicated Checkout Page →"}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenCashfreeTab();
+                          }}
+                          disabled={submitting}
+                          className="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
+                        >
+                          <span>Pay in Tab Below</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -721,7 +794,23 @@ export default function BillingPaymentPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProceedToSecureCheckout();
+                          }}
+                          disabled={submitting}
+                          className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>
+                            {submitting
+                              ? "Securing Session..."
+                              : `Open Dedicated Checkout Page (${formatCurrency(paidAmount)}) →`}
+                          </span>
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -729,14 +818,9 @@ export default function BillingPaymentPage() {
                             handleOpenCashfreeTab();
                           }}
                           disabled={submitting}
-                          className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                          className="px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold"
                         >
-                          <span>
-                            {submitting
-                              ? "Initializing Gateway..."
-                              : `Open Payment Options Tab (${formatCurrency(paidAmount)})`}
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span>Pay in Tab Below</span>
                         </button>
                       </div>
                     </div>

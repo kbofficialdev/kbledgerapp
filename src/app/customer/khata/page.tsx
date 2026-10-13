@@ -222,6 +222,45 @@ export default function CustomerKhataPage() {
     }
   };
 
+  const handleProceedToSecureCheckout = async () => {
+    if (!customer || effectivePaymentAmount <= 0) return;
+    try {
+      setSubmittingPayment(true);
+      const res = await fetch("/api/payments/cashfree/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderAmount: effectivePaymentAmount,
+          orderCurrency: "INR",
+          orderIds: selectedOrderIds,
+          customerDetails: {
+            customerId: customer.id,
+            customerName: customer.name,
+            customerPhone: customer.mobile,
+          },
+          orderMeta: {
+            orderType: "KHATA_SETTLEMENT",
+            orderIds: selectedOrderIds,
+            notes: `Khata settlement of ${selectedOrderIds.length} orders by ${customer.name}`,
+          },
+        }),
+      });
+
+      const orderData = await res.json();
+      if (!orderData.success || (!orderData.checkoutUrl && !orderData.token)) {
+        throw new Error(orderData.error || "Failed to initialize dedicated checkout session.");
+      }
+
+      const checkoutUrl =
+        orderData.checkoutUrl || `/checkout/pay?token=${encodeURIComponent(orderData.token)}`;
+      router.push(checkoutUrl);
+    } catch (err: any) {
+      toast.authError(err.message || "Could not connect to Cashfree Gateway.", "Gateway Error");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
   // Handle Cashfree Success Callback
   const handleCashfreeSuccess = async (cfOrderId: string, cfPaymentId?: string) => {
     setCashfreeTabActive(false);
@@ -549,14 +588,28 @@ export default function CustomerKhataPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-end pt-1">
+                  <div className="flex flex-wrap items-center justify-end gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleProceedToSecureCheckout}
+                      disabled={submittingPayment || effectivePaymentAmount <= 0}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>
+                        {submittingPayment
+                          ? "Securing Checkout Session..."
+                          : `Dedicated Checkout Page (${formatCurrency(effectivePaymentAmount)}) →`}
+                      </span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setCashfreeTabActive(true)}
-                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+                      disabled={submittingPayment || effectivePaymentAmount <= 0}
+                      className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                     >
                       <BrandCashfreeIcon className="w-4 h-4" />
-                      <span>Proceed to Cashfree Payment Options Tab ({formatCurrency(effectivePaymentAmount)}) →</span>
+                      <span>Pay via In-Page Tab →</span>
                     </button>
                   </div>
                 </div>

@@ -222,6 +222,48 @@ function CustomerPayContent() {
     }
   };
 
+  const handleProceedToSecureCheckout = async () => {
+    try {
+      setInitiating(true);
+      const targetOrderIds =
+        payMode === "ORDER_SELECT"
+          ? selectedOrderIds
+          : profile.unpaidOrders.map((o) => o.id);
+
+      const res = await fetch("/api/payments/cashfree/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderAmount: payableAmount,
+          orderCurrency: "INR",
+          orderIds: targetOrderIds,
+          customerDetails: {
+            customerId: profile.id,
+            customerName: profile.name,
+            customerPhone: profile.mobile,
+          },
+          orderMeta: {
+            orderType: "KHATA_SETTLEMENT",
+            orderIds: targetOrderIds,
+            notes: `Self-serve Udhaar payment by ${profile.name} (${profile.customerCode})`,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success || (!data.checkoutUrl && !data.token)) {
+        throw new Error(data.error || "Failed to initialize checkout session");
+      }
+
+      const checkoutUrl = data.checkoutUrl || `/checkout/pay?token=${encodeURIComponent(data.token)}`;
+      router.push(checkoutUrl);
+    } catch (err: any) {
+      toast.authError(err.message, "Gateway Error");
+    } finally {
+      setInitiating(false);
+    }
+  };
+
   const handleCashfreeSuccess = async (cfOrderId: string, cfPaymentId?: string) => {
     toast.info("Verifying transaction with banking network...", "Processing");
 
@@ -601,15 +643,30 @@ function CustomerPayContent() {
 
               <button
                 type="button"
+                onClick={handleProceedToSecureCheckout}
+                disabled={initiating || payableAmount <= 0}
+                className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>
+                  {initiating
+                    ? "Securing Checkout Session..."
+                    : `Proceed to Dedicated Checkout Page (${formatCurrency(payableAmount)})`}
+                </span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
                 onClick={handleOpenCashfreeTab}
                 disabled={initiating || payableAmount <= 0}
-                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <BrandCashfreeIcon className="w-4 h-4" />
                 <span>
                   {initiating
                     ? "Initializing Cashfree Gateway..."
-                    : `Open Cashfree Payment Options Tab (${formatCurrency(payableAmount)})`}
+                    : `Pay via In-Page Tab (${formatCurrency(payableAmount)})`}
                 </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
