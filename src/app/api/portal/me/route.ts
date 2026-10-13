@@ -61,6 +61,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Your account is blacklisted/deactivated. Please contact KB Khata administration." },
+        { status: 403 }
+      );
+    }
+
     const formattedCustomer = {
       id: customer.id,
       name: customer.name,

@@ -5,6 +5,7 @@ import { sendCustomerWelcomeEmail } from "@/lib/email";
 import { requireAdminSession } from "@/lib/auth-session";
 import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
+import { CustomerService } from "@/modules/customers";
 
 export const dynamic = "force-dynamic";
 
@@ -18,66 +19,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim() || "";
     const villageId = searchParams.get("villageId")?.trim() || "";
-    const filter = searchParams.get("filter")?.trim() || ""; // "with_balance", "zero_balance", "blacklisted", "all"
+    const status = (searchParams.get("status") || searchParams.get("filter") || "all").toLowerCase().trim();
 
-    const whereClause: any = {
-      ...(filter === "blacklisted"
-        ? { isActive: false }
-        : filter === "all"
-          ? {}
-          : { isActive: true }),
-      ...(villageId ? { villageId } : {}),
-      ...(search
-        ? {
-            OR: [
-              { name: { contains: search, mode: "insensitive" } },
-              { customerCode: { contains: search, mode: "insensitive" } },
-              { mobile: { contains: search } },
-              { altMobile: { contains: search } },
-              { email: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    };
-
-    if (filter === "with_balance") {
-      whereClause.currentBalance = { gt: 0 };
-    } else if (filter === "zero_balance") {
-      whereClause.currentBalance = { lte: 0 };
-    }
-
-    const customers = await prisma.customer.findMany({
-      where: whereClause,
-      include: {
-        village: {
-          select: { id: true, name: true, code: true },
-        },
-        _count: {
-          select: { orders: true, payments: true, ledgerEntries: true },
-        },
-      },
-      orderBy: { name: "asc" },
+    const formattedCustomers = await CustomerService.getInstance().getCustomers({
+      status,
+      villageId,
+      search,
     });
-
-    const formattedCustomers = customers.map((c) => ({
-      id: c.id,
-      customerCode: c.customerCode,
-      name: c.name,
-      mobile: c.mobile,
-      altMobile: c.altMobile,
-      email: c.email,
-      address: c.address,
-      villageId: c.villageId,
-      villageName: c.village.name,
-      villageCode: c.village.code,
-      creditLimit: Number(c.creditLimit),
-      currentBalance: Number(c.currentBalance),
-      notes: c.notes,
-      isActive: c.isActive,
-      orderCount: c._count.orders,
-      paymentCount: c._count.payments,
-      createdAt: c.createdAt,
-    }));
 
     return NextResponse.json({ success: true, customers: formattedCustomers });
   } catch (error: any) {

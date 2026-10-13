@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession, requireCustomerSession } from "@/lib/auth-session";
 import { reconcilePendingCashfreePayments } from "@/lib/cashfree-reconcile";
 import { sanitizeApiError } from "@/lib/api-error";
+import { CustomerService } from "@/modules/customers";
 
 export const dynamic = "force-dynamic";
 
@@ -245,9 +246,8 @@ export async function PATCH(
 
 /**
  * DELETE /api/customers/[id]
- * Permanently deletes the customer and all associated orders, payments, ledger entries,
- * support tickets, and active sessions from PostgreSQL so they completely disappear from
- * ledgers, customer lists, and cannot log in.
+ * Safely deactivates & blacklists the customer without wiping historical orders or ledgers.
+ * Immediately revokes active login sessions and bans login and checkout actions.
  */
 export async function DELETE(
   req: NextRequest,
@@ -257,80 +257,20 @@ export async function DELETE(
     const auth = await requireAdminSession(req);
     if (!auth.authorized) return auth.response!;
 
-    const customer = await prisma.customer.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!customer) {
-      return NextResponse.json(
-        { success: false, error: "Customer not found" },
-        { status: 404 }
-      );
-    }
-
-    await prisma.$transaction(async (tx) => {
-      // 1. Revoke & delete any active sessions for this customer
-      await tx.activeSession.deleteMany({
-        where: { identifier: params.id },
-      });
-
-      // 2. Delete support ticket messages & tickets
-      const tickets = await tx.supportTicket.findMany({
-        where: { customerId: params.id },
-        select: { id: true },
-      });
-      if (tickets.length > 0) {
-        await tx.ticketMessage.deleteMany({
-          where: { ticketId: { in: tickets.map((t) => t.id) } },
-        });
-        await tx.supportTicket.deleteMany({
-          where: { customerId: params.id },
-        });
-      }
-
-      // 3. Delete transaction audit logs
-      await tx.transactionAudit.deleteMany({
-        where: { customerId: params.id },
-      });
-
-      // 4. Delete ledger entries
-      await tx.ledgerEntry.deleteMany({
-        where: { customerId: params.id },
-      });
-
-      // 5. Delete payments
-      await tx.payment.deleteMany({
-        where: { customerId: params.id },
-      });
-
-      // 6. Delete order line items & orders
-      const orders = await tx.order.findMany({
-        where: { customerId: params.id },
-        select: { id: true },
-      });
-      if (orders.length > 0) {
-        await tx.orderItem.deleteMany({
-          where: { orderId: { in: orders.map((o) => o.id) } },
-        });
-        await tx.order.deleteMany({
-          where: { customerId: params.id },
-        });
-      }
-
-      // 7. Delete customer profile permanently
-      await tx.customer.delete({
-        where: { id: params.id },
-      });
-    });
+    const deactivated = await CustomerService.getInstance().deactivateCustomer(
+      params.id,
+      "Administrative deactivation/blacklisting"
+    );
 
     return NextResponse.json({
       success: true,
-      deletedId: params.id,
-      message: `Customer "${customer.name}" and all associated ledger/order records permanently deleted.`,
+      deactivatedId: params.id,
+      customer: deactivated,
+      message: `Customer "${deactivated.name}" has been safely deactivated & blacklisted. Database history and audit ledgers preserved.`,
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: sanitizeApiError(error, "Failed to delete customer account.") },
+      { success: false, error: sanitizeApiError(error, "Failed to deactivate customer account.") },
       { status: 500 }
     );
   }

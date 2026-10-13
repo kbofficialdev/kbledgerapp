@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
     // Find customer by mobile or email
     const customer = await prisma.customer.findFirst({
       where: {
-        isActive: true,
         OR: [
           { mobile: cleanInput },
           { email: { equals: cleanInput, mode: "insensitive" } },
@@ -32,6 +31,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "No customer account found with this mobile/email. Please verify or contact KB Khata store." },
         { status: 404 }
+      );
+    }
+
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { error: "This customer account is deactivated/blacklisted. Access denied. Please contact KB Khata administration." },
+        { status: 403 }
       );
     }
 

@@ -92,6 +92,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Cannot create support tickets for a deactivated or blacklisted customer account." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { subject, category = "GENERAL", priority = "MEDIUM", message } = body;
 

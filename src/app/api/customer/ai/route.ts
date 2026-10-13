@@ -76,6 +76,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Your account is blacklisted/deactivated. AI assistant services are disabled." },
+        { status: 403 }
+      );
+    }
+
     // 2. Build live customer financial summary
     const outstandingUdhaar = Number(customer.currentBalance);
     const creditLimit = Number(customer.creditLimit);

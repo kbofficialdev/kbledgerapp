@@ -166,6 +166,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Cannot create bills or orders for a blacklisted or disabled customer account." },
+        { status: 403 }
+      );
+    }
+
     const result = await executeAcidOrderCreation({
       villageId,
       customerId,

@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
 
     const customer = await prisma.customer.findFirst({
       where: {
-        isActive: true,
         OR: [
           { mobile: cleanInput },
           { email: { equals: cleanInput, mode: "insensitive" } },
@@ -28,8 +27,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!customer || !customer.email) {
-      return NextResponse.json({ error: "Customer not found or email not registered." }, { status: 404 });
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found." }, { status: 404 });
+    }
+
+    if (!customer.isActive) {
+      return NextResponse.json(
+        { error: "This customer account is deactivated/blacklisted. Access denied. Please contact KB Khata administration." },
+        { status: 403 }
+      );
+    }
+
+    if (!customer.email) {
+      return NextResponse.json({ error: "Customer email is not registered for verification." }, { status: 400 });
     }
 
     // Verify OTP against email

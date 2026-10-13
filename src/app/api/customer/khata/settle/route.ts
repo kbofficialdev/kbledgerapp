@@ -21,6 +21,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { prisma } = await import("@/lib/prisma");
+    const customer = await prisma.customer.findUnique({
+      where: { id: session.customerId },
+      select: { id: true, isActive: true },
+    });
+
+    if (!customer || !customer.isActive) {
+      return NextResponse.json(
+        { success: false, error: "Your account is blacklisted/deactivated. Operation not permitted." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       orderIds,

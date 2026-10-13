@@ -859,8 +859,8 @@ function CombinedCustomersContent() {
                             type="button"
                             onClick={() => setDeletingCustomer(c)}
                             disabled={submitting}
-                            title="Permanently Delete Customer & All Ledger Records"
-                            className="px-2 py-1 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold transition-colors flex items-center gap-1"
+                            title="Deactivate & Blacklist Customer (Preserves Database Records)"
+                            className="px-2 py-1 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -1182,14 +1182,14 @@ function CombinedCustomersContent() {
         </div>
       )}
 
-      {/* 7. PERMANENT DELETE CUSTOMER CONFIRMATION MODAL */}
+      {/* 7. SAFE DEACTIVATION & BLACKLIST CONFIRMATION MODAL */}
       {deletingCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl border border-rose-200 shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-rose-100 pb-3">
               <h3 className="text-base font-bold text-rose-700 flex items-center gap-2">
-                <Trash2 className="w-5 h-5 text-rose-600" />
-                Permanently Delete Customer Account
+                <Ban className="w-5 h-5 text-rose-600" />
+                Deactivate & Blacklist Customer Account
               </h3>
               <button
                 onClick={() => setDeletingCustomer(null)}
@@ -1201,14 +1201,17 @@ function CombinedCustomersContent() {
 
             <div className="space-y-2 text-xs text-slate-700">
               <p>
-                Are you sure you want to permanently delete{" "}
+                Are you sure you want to deactivate and blacklist{" "}
                 <strong className="text-slate-900">{deletingCustomer.name}</strong> (
                 <span className="font-mono">{deletingCustomer.customerCode}</span>)?
               </p>
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 space-y-1">
-                <div className="font-bold">Warning: Permanent Database Removal</div>
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Database Protection Guarantee
+                </div>
                 <p>
-                  This will permanently remove the customer, their login credentials, all orders, payments, and ledger entries from PostgreSQL. If you only want to restrict their access and hide them from active ledgers, use <strong>Blacklist</strong> instead.
+                  This account will be banned from logging in and hidden from active sales & ledger calculations. <strong>All historical orders, payments, bills, and accounting records are permanently preserved in PostgreSQL for compliance.</strong>
                 </p>
               </div>
             </div>
@@ -1217,7 +1220,7 @@ function CombinedCustomersContent() {
               <button
                 type="button"
                 onClick={() => setDeletingCustomer(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold"
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold cursor-pointer"
               >
                 Cancel
               </button>
@@ -1225,9 +1228,9 @@ function CombinedCustomersContent() {
                 type="button"
                 onClick={handleConfirmDeleteCustomer}
                 disabled={submitting}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
               >
-                {submitting ? "Deleting..." : "Delete Permanently"}
+                {submitting ? "Deactivating..." : "Deactivate & Blacklist Account"}
               </button>
             </div>
           </div>

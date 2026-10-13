@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
         where: { customerCode: entry.customerCode },
       });
 
-      if (!customer) {
-        continue; // Skip unrecognized customer codes
+      if (!customer || !customer.isActive) {
+        continue; // Skip unrecognized or blacklisted/disabled customer accounts
       }
 
       const paymentRef = `COL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
