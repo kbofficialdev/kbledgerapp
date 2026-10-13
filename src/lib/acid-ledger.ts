@@ -201,6 +201,30 @@ export async function executeAcidOrderCreation(input: AcidOrderInput) {
         throw new Error("Customer not found.");
       }
 
+      // Idempotency guard: if Cashfree webhook already created the counter bill for this cashfreeOrderId
+      if (input.cashfreeOrderId) {
+        const existingCfPayment = await tx.payment.findUnique({
+          where: { cashfreeOrderId: input.cashfreeOrderId },
+        });
+        if (existingCfPayment && existingCfPayment.orderId && existingCfPayment.status === "SUCCESS") {
+          const existingOrder = await tx.order.findUnique({
+            where: { id: existingCfPayment.orderId },
+            include: { items: true },
+          });
+          if (existingOrder) {
+            await tx.$executeRawUnsafe(`RELEASE SAVEPOINT sp_order_init`);
+            const currentBal = roundCurrency(customer.currentBalance);
+            return {
+              order: existingOrder,
+              payment: existingCfPayment,
+              previousBalance: roundCurrency(currentBal - roundCurrency(existingOrder.creditAmount)),
+              newBalance: currentBal,
+              idempotent: true,
+            };
+          }
+        }
+      }
+
       const balanceBefore = roundCurrency(customer.currentBalance);
       const balanceAfterDebit = roundCurrency(balanceBefore + calculatedTotal);
       const balanceAfterFinal = roundCurrency(balanceBefore + finalCreditAmount);

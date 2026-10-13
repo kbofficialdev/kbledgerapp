@@ -425,3 +425,44 @@ body {
   color: #7dd3fc;
 }
 
+/* ============================================================================
+   Cashfree.js Custom Element State Classes
+   Configured per https://www.cashfree.com/docs/payments/online/element/customize
+   States: base, complete, empty, focus, invalid, disabled
+============================================================================ */
+.cf-kb-element-base {
+  padding: 2px 6px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  min-height: 44px;
+}
+
+.cf-kb-element-empty {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.cf-kb-element-focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+.cf-kb-element-complete {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.cf-kb-element-invalid {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.cf-kb-element-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f1f5f9;
+}
+
+

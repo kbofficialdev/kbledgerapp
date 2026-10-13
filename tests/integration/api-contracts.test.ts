@@ -230,6 +230,104 @@ export async function runApiContractTests(): Promise<TestSuiteResult> {
     }
   })();
 
+  // Test 7: Cashfree Webhook Midway-Drop & Pending Reconciliation Contract
+  await (async () => {
+    const start = performance.now();
+    try {
+      const getRes = await fetch(`${BASE_URL}/api/payments/cashfree/webhook?reconcilePending=true`, {
+        headers: authHeaders,
+      });
+      if (getRes.status !== 200) {
+        throw new Error(`Expected HTTP 200 on webhook reconcilePending, got ${getRes.status}`);
+      }
+      const getData = await getRes.json();
+      if (!getData.success || typeof getData.checked !== "number") {
+        throw new Error(`Unexpected webhook GET schema: ${JSON.stringify(getData)}`);
+      }
+
+      const postRes = await fetch(`${BASE_URL}/api/payments/cashfree/webhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "PAYMENT_USER_DROPPED_WEBHOOK",
+          data: {
+            order: { order_id: "CF_KB_MIDWAY_TEST_NONEXISTENT", order_amount: 500 },
+            payment: { payment_status: "USER_DROPPED" },
+          },
+        }),
+      });
+      if (postRes.status !== 200) {
+        throw new Error(`Expected HTTP 200 on PAYMENT_USER_DROPPED_WEBHOOK, got ${postRes.status}`);
+      }
+      const postData = await postRes.json();
+      if (!postData.received || postData.status !== "OK" || postData.eventType !== "PAYMENT_USER_DROPPED_WEBHOOK") {
+        throw new Error(`Unexpected webhook POST drop response: ${JSON.stringify(postData)}`);
+      }
+
+      tests.push({
+        name: "Cashfree Webhook System (reconcilePending & PAYMENT_USER_DROPPED_WEBHOOK)",
+        suite: "API Integration & Contracts",
+        category: "INTEGRATION",
+        passed: true,
+        durationMs: performance.now() - start,
+        details: `Verified webhook sweep (${getData.checked} pending checked) and midway drop handling.`,
+      });
+    } catch (e: any) {
+      tests.push({
+        name: "Cashfree Webhook System (reconcilePending & PAYMENT_USER_DROPPED_WEBHOOK)",
+        suite: "API Integration & Contracts",
+        category: "INTEGRATION",
+        passed: false,
+        durationMs: performance.now() - start,
+        error: e.message,
+      });
+    }
+  })();
+
+  // Test 8: ChatGPT-Style Natural Prompt Artifact Generation (POST /api/admin/ai)
+  await (async () => {
+    const start = performance.now();
+    try {
+      const res = await fetch(`${BASE_URL}/api/admin/ai`, {
+        method: "POST",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: "Generate a PDF ledger audit report and visual chart for the store",
+        }),
+      });
+      if (res.status !== 200) {
+        throw new Error(`Expected HTTP 200 from /api/admin/ai, got ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data.success || !Array.isArray(data.artifacts) || data.artifacts.length === 0) {
+        throw new Error(`Expected automatic artifacts from natural prompt, got: ${JSON.stringify(data).slice(0, 150)}`);
+      }
+      const hasPdf = data.artifacts.some((a: any) => a.type === "pdf" && a.dataUrl);
+      const hasImage = data.artifacts.some((a: any) => a.type === "image" && a.dataUrl);
+      if (!hasPdf || !hasImage) {
+        throw new Error(`Expected both PDF and Image artifacts from natural prompt, got types: ${data.artifacts.map((a: any) => a.type).join(",")}`);
+      }
+
+      tests.push({
+        name: "POST /api/admin/ai natural-prompt PDF & Chart auto-generation (ChatGPT style)",
+        suite: "API Integration & Contracts",
+        category: "INTEGRATION",
+        passed: true,
+        durationMs: performance.now() - start,
+        details: `Auto-generated ${data.artifacts.length} artifacts (PDF + SVG Chart) directly from natural prompt.`,
+      });
+    } catch (e: any) {
+      tests.push({
+        name: "POST /api/admin/ai natural-prompt PDF & Chart auto-generation (ChatGPT style)",
+        suite: "API Integration & Contracts",
+        category: "INTEGRATION",
+        passed: false,
+        durationMs: performance.now() - start,
+        error: e.message,
+      });
+    }
+  })();
+
   const passed = tests.filter((t) => t.passed).length;
   return {
     suite: "API Integration & Contracts",

@@ -90,6 +90,7 @@ export default function CustomerKhataPage() {
   const fetchKhata = async () => {
     try {
       setLoading(true);
+      await fetch("/api/payments/cashfree/webhook?reconcilePending=true").catch(() => {});
       const res = await fetch("/api/customer/me");
       if (res.status === 401) {
         toast.authError("Session expired. Please log in.", "Session Closed");
@@ -182,6 +183,8 @@ export default function CustomerKhataPage() {
           customerEmail: customer.email || "support@kbkhata.in",
         },
         orderMeta: {
+          orderType: "KHATA_SETTLEMENT",
+          orderIds: selectedOrderIds,
           notes: `Khata settlement of ${selectedOrderIds.length} orders by ${customer.name}`,
         },
       };

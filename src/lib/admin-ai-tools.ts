@@ -1283,7 +1283,11 @@ export function detectRequestedToolsFromPrompt(
   const detected: Array<{ toolName: string; args: Record<string, any> }> = [];
 
   // 1. PDF Generation Intent
-  if (/\b(pdf|statement pdf|ledger pdf|download pdf|generate pdf|export pdf)\b/i.test(p)) {
+  if (
+    /\b(pdf|statement pdf|ledger pdf|download pdf|generate pdf|export pdf|create pdf|pdf report|make a pdf|dump pdf)\b/i.test(
+      p
+    )
+  ) {
     const reportType = /statement|customer/i.test(p)
       ? "CUSTOMER_STATEMENT"
       : /recovery|debtor/i.test(p)
@@ -1293,7 +1297,11 @@ export function detectRequestedToolsFromPrompt(
   }
 
   // 2. Excel Generation Intent
-  if (/\b(excel|xlsx|spreadsheet|workbook|csv|collection sheet|export sheet|generate excel)\b/i.test(p)) {
+  if (
+    /\b(excel|xlsx|spreadsheet|workbook|csv|collection sheet|export sheet|generate excel|download excel|make an excel)\b/i.test(
+      p
+    )
+  ) {
     const sheetType = /order|bill/i.test(p)
       ? "ORDERS_EXPORT"
       : /debtor|recovery/i.test(p)
@@ -1302,9 +1310,9 @@ export function detectRequestedToolsFromPrompt(
     detected.push({ toolName: "generate_excel_sheet", args: { sheetType } });
   }
 
-  // 3. Image / Visual / Chart / Poster Generation Intent
+  // 3. Image / Visual / Chart / Graph / Poster Generation Intent
   if (
-    /\b(generate image|create image|visual|infographic|poster|banner|chart image|draw chart|generate chart)\b/i.test(
+    /\b(generate image|create image|make an image|show image|visual|infographic|poster|banner|chart|graph|plot|diagram|bar chart|analytics chart)\b/i.test(
       p
     )
   ) {
@@ -1317,7 +1325,7 @@ export function detectRequestedToolsFromPrompt(
   }
 
   // 4. Send Email Intent
-  if (/\b(send email|send mail|email reminder|mail to|payment reminder mail|dispatch email)\b/i.test(p)) {
+  if (/\b(send email|send mail|send a mail|email reminder|mail to|payment reminder mail|dispatch email|draft email)\b/i.test(p)) {
     const emailMatch = prompt.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
     const recipientQuery = emailMatch ? emailMatch[1] : "KOKKULA BHAVITH KUMAR";
     detected.push({
@@ -1325,6 +1333,32 @@ export function detectRequestedToolsFromPrompt(
       args: {
         recipientQuery,
         subject: "[KB Fashions & Khata] Official Account Statement & Payment Reminder",
+      },
+    });
+  }
+
+  // 5. Create Village Intent
+  const villageMatch = prompt.match(/(?:create|add|new)\s+village\s+(?:named\s+|called\s+)?([A-Za-z\s]{2,25})/i);
+  if (villageMatch && villageMatch[1]) {
+    const vilName = villageMatch[1].replace(/\b(in|under|with|code|mandal|district)\b.*$/i, "").trim();
+    if (vilName.length >= 2) {
+      detected.push({
+        toolName: "create_village",
+        args: { name: vilName },
+      });
+    }
+  }
+
+  // 6. Register Customer Intent
+  const customerMatch = prompt.match(
+    /(?:register|add|create|new)\s+customer\s+([A-Za-z\s]{2,35}?)(?:\s+(?:mobile|phone|number|with)?\s*(\d{10}))/i
+  );
+  if (customerMatch && customerMatch[1] && customerMatch[2]) {
+    detected.push({
+      toolName: "register_customer",
+      args: {
+        name: customerMatch[1].trim(),
+        mobile: customerMatch[2].trim(),
       },
     });
   }

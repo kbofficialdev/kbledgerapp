@@ -66,6 +66,7 @@ function CustomerPayContent() {
     async function loadProfile() {
       try {
         setLoading(true);
+        await fetch("/api/payments/cashfree/webhook?reconcilePending=true").catch(() => {});
         const res = await fetch("/api/customer/me");
         if (res.status === 401) {
           toast.authError("Please log in to settle your Khata debt.", "Sign In Required");
@@ -149,6 +150,11 @@ function CustomerPayContent() {
       setInitiating(true);
       toast.info("Connecting to Cashfree Payments Gateway...", "Initializing Checkout");
 
+      const targetOrderIds =
+        payMode === "ORDER_SELECT"
+          ? selectedOrderIds
+          : profile.unpaidOrders.map((o) => o.id);
+
       const res = await fetch("/api/payments/cashfree/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -161,6 +167,8 @@ function CustomerPayContent() {
             customerPhone: profile.mobile,
           },
           orderMeta: {
+            orderType: "KHATA_SETTLEMENT",
+            orderIds: targetOrderIds,
             notes: `Self-serve Udhaar payment by ${profile.name} (${profile.customerCode})`,
           },
         }),
@@ -187,12 +195,21 @@ function CustomerPayContent() {
     toast.info("Verifying transaction with banking network...", "Processing");
 
     try {
-      const res = await fetch("/api/payments/cashfree/verify", {
+      const targetOrderIds =
+        payMode === "ORDER_SELECT"
+          ? selectedOrderIds
+          : profile.unpaidOrders.map((o) => o.id);
+
+      const res = await fetch("/api/customer/khata/settle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          order_id: cfOrderId,
-          cf_payment_id: cfPaymentId,
+          orderIds: targetOrderIds,
+          amount: payableAmount,
+          cashfreeOrderId: cfOrderId,
+          cashfreePaymentId: cfPaymentId,
+          paymentSessionId: cashfreeSessionId,
+          notes: `Self-serve Udhaar settlement via Cashfree Elements (${profile.customerCode})`,
         }),
       });
 

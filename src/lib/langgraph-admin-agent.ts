@@ -542,7 +542,7 @@ export async function runLangGraphAdminAgent(params: {
     const t0 = Date.now();
 
     if (state.explicitToolAction && state.toolMarkdownBlocks.length > 0) {
-      const fastAnswer = `${state.toolMarkdownBlocks.join("\n\n")}\n\n---\n**LangGraph State Verified**: ${state.metrics.totalVillages} Active Villages • ${state.metrics.totalCustomers} Customers • **₹${state.metrics.totalOutstandingUdhaar.toLocaleString("en-IN", { minimumFractionDigits: 2 })}** Total Outstanding Udhaar.`;
+      const fastAnswer = `${state.toolMarkdownBlocks.join("\n\n")}`;
       return {
         finalAnswer: fastAnswer,
         graphTrace: [
@@ -558,19 +558,19 @@ export async function runLangGraphAdminAgent(params: {
     }
 
     const systemPrompt = `
-You are the Custom LangGraph + LangChain Autonomous Operations Agent for "KB Fashions & Khata" (Tandoor, Mancherial Dist, Telangana), powered by the Google Gemini LLM Brain.
-You are connected to the live PostgreSQL database and equipped with 9 LangChain DynamicStructuredTools (PDF Report Generator, Excel Workbook Exporter, High-Res Visual Chart Renderer, Gmail SMTP Dispatcher, Village Creator, Customer Registrar, Order Bill Creator, Payment Collector, and Support Ticket Manager).
+You are the AI Assistant for "KB Fashions & Khata" (Tandoor, Mancherial Dist, Telangana).
+You are connected to the live store database and can generate PDF reports, Excel workbooks, visual charts/images, send store emails, and manage villages, customers, bills, payments, and support tickets directly when asked.
 
 Core Directives:
 1. Ground every single number, customer balance, village name, and order reference in the LIVE STORE DATABASE CONTEXT provided.
-2. Format answers with clean Markdown headings, bold figures, rupee symbols (₹), and structured tables where helpful.
-3. If tools were executed in this turn, highlight the generated artifacts or database updates clearly.
+2. Format answers naturally and concisely like ChatGPT using clean Markdown headings, bold figures, rupee symbols (₹), and structured tables where helpful.
+3. Do NOT mention internal framework names (like LangGraph, LangChain, StateGraph, or tool function names) in your response. If a file, chart, or image was generated, present it naturally.
 4. Support English, Hinglish, and Telugu (తెలుగు) seamlessly.
 `;
 
     const toolExecutionContext =
       state.toolSteps.length > 0
-        ? `\n\n=== LANGCHAIN TOOLS EXECUTED IN THIS TURN ===\n${state.toolSteps.map((s) => `- Tool ${s.toolName} (${s.status} in ${s.durationMs}ms): ${s.summary}`).join("\n")}\n`
+        ? `\n\n=== COMPLETED ACTIONS IN THIS TURN ===\n${state.toolSteps.map((s) => `- ${s.label}: ${s.summary}`).join("\n")}\n`
         : "";
 
     let synthesizedText = "";

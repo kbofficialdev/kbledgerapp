@@ -69,6 +69,7 @@ export default function BillingPaymentPage() {
   const [cashfreeOrderId, setCashfreeOrderId] = useState<string | null>(null);
 
   useEffect(() => {
+    fetch("/api/payments/cashfree/webhook?reconcilePending=true").catch(() => {});
     // Guard check: verify active billing slip exists in sessionStorage
     try {
       const stored = sessionStorage.getItem("kb_active_billing_slip");
@@ -217,7 +218,7 @@ export default function BillingPaymentPage() {
         throw new Error("Online payment amount must be greater than zero.");
       }
 
-      // Create Cashfree Order via backend endpoint
+      // Create Cashfree Order via backend endpoint with full billingDraft for webhook midway recovery
       const orderPayload = {
         orderAmount: targetAmount,
         orderCurrency: "INR",
@@ -227,6 +228,15 @@ export default function BillingPaymentPage() {
           customerPhone: draft.customerMobile,
         },
         orderMeta: {
+          orderType: "COUNTER_BILL",
+          billingDraft: {
+            villageId: draft.villageId,
+            customerId: draft.customerId,
+            items: draft.items,
+            paymentType: settlementOption === "CASHFREE_PARTIAL" ? "PARTIAL" : "DEBIT",
+            paidAmount: targetAmount,
+            notes: draft.notes,
+          },
           notes: `Counter bill for ${draft.customerName} - ${draft.items.length} items (${settlementOption === "CASHFREE_PARTIAL" ? "Partial" : "Full"})`,
         },
       };
