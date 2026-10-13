@@ -53,7 +53,6 @@ export async function POST(
       message: `Account credentials sent successfully to ${customer.email}`,
     });
   } catch (error: any) {
-    console.error("[Resend Credentials Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to resend credentials. Please verify store email settings.") },
       { status: 500 }

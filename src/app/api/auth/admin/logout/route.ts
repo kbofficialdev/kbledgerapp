@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error("[Admin Logout Error]:", error);
     return NextResponse.json({ success: true, message: "Logged out locally" });
   }
 }

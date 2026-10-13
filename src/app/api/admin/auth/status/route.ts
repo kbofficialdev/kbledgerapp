@@ -23,7 +23,6 @@ export async function GET(req: NextRequest) {
       hasEnrolledAdmin: Boolean(admin),
     });
   } catch (error: any) {
-    console.error("[Admin Auth Status Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to verify admin status.") },
       { status: 500 }

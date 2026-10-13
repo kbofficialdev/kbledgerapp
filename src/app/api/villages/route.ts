@@ -60,7 +60,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, villages: villagesWithMetrics });
   } catch (error: any) {
-    console.error("Error fetching villages:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch villages.") },
       { status: 500 }
@@ -110,7 +109,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, village }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating village:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to create village.") },
       { status: 500 }

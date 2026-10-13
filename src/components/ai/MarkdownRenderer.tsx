@@ -22,7 +22,6 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       });
       return marked.parse(content || "") as string;
     } catch (e) {
-      console.error("Markdown parse error:", e);
       return content || "";
     }
   }, [content]);

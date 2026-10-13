@@ -73,7 +73,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, customers: formattedCustomers });
   } catch (error: any) {
-    console.error("Error fetching customers:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch customers.") },
       { status: 500 }
@@ -234,12 +233,11 @@ export async function POST(req: NextRequest) {
         mobile: customer.mobile,
         initialBalance: initBal,
         portalUrl,
-      }).catch((err) => console.error("[Auto Email Error]:", err));
+      }).catch(() => {});
     }
 
     return NextResponse.json({ success: true, customer }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating customer:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to create customer. Please ensure mobile/email are valid and unique.") },
       { status: 500 }

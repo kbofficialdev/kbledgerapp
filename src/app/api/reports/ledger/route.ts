@@ -108,7 +108,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Error fetching ledger reports:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to generate ledger report.") },
       { status: 500 }

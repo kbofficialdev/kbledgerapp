@@ -122,7 +122,6 @@ Your Duties:
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.warn(`[Gemini API] Model ${model} returned error:`, errorData?.error?.message || response.statusText);
         lastError = new Error(errorData?.error?.message || `HTTP ${response.status}`);
         continue; // Try next model
       }
@@ -133,16 +132,11 @@ Your Duties:
         return text;
       }
     } catch (err) {
-      console.warn(`[Gemini API] Request failed for model ${model}:`, err);
       lastError = err;
     }
   }
 
   // Graceful degradation: Log internal error to server console, but NEVER leak raw quota errors to users
-  console.warn(
-    "[Gemini API] External AI models throttled or unavailable. Providing graceful grounded database response:",
-    lastError?.message
-  );
 
   if (dbContextSummary && dbContextSummary.trim()) {
     const isTelugu = /[\u0C00-\u0C7F]|బాకీ|బ్యాలెన్స్|చెల్లింపు|ఖాతా/i.test(prompt);

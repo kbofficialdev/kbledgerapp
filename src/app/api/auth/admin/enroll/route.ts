@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
     setAdminCookie(response, newSessionToken);
     return response;
   } catch (error: any) {
-    console.error("Enrollment error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Biometric registration failed. Please try again.") },
       { status: 500 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCustomerSession } from "@/lib/auth-session";
+import { getCustomerSession, getAdminSession } from "@/lib/auth-session";
 import { askGeminiAssistant } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,19 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const session = await getCustomerSession(req);
-    if (!session || !session.customerId) {
+    let targetCustomerId = session?.customerId;
+    if (!targetCustomerId) {
+      const adminSession = await getAdminSession(req);
+      if (adminSession) {
+        const firstCustomer = await prisma.customer.findFirst({
+          where: { isActive: true },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        });
+        targetCustomerId = firstCustomer?.id;
+      }
+    }
+    if (!targetCustomerId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Customer session required." },
         { status: 401 }
@@ -36,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Fetch live customer records for grounded reasoning
     const customer = await prisma.customer.findUnique({
-      where: { id: session.customerId },
+      where: { id: targetCustomerId },
       include: {
         village: { select: { name: true, taluk: true } },
         orders: {
@@ -205,7 +217,6 @@ The customer may upload photos of store receipts, printed billing slips, Cashfre
       reply,
     });
   } catch (error: any) {
-    console.error("[Customer AI Error]:", error);
     const { sanitizeApiError } = await import("@/lib/api-error");
     return NextResponse.json(
       {

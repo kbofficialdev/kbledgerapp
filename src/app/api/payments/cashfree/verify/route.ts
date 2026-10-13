@@ -93,7 +93,6 @@ export async function POST(req: NextRequest) {
       message: isPaid ? "Payment confirmed on Cashfree gateway." : `Order status: ${cfOrder.order_status}`,
     });
   } catch (error: any) {
-    console.error("[Cashfree Verify Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to verify payment status.") },
       { status: 500 }

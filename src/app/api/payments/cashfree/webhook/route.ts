@@ -208,7 +208,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status: "OK", received: true }, { status: 200 });
   } catch (error: any) {
-    console.error("[Cashfree Webhook Error]:", error);
     return NextResponse.json(
       { status: "ERROR", error: sanitizeApiError(error, "Failed to process webhook event.") },
       { status: 500 }
@@ -342,7 +341,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, status: "WEBHOOK_ACTIVE" });
   } catch (error: any) {
-    console.error("[Cashfree Webhook GET Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Webhook status check failed.") },
       { status: 500 }

@@ -57,7 +57,6 @@ function AdminContent() {
         setAdminStatus(data);
       }
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -74,7 +73,6 @@ function AdminContent() {
         setStreamActive(true);
       }
     } catch (err) {
-      console.warn("Camera could not be started:", err);
       setStreamActive(false);
     }
   };
@@ -160,7 +158,6 @@ function AdminContent() {
     try {
       await fetch("/api/auth/admin/logout", { method: "POST" });
     } catch (e) {
-      console.warn("Logout request failed:", e);
     }
     localStorage.removeItem("kb_admin_session");
     sessionStorage.clear();

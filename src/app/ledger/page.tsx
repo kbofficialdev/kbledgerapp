@@ -76,7 +76,7 @@ export default function LedgerPage() {
       .then((data) => {
         if (data.success) setVillages(data.villages);
       })
-      .catch(console.error);
+      .catch(() => {});
   }, []);
 
   const fetchLedger = async () => {
@@ -96,7 +96,6 @@ export default function LedgerPage() {
         setSummary(data.summary);
       }
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }

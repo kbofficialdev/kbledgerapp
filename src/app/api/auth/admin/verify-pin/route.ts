@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("[Admin Verify PIN Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to verify administrative PIN.") },
       { status: 500 }

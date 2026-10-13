@@ -103,6 +103,17 @@ export async function createAdminToken(
   return adminAuth.createToken(principal);
 }
 
+function isLoopbackAddress(ip?: string | null): boolean {
+  if (!ip) return true;
+  const trimmed = ip.trim().toLowerCase();
+  return (
+    trimmed === "127.0.0.1" ||
+    trimmed === "::1" ||
+    trimmed === "::ffff:127.0.0.1" ||
+    trimmed === "localhost"
+  );
+}
+
 /**
  * Verifies an Admin Session Token with optional IP binding enforcement
  * Delegates to AdminAuthService OOP singleton
@@ -121,10 +132,8 @@ export async function verifyAdminToken(
   if (
     clientIp &&
     res.principal.ipAddress &&
-    clientIp !== "127.0.0.1" &&
-    clientIp !== "::1" &&
-    res.principal.ipAddress !== "127.0.0.1" &&
-    res.principal.ipAddress !== "::1" &&
+    !isLoopbackAddress(clientIp) &&
+    !isLoopbackAddress(res.principal.ipAddress) &&
     clientIp !== res.principal.ipAddress
   ) {
     return { valid: false };
@@ -182,10 +191,8 @@ export async function verifyCustomerToken(
   if (
     clientIp &&
     res.principal.ipAddress &&
-    clientIp !== "127.0.0.1" &&
-    clientIp !== "::1" &&
-    res.principal.ipAddress !== "127.0.0.1" &&
-    res.principal.ipAddress !== "::1" &&
+    !isLoopbackAddress(clientIp) &&
+    !isLoopbackAddress(res.principal.ipAddress) &&
     clientIp !== res.principal.ipAddress
   ) {
     return { valid: false };

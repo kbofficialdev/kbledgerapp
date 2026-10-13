@@ -114,7 +114,6 @@ export default function AdminAnalyticalDashboard() {
           villageBreakdown: villageStats,
         });
       } catch (err) {
-        console.error("Dashboard data load error:", err);
       } finally {
         setLoading(false);
       }

@@ -98,7 +98,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, orders: formatted });
   } catch (error: any) {
-    console.error("Error fetching orders:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to load orders.") },
       { status: 500 }
@@ -193,7 +192,6 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error creating order:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to record order. Please verify input data and try again.") },
       { status: 500 }

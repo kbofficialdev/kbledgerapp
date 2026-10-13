@@ -468,7 +468,6 @@ export async function runLangGraphAdminAgent(params: {
           }));
         }
       } catch (err: any) {
-        console.warn("[LangGraph Agent Planner] ChatGoogleGenerativeAI tool binding fallback:", err?.message);
       }
     }
 

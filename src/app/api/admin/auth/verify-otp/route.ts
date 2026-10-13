@@ -115,7 +115,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error("[Admin Verify OTP Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to verify admin authentication. Please try again.") },
       { status: 500 }

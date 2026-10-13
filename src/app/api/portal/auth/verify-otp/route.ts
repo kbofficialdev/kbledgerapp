@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error("[Portal Verify OTP Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to verify authentication code. Please try again.") },
       { status: 500 }

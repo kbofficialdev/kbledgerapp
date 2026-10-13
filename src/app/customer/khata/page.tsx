@@ -158,16 +158,18 @@ export default function CustomerKhataPage() {
     }
   };
 
-  // Launch Cashfree Payment Checkout
-  const handleInitiateCashfree = async () => {
+  const createCashfreeSession = async (): Promise<{
+    paymentSessionId: string;
+    orderId: string;
+  } | null> => {
     if (selectedOrderIds.length === 0) {
       toast.authError("Please select at least one order to pay.", "No Order Selected");
-      return;
+      return null;
     }
 
     if (effectivePaymentAmount <= 0) {
       toast.authError("Payment amount must be greater than zero.", "Invalid Amount");
-      return;
+      return null;
     }
 
     try {
@@ -204,11 +206,24 @@ export default function CustomerKhataPage() {
       setCashfreeSessionId(orderData.payment_session_id);
       setCashfreeOrderId(orderData.order_id);
       setCashfreeModalOpen(true);
+      return {
+        paymentSessionId: orderData.payment_session_id,
+        orderId: orderData.order_id,
+      };
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message || "Could not connect to Cashfree Gateway.", "Gateway Error");
+      return null;
     } finally {
       setSubmittingPayment(false);
+    }
+  };
+
+  // Launch Cashfree Payment Checkout
+  const handleInitiateCashfree = async () => {
+    await createCashfreeSession();
+    const el = document.getElementById("kb-khata-inline-cashfree");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 
@@ -217,13 +232,14 @@ export default function CustomerKhataPage() {
     setCashfreeModalOpen(false);
     try {
       setSubmittingPayment(true);
+      const settledAmount = pendingPaymentAmount || effectivePaymentAmount;
 
       const settleRes = await fetch("/api/customer/khata/settle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderIds: selectedOrderIds,
-          amount: pendingPaymentAmount,
+          amount: settledAmount,
           cashfreeOrderId: cfOrderId,
           cashfreePaymentId: cfPaymentId,
           paymentSessionId: cashfreeSessionId,
@@ -234,7 +250,7 @@ export default function CustomerKhataPage() {
       const settleData = await settleRes.json();
       if (settleData.success) {
         toast.authSuccess(
-          `Payment of ${formatCurrency(pendingPaymentAmount)} received and reconciled!`,
+          `Payment of ${formatCurrency(settledAmount)} received and reconciled!`,
           "Settlement Complete"
         );
         setSelectedOrderIds([]);
@@ -243,7 +259,7 @@ export default function CustomerKhataPage() {
       } else {
         toast.authError(settleData.error || "Failed to record settlement.", "Ledger Error");
       }
-    } catch (err: any) {
+    } catch {
       toast.authError("Settlement update error.", "Network Error");
     } finally {
       setSubmittingPayment(false);
@@ -491,23 +507,19 @@ export default function CustomerKhataPage() {
                 </div>
               )}
 
-              {/* Action Button */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <div className="text-[11px] text-slate-500">
-                  Projected Customer Udhaar Balance:{" "}
-                  <strong className="text-slate-900 font-mono">{formatCurrency(projectedBalance)}</strong>
-                </div>
-
-                <button
-                  onClick={handleInitiateCashfree}
-                  disabled={submittingPayment || effectivePaymentAmount <= 0}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <BrandCashfreeIcon className="w-4 h-4" />
-                  <span>
-                    Pay {formatCurrency(effectivePaymentAmount)} via Cashfree PG
-                  </span>
-                </button>
+              {/* In-Page BookMyShow-Style Cashfree Custom Elements Panel */}
+              <div id="kb-khata-inline-cashfree" className="pt-2">
+                <CashfreeCheckoutModal
+                  isOpen={true}
+                  paymentSessionId={cashfreeSessionId || ""}
+                  orderId={cashfreeOrderId || ""}
+                  amount={effectivePaymentAmount}
+                  customerName={customer.name}
+                  customerMobile={customer.mobile}
+                  onCreateSession={createCashfreeSession}
+                  onSuccess={handleCashfreeSuccess}
+                  onFailure={(err) => toast.authError(String(err), "Payment Failed")}
+                />
               </div>
             </div>
           )}
@@ -838,18 +850,6 @@ export default function CustomerKhataPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Cashfree Web Checkout Elements Modal */}
-      {cashfreeModalOpen && cashfreeSessionId && (
-        <CashfreeCheckoutModal
-          isOpen={cashfreeModalOpen}
-          paymentSessionId={cashfreeSessionId}
-          orderId={cashfreeOrderId || ""}
-          amount={pendingPaymentAmount}
-          onClose={() => setCashfreeModalOpen(false)}
-          onSuccess={handleCashfreeSuccess}
-        />
       )}
     </div>
   );

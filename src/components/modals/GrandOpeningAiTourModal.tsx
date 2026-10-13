@@ -17,17 +17,7 @@ export default function GrandOpeningAiTourModal({
   const [activeTab, setActiveTab] = useState<"admin" | "customer">("admin");
 
   useEffect(() => {
-    if (forceOpen) {
-      setIsOpen(true);
-      return;
-    }
-
-    const hasSeenTour = localStorage.getItem("kb_grand_opening_tour_seen_v2");
-    if (!hasSeenTour) {
-      // Trigger automatically on first launch
-      const timer = setTimeout(() => setIsOpen(true), 600);
-      return () => clearTimeout(timer);
-    }
+    setIsOpen(Boolean(forceOpen));
   }, [forceOpen]);
 
   const handleDismiss = () => {

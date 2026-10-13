@@ -68,7 +68,6 @@ export default function VillageCollectionSheetPage() {
           setVillages(json.villages);
         }
       } catch (err) {
-        console.error(err);
       }
     }
     loadVillages();

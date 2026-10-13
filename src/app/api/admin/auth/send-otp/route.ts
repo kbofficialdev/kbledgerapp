@@ -70,7 +70,6 @@ export async function POST(req: NextRequest) {
       username: matchedAdmin.username,
     });
   } catch (error: any) {
-    console.error("[Admin Send OTP Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to dispatch administrator security code. Please try again.") },
       { status: 500 }

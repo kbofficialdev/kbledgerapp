@@ -119,7 +119,6 @@ export async function POST(req: NextRequest) {
               });
             }
           } catch (dbErr) {
-            console.error("[Assistant Chat Stream] Failed to save assistant message:", dbErr);
           }
         })();
 
@@ -133,7 +132,6 @@ export async function POST(req: NextRequest) {
           },
         });
       } catch (streamInitErr: any) {
-        console.warn("[Assistant Chat] Stream initialization failed, falling back to non-streaming:", streamInitErr);
         // Fall back to non-streaming execution below
       }
     }
@@ -166,7 +164,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("[Assistant Chat POST] Error:", error);
     return NextResponse.json(
       {
         success: false,

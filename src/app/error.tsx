@@ -13,7 +13,6 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Application Runtime Error]:", error);
   }, [error]);
 
   return (

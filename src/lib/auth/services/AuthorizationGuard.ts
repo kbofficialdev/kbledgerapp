@@ -76,18 +76,24 @@ export class AuthorizationGuard {
       const forwarded = request.headers.get("x-forwarded-for");
       const clientIp = forwarded ? forwarded.split(",")[0].trim() : (request.headers.get("x-real-ip") || "127.0.0.1");
       const { validateActiveSessionInDb } = await import("@/lib/session-db");
-      const dbCheck = await validateActiveSessionInDb(token, clientIp);
+      const dbCheck = await validateActiveSessionInDb(token, clientIp, {
+        identifier: principal.username || "kbadmin",
+        role: "ADMIN",
+        expiresAt: principal.expiresAt,
+      });
       if (!dbCheck.valid) {
+        const errResp = NextResponse.json(
+          {
+            success: false,
+            error: dbCheck.error || "Session has been invalidated.",
+            code: "ERR_SESSION_INVALIDATED",
+          },
+          { status: 401 }
+        );
+        errResp.cookies.set("kb_admin_session", "", { maxAge: 0, path: "/" });
         return {
           principal,
-          errorResponse: NextResponse.json(
-            {
-              success: false,
-              error: dbCheck.error || "Session has been invalidated.",
-              code: "ERR_SESSION_INVALIDATED",
-            },
-            { status: 401 }
-          ),
+          errorResponse: errResp,
         };
       }
     }
@@ -129,18 +135,24 @@ export class AuthorizationGuard {
         const forwarded = request.headers.get("x-forwarded-for");
         const clientIp = forwarded ? forwarded.split(",")[0].trim() : (request.headers.get("x-real-ip") || "127.0.0.1");
         const { validateActiveSessionInDb } = await import("@/lib/session-db");
-        const dbCheck = await validateActiveSessionInDb(token, clientIp);
+        const dbCheck = await validateActiveSessionInDb(token, clientIp, {
+          identifier: principal.customerId || "",
+          role: "CUSTOMER",
+          expiresAt: principal.expiresAt,
+        });
         if (!dbCheck.valid) {
+          const errResp = NextResponse.json(
+            {
+              success: false,
+              error: dbCheck.error || "Session has been invalidated.",
+              code: "ERR_SESSION_INVALIDATED",
+            },
+            { status: 401 }
+          );
+          errResp.cookies.set("kb_customer_session", "", { maxAge: 0, path: "/" });
           return {
             principal,
-            errorResponse: NextResponse.json(
-              {
-                success: false,
-                error: dbCheck.error || "Session has been invalidated.",
-                code: "ERR_SESSION_INVALIDATED",
-              },
-              { status: 401 }
-            ),
+            errorResponse: errResp,
           };
         }
       }

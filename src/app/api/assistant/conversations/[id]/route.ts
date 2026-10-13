@@ -52,7 +52,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error("[Assistant Conversation GET by ID] Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to load conversation." },
       { status: 500 }
@@ -99,7 +98,6 @@ export async function PATCH(
       },
     });
   } catch (error: any) {
-    console.error("[Assistant Conversation PATCH] Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to rename conversation." },
       { status: 500 }
@@ -132,7 +130,6 @@ export async function DELETE(
       message: "Conversation deleted successfully.",
     });
   } catch (error: any) {
-    console.error("[Assistant Conversation DELETE] Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete conversation." },
       { status: 500 }

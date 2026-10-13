@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
       maskedEmail,
     });
   } catch (error: any) {
-    console.error("[Admin Send OTP Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to dispatch administrator security code.") },
       { status: 500 }

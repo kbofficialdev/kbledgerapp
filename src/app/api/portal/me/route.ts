@@ -133,7 +133,6 @@ export async function GET(req: NextRequest) {
       ledgerEntries: formattedLedger,
     });
   } catch (error: any) {
-    console.error("Portal /me API error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to load customer profile.") },
       { status: 500 }

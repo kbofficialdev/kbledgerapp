@@ -193,7 +193,7 @@ export async function middleware(request: NextRequest) {
 
   // Security and policy headers
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", "payment=*, encrypted-media=*");
 

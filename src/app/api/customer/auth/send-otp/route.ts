@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
       customerId: customer.id,
     });
   } catch (error: any) {
-    console.error("[Customer Send OTP Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to send verification code. Please try again.") },
       { status: 500 }

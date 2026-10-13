@@ -69,7 +69,6 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error: any) {
-    console.error("Admin tickets GET error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to load tickets.") },
       { status: 500 }

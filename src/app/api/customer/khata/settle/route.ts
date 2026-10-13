@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("[Customer Khata Settle Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to process multi-order settlement. Please try again.") },
       { status: 500 }

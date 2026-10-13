@@ -41,7 +41,6 @@ export default function PresentationPage() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to load test results:", err);
         setLoading(false);
       });
   }, []);

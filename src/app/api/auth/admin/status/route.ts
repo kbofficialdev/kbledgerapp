@@ -25,7 +25,6 @@ export async function GET(req: NextRequest) {
       isAuthenticated,
     });
   } catch (error: any) {
-    console.error("[Admin Status Error]:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to verify admin status.") },
       { status: 500 }

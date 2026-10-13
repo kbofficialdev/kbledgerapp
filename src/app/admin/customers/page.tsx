@@ -105,7 +105,6 @@ function CombinedCustomersContent() {
         setCustForm((prev) => ({ ...prev, villageId: vList[0].id }));
       }
     } catch (err) {
-      console.error(err);
       toast.authError("Failed to load customer & village directory", "Error");
     } finally {
       setLoading(false);

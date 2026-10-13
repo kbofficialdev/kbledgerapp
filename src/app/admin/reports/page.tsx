@@ -83,7 +83,7 @@ function ReportsContent() {
         setVillages(vData.villages || []);
         setCustomers(cData.customers || []);
       })
-      .catch(console.error);
+      .catch(() => {});
 
     // Initial query for all time
     handleFetchReports("", "", "", "");
@@ -136,7 +136,6 @@ function ReportsContent() {
         setTotalCredit(data.totalCredit || 0);
       }
     } catch (err) {
-      console.error(err);
       toast.authError("Failed to generate ledger report", "Error");
     } finally {
       setLoading(false);

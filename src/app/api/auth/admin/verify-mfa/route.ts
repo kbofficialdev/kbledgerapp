@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error("[Admin MFA Verification Error]:", error);
     return NextResponse.json(
       { error: sanitizeApiError(error, "Failed to verify administrator security code.") },
       { status: 500 }

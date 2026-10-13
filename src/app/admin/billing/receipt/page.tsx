@@ -95,7 +95,6 @@ function ReceiptContent() {
         toast.info("No recent receipt to print. Starting a new bill.", "New Bill");
         router.replace("/admin/billing");
       } catch (err) {
-        console.error("Error loading receipt:", err);
         router.replace("/admin/billing");
       } finally {
         setLoading(false);

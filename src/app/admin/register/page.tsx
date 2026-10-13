@@ -44,7 +44,7 @@ export default function AdminRegisterPage() {
           setIsRegistrationAllowed(data.isRegistrationAllowed);
         }
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setCheckingStatus(false));
   }, []);
 
@@ -63,7 +63,6 @@ export default function AdminRegisterPage() {
         setStreamActive(true);
       }
     } catch (err: any) {
-      console.error("Camera access error:", err);
       setCameraError(
         err.name === "NotAllowedError"
           ? "Camera permission denied. Please allow camera access in browser settings."

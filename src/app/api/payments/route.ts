@@ -76,7 +76,6 @@ export async function POST(req: NextRequest) {
       allocations: result.allocations,
     });
   } catch (error: any) {
-    console.error("Error recording payment:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to record payment.") },
       { status: 500 }
@@ -130,7 +129,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, payments: formatted });
   } catch (error: any) {
-    console.error("Error fetching payments:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch payments.") },
       { status: 500 }

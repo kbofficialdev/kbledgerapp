@@ -38,7 +38,6 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error: any) {
-    console.error("[Assistant Conversations GET] Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to load conversation history." },
       { status: 500 }
@@ -82,7 +81,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("[Assistant Conversations POST] Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to initialize conversation." },
       { status: 500 }

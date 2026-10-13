@@ -126,7 +126,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Face verification error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Biometric authentication failed. Please retry or use PIN.") },
       { status: 500 }

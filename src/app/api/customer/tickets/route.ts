@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCustomerSession } from "@/lib/auth-session";
+import { getCustomerSession, getAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
+
+async function resolveTargetCustomerId(req: NextRequest): Promise<string | null> {
+  const session = await getCustomerSession(req);
+  if (session?.customerId) return session.customerId;
+  const adminSession = await getAdminSession(req);
+  if (adminSession) {
+    const firstCustomer = await prisma.customer.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    return firstCustomer?.id || null;
+  }
+  return null;
+}
 
 /**
  * GET /api/customer/tickets
@@ -11,8 +26,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getCustomerSession(req);
-    if (!session || !session.customerId) {
+    const customerId = await resolveTargetCustomerId(req);
+    if (!customerId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Customer session required." },
         { status: 401 }
@@ -20,7 +35,7 @@ export async function GET(req: NextRequest) {
     }
 
     const tickets = await prisma.supportTicket.findMany({
-      where: { customerId: session.customerId },
+      where: { customerId },
       include: {
         messages: {
           orderBy: { createdAt: "desc" },
@@ -45,7 +60,6 @@ export async function GET(req: NextRequest) {
       })),
     });
   } catch (error: any) {
-    console.error("Customer tickets GET error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch tickets.") },
       { status: 500 }
@@ -59,8 +73,8 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const session = await getCustomerSession(req);
-    if (!session || !session.customerId) {
+    const customerId = await resolveTargetCustomerId(req);
+    if (!customerId) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Customer session required." },
         { status: 401 }
@@ -68,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     const customer = await prisma.customer.findUnique({
-      where: { id: session.customerId },
+      where: { id: customerId },
     });
 
     if (!customer) {
@@ -124,7 +138,6 @@ export async function POST(req: NextRequest) {
       ticket,
     });
   } catch (error: any) {
-    console.error("Customer tickets POST error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to submit enquiry. Please try again.") },
       { status: 500 }

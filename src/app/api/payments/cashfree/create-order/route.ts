@@ -150,7 +150,6 @@ export async function POST(req: NextRequest) {
       webhookEndpoint: "/api/payments/cashfree/webhook",
     });
   } catch (error: any) {
-    console.error("[Cashfree Create Order Error]:", error);
     return NextResponse.json(
       {
         success: false,

@@ -117,11 +117,9 @@ export default function AdminBillingPage() {
             }
             if (parsed.notes) setNotes(parsed.notes);
           } catch (e) {
-            console.warn("Could not parse previous draft:", e);
           }
         }
       } catch (err) {
-        console.error("Failed to load billing dependencies:", err);
       } finally {
         setLoading(false);
       }

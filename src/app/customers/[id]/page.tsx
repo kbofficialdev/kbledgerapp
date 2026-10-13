@@ -168,7 +168,6 @@ export default function CustomerDetailPage() {
         setCustomer(data.customer);
       }
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }

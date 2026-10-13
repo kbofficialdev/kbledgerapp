@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCustomerSession } from "@/lib/auth-session";
+import { getCustomerSession, getAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,8 @@ export async function GET(
 ) {
   try {
     const session = await getCustomerSession(req);
-    if (!session || !session.customerId) {
+    const adminSession = !session ? await getAdminSession(req) : null;
+    if (!session?.customerId && !adminSession) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Customer session required." },
         { status: 401 }
@@ -41,8 +42,8 @@ export async function GET(
       );
     }
 
-    // Tenant isolation: Customer can only view their own ticket
-    if (ticket.customerId !== session.customerId) {
+    // Tenant isolation: Customer can only view their own ticket (Admin can view any)
+    if (session?.customerId && ticket.customerId !== session.customerId) {
       return NextResponse.json(
         { success: false, error: "Forbidden: You cannot view this ticket." },
         { status: 403 }
@@ -54,7 +55,6 @@ export async function GET(
       ticket,
     });
   } catch (error: any) {
-    console.error("Customer ticket GET error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch ticket.") },
       { status: 500 }
@@ -72,7 +72,8 @@ export async function POST(
 ) {
   try {
     const session = await getCustomerSession(req);
-    if (!session || !session.customerId) {
+    const adminSession = !session ? await getAdminSession(req) : null;
+    if (!session?.customerId && !adminSession) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Customer session required." },
         { status: 401 }
@@ -91,7 +92,7 @@ export async function POST(
       );
     }
 
-    if (ticket.customerId !== session.customerId) {
+    if (session?.customerId && ticket.customerId !== session.customerId) {
       return NextResponse.json(
         { success: false, error: "Forbidden: You cannot reply to this ticket." },
         { status: 403 }
@@ -133,7 +134,6 @@ export async function POST(
       newMessage,
     });
   } catch (error: any) {
-    console.error("Customer ticket message POST error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to post message.") },
       { status: 500 }

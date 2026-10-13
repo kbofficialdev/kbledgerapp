@@ -140,7 +140,6 @@ export default function AssistantPage() {
         return data.conversations as ConversationItem[];
       }
     } catch (err) {
-      console.error("Failed to load conversations:", err);
     } finally {
       setLoadingConversations(false);
     }
@@ -285,7 +284,6 @@ export default function AssistantPage() {
         );
       }
     } catch (err) {
-      console.error("Rename failed:", err);
     } finally {
       setEditingId(null);
     }
@@ -455,7 +453,6 @@ export default function AssistantPage() {
           )
         );
       } else {
-        console.error("Chat error:", err);
         setErrorBanner(err.message || "Failed to receive response. Please retry.");
         setMessages((prev) =>
           prev.map((m) =>

@@ -90,8 +90,7 @@ export default function BillingPaymentPage() {
       const half = String(Math.floor(parsed.grandTotal / 2));
       setPartialCashAmount(half);
       setPartialCashfreeAmount(half);
-    } catch (err) {
-      console.error("Error reading draft:", err);
+    } catch {
       router.replace("/admin/billing");
     } finally {
       setLoadingDraft(false);
@@ -200,16 +199,17 @@ export default function BillingPaymentPage() {
       toast.authSuccess(`Bill #${receiptData.orderNumber} generated successfully!`, "Bill Recorded");
       router.push("/admin/billing/receipt");
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message || "Failed to process settlement", "Settlement Error");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle Cashfree Online Gateway initiation
-  const handleInitiateCashfree = async () => {
-    if (submitting) return;
+  // Create or refresh Cashfree Order session for in-page elements
+  const createCashfreeOrderSession = async (): Promise<{
+    paymentSessionId: string;
+    orderId: string;
+  } | null> => {
     try {
       setSubmitting(true);
 
@@ -218,7 +218,6 @@ export default function BillingPaymentPage() {
         throw new Error("Online payment amount must be greater than zero.");
       }
 
-      // Create Cashfree Order via backend endpoint with full billingDraft for webhook midway recovery
       const orderPayload = {
         orderAmount: targetAmount,
         orderCurrency: "INR",
@@ -255,11 +254,23 @@ export default function BillingPaymentPage() {
       setCashfreeSessionId(data.payment_session_id);
       setCashfreeOrderId(data.order_id);
       setCashfreeModalOpen(true);
+      return {
+        paymentSessionId: data.payment_session_id,
+        orderId: data.order_id,
+      };
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message || "Failed to connect to Cashfree Gateway", "Gateway Error");
+      return null;
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleInitiateCashfree = async () => {
+    await createCashfreeOrderSession();
+    const el = document.getElementById("kb-inline-cashfree-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 
@@ -335,7 +346,6 @@ export default function BillingPaymentPage() {
       toast.authSuccess(`Bill #${receiptData.orderNumber} recorded via Cashfree!`, "Payment Approved");
       router.push("/admin/billing/receipt");
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message || "Failed to record Cashfree settlement", "Error");
     } finally {
       setSubmitting(false);
@@ -383,7 +393,7 @@ export default function BillingPaymentPage() {
 
       {/* 2. SUMMARY OF THE ACTIVE BILL */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT COLUMN: PAYMENT OPTION CARDS (7 cols) */}
+        {/* LEFT COLUMN: PAYMENT OPTION CARDS + IN-PAGE CASHFREE ELEMENTS (7 cols) */}
         <div className="lg:col-span-7 space-y-5">
           <div>
             <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -391,7 +401,7 @@ export default function BillingPaymentPage() {
               Select Settlement & Payment Method
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Choose cash, village Udhaar credit, or Cashfree Gateway (UPI, Cards & NetBanking).
+              Choose cash, village Udhaar credit, or in-page Cashfree Custom Elements (UPI, QR, Cards, NetBanking &amp; Wallets).
             </p>
           </div>
 
@@ -523,13 +533,13 @@ export default function BillingPaymentPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900">Cashfree Payment Gateway</h3>
+                      <h3 className="text-sm font-bold text-slate-900">Cashfree Payment Gateway (In-Page)</h3>
                       <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-mono font-bold">
-                        UPI / CARDS / NB
+                        UPI / QR / CARDS / NB
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-0.5">
-                      Launch Cashfree Web Checkout Elements for instant digital collection & auto-verification.
+                      Pay directly below using embedded Cashfree Custom Elements (UPI Apps, VPA, QR, Card, NetBanking).
                     </p>
                   </div>
                 </div>
@@ -537,19 +547,9 @@ export default function BillingPaymentPage() {
                   <span className="text-sm font-mono font-black text-amber-700">
                     {formatCurrency(draft.grandTotal)}
                   </span>
-                  <span className="block text-[10px] uppercase font-bold text-emerald-600">Sandbox</span>
+                  <span className="block text-[10px] uppercase font-bold text-emerald-600">In-Page</span>
                 </div>
               </div>
-
-              {settlementOption === "CASHFREE_GATEWAY" && (
-                <div className="mt-3 pt-3 border-t border-amber-200 text-xs text-amber-900 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    PCI-DSS Level 1 Secure Gateway
-                  </span>
-                  <span className="font-mono text-[11px] text-slate-500">v2023-08-01</span>
-                </div>
-              )}
             </div>
 
             {/* OPTION 5: CASHFREE PARTIAL PAYMENT GATEWAY + Udhaar Remainder */}
@@ -574,7 +574,7 @@ export default function BillingPaymentPage() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-0.5">
-                      Pay custom portion digitally via Cashfree (UPI/Cards); remaining balance placed on customer Udhaar.
+                      Pay custom portion digitally via in-page Cashfree Elements; remaining balance placed on customer Udhaar.
                     </p>
                   </div>
                 </div>
@@ -592,7 +592,10 @@ export default function BillingPaymentPage() {
                       max={draft.grandTotal}
                       step="any"
                       value={partialCashfreeAmount}
-                      onChange={(e) => setPartialCashfreeAmount(e.target.value)}
+                      onChange={(e) => {
+                        setPartialCashfreeAmount(e.target.value);
+                        setCashfreeSessionId(null);
+                      }}
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
                   </div>
@@ -608,6 +611,25 @@ export default function BillingPaymentPage() {
               )}
             </div>
           </div>
+
+          {/* IN-PAGE BOOKMYSHOW-STYLE CASHFREE CUSTOM ELEMENTS PANEL */}
+          {(settlementOption === "CASHFREE_GATEWAY" || settlementOption === "CASHFREE_PARTIAL") && (
+            <div id="kb-inline-cashfree-section" className="pt-2">
+              <CashfreeCheckoutModal
+                isOpen={true}
+                paymentSessionId={cashfreeSessionId || ""}
+                orderId={cashfreeOrderId || ""}
+                amount={settlementOption === "CASHFREE_PARTIAL" ? paidAmount : draft.grandTotal}
+                customerName={draft.customerName}
+                customerMobile={draft.customerMobile}
+                onCreateSession={createCashfreeOrderSession}
+                onSuccess={(orderId, paymentId) => handleCashfreePaymentSuccess(orderId, paymentId)}
+                onFailure={(error) => {
+                  toast.authError(String(error), "Payment Failed");
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: SLIP RECAP & CONFIRM BUTTON (5 cols) */}
@@ -677,19 +699,15 @@ export default function BillingPaymentPage() {
             {/* ACTION BUTTONS */}
             <div className="pt-3 space-y-2.5">
               {settlementOption === "CASHFREE_GATEWAY" || settlementOption === "CASHFREE_PARTIAL" ? (
-                <button
-                  type="button"
-                  onClick={handleInitiateCashfree}
-                  disabled={submitting || (settlementOption === "CASHFREE_PARTIAL" && paidAmount <= 0)}
-                  className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm active:scale-98 disabled:opacity-50"
-                >
-                  <BrandCashfreeIcon className="w-4 h-4 text-white" />
-                  <span>
-                    {submitting
-                      ? "Connecting to Cashfree..."
-                      : `Pay ${formatCurrency(paidAmount)} via Cashfree ${settlementOption === "CASHFREE_PARTIAL" ? "(Partial)" : ""}`}
-                  </span>
-                </button>
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <BrandCashfreeIcon className="w-4 h-4 text-amber-600" />
+                    <span>In-Page Cashfree Payment Active</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800">
+                    Select UPI App, UPI ID, Scan QR, Card, Net Banking, or Wallet directly in the Payment Options panel on this page to complete ₹{paidAmount.toLocaleString("en-IN")}.
+                  </p>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -713,23 +731,6 @@ export default function BillingPaymentPage() {
           </div>
         </div>
       </div>
-
-      {/* 3. CASHFREE CHECKOUT MODAL */}
-      {cashfreeModalOpen && cashfreeSessionId && (
-        <CashfreeCheckoutModal
-          paymentSessionId={cashfreeSessionId}
-          orderId={cashfreeOrderId || ""}
-          amount={settlementOption === "CASHFREE_PARTIAL" ? paidAmount : draft.grandTotal}
-          customerName={draft.customerName}
-          customerMobile={draft.customerMobile}
-          onSuccess={(orderId, paymentId) => handleCashfreePaymentSuccess(orderId, paymentId)}
-          onFailure={(error) => {
-            toast.authError(error, "Payment Cancelled or Failed");
-            setCashfreeModalOpen(false);
-          }}
-          onClose={() => setCashfreeModalOpen(false)}
-        />
-      )}
     </div>
   );
 }

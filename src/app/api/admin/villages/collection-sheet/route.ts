@@ -107,7 +107,6 @@ export async function GET(req: NextRequest) {
       customers: formattedData,
     });
   } catch (error: any) {
-    console.error("Village collection sheet query error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to generate collection sheet.") },
       { status: 500 }

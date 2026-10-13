@@ -125,7 +125,6 @@ export async function GET(
       ledgerEntries: formattedLedger,
     });
   } catch (error: any) {
-    console.error("Portal API error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to load customer portal data.") },
       { status: 500 }

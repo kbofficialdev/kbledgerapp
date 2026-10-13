@@ -181,10 +181,8 @@ export async function sendCustomerWelcomeEmail({
       html,
     });
 
-    console.log(`[Email] Customer credentials sent successfully to ${to}`);
     return true;
   } catch (error) {
-    console.error("[Email Error] Failed to send customer credentials email:", error);
     return false;
   }
 }
@@ -256,10 +254,8 @@ export async function sendOtpEmail({
       html,
     });
 
-    console.log(`[Email] OTP sent successfully to ${to}`);
     return true;
   } catch (error) {
-    console.error("[Email Error] Failed to send OTP email:", error);
     return false;
   }
 }
@@ -342,7 +338,6 @@ export async function sendCustomStoreEmail({
 
     return { sent: true };
   } catch (error: any) {
-    console.error("[Custom Email Dispatch Error]:", error);
     return { sent: false, error: error?.message || "SMTP dispatch failed" };
   }
 }

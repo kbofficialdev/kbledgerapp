@@ -33,10 +33,6 @@ export default function CustomerNavbar() {
     pathname === "/admin/login" ||
     pathname?.startsWith("/admin/login");
 
-  if (isAuthRoute) {
-    return null;
-  }
-
   const [customer, setCustomer] = useState<{
     id: string;
     name: string;
@@ -47,6 +43,7 @@ export default function CustomerNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    if (isAuthRoute) return;
     async function loadCustomer() {
       try {
         const res = await fetch("/api/customer/me");
@@ -56,12 +53,16 @@ export default function CustomerNavbar() {
             setCustomer(data.customer);
           }
         }
-      } catch (e) {
-        console.error("Failed to fetch customer profile in navbar", e);
+      } catch {
+        // Ignore network errors in navbar background fetch
       }
     }
     loadCustomer();
-  }, []);
+  }, [isAuthRoute]);
+
+  if (isAuthRoute) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {

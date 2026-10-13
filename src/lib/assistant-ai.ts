@@ -154,7 +154,6 @@ ${paymentLines.length > 0 ? paymentLines.join("\n") : "No recent payments."}
 [END DATABASE SNAPSHOT]
 `;
   } catch (err: any) {
-    console.error("[Assistant DB Snapshot] Error generating snapshot:", err.message);
     return "[Database snapshot temporarily unavailable]";
   }
 }
@@ -219,7 +218,6 @@ export async function generateAssistantResponse(
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.warn(`[Assistant AI] Model ${model} returned error ${res.status}:`, errorData);
         lastError = new Error(errorData?.error?.message || `HTTP ${res.status}`);
         continue;
       }
@@ -230,7 +228,6 @@ export async function generateAssistantResponse(
         return text;
       }
     } catch (err: any) {
-      console.warn(`[Assistant AI] Network error with model ${model}:`, err.message);
       lastError = err;
     }
   }
@@ -281,15 +278,12 @@ export async function streamAssistantResponse(
       if (res.ok && res.body) {
         upstreamResponse = res;
         activeModel = model;
-        console.log(`[Assistant AI Stream] Connected to model: ${model}`);
         break;
       } else {
         const errJson = await res.json().catch(() => ({}));
-        console.warn(`[Assistant AI Stream] Model ${model} error:`, errJson);
       }
     } catch (err: any) {
       if (err.name === "AbortError") throw err;
-      console.warn(`[Assistant AI Stream] Exception with model ${model}:`, err.message);
     }
   }
 

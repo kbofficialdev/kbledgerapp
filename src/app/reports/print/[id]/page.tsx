@@ -66,7 +66,7 @@ export default function CarbonPrintReceiptPage() {
           }
         }
       })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [orderId]);
 

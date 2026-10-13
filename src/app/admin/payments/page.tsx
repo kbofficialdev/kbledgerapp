@@ -79,8 +79,7 @@ export default function AdminPaymentsHubPage() {
           setCollectionAmount(String(Math.min(1000, cRes.customers[0].currentBalance || 500)));
         }
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.authError("Failed to fetch payments data", "Network Error");
     } finally {
       setLoading(false);
@@ -93,22 +92,22 @@ export default function AdminPaymentsHubPage() {
 
   const selectedCustomerObj = customers.find((c) => c.id === selectedCustomerId);
 
-  // Quick Collection Trigger
-  const handleLaunchCashfreeCollection = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const createCashfreeCollectionSession = async (): Promise<{
+    paymentSessionId: string;
+    orderId: string;
+  } | null> => {
     if (!selectedCustomerObj) {
       toast.authError("Please select a customer.", "Missing Customer");
-      return;
+      return null;
     }
     const amt = parseFloat(collectionAmount);
     if (!amt || amt <= 0) {
       toast.authError("Enter a valid payment amount greater than ₹0.", "Invalid Amount");
-      return;
+      return null;
     }
 
     try {
       setInitiating(true);
-      toast.info("Connecting to Cashfree Gateway Sandbox...", "Initializing");
 
       const res = await fetch("/api/payments/cashfree/create-order", {
         method: "POST",
@@ -136,11 +135,25 @@ export default function AdminPaymentsHubPage() {
       setCashfreeSessionId(data.payment_session_id);
       setCashfreeOrderId(data.order_id);
       setCashfreeModalOpen(true);
+      return {
+        paymentSessionId: data.payment_session_id,
+        orderId: data.order_id,
+      };
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message, "Cashfree Error");
+      return null;
     } finally {
       setInitiating(false);
+    }
+  };
+
+  // Quick Collection Trigger
+  const handleLaunchCashfreeCollection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createCashfreeCollectionSession();
+    const el = document.getElementById("kb-admin-payments-inline-cashfree");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 
@@ -425,24 +438,26 @@ export default function AdminPaymentsHubPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 3. CASHFREE CHECKOUT MODAL */}
-      {cashfreeModalOpen && cashfreeSessionId && (
-        <CashfreeCheckoutModal
-          paymentSessionId={cashfreeSessionId}
-          orderId={cashfreeOrderId || ""}
-          amount={parseFloat(collectionAmount) || 0}
-          customerName={selectedCustomerObj?.name || "Customer"}
-          customerMobile={selectedCustomerObj?.mobile || "9999999999"}
-          onSuccess={(orderId, paymentId) => handlePaymentSuccess(orderId, paymentId)}
-          onFailure={(error) => {
-            toast.authError(error, "Payment Cancelled or Failed");
-            setCashfreeModalOpen(false);
-          }}
-          onClose={() => setCashfreeModalOpen(false)}
-        />
-      )}
+        {/* 3. IN-PAGE BOOKMYSHOW-STYLE CASHFREE CUSTOM ELEMENTS PANEL */}
+        {selectedCustomerObj && (parseFloat(collectionAmount) || 0) > 0 && (
+          <div id="kb-admin-payments-inline-cashfree" className="lg:col-span-12 pt-2">
+            <CashfreeCheckoutModal
+              isOpen={true}
+              paymentSessionId={cashfreeSessionId || ""}
+              orderId={cashfreeOrderId || ""}
+              amount={parseFloat(collectionAmount) || 0}
+              customerName={selectedCustomerObj.name || "Customer"}
+              customerMobile={selectedCustomerObj.mobile || "9999999999"}
+              onCreateSession={createCashfreeCollectionSession}
+              onSuccess={(orderId, paymentId) => handlePaymentSuccess(orderId, paymentId)}
+              onFailure={(error) => {
+                toast.authError(String(error), "Payment Failed");
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

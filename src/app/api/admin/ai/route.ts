@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
       customers: result.customers,
     });
   } catch (error: any) {
-    console.error("[LangGraph Admin Agent Route Error]:", error);
     return NextResponse.json(
       {
         success: false,

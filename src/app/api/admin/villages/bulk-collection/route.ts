@@ -142,7 +142,6 @@ export async function POST(req: NextRequest) {
       data: results,
     });
   } catch (error: any) {
-    console.error("Bulk collection import error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to process bulk collection spreadsheet.") },
       { status: 500 }

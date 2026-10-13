@@ -41,7 +41,6 @@ export function buildTeluguCalloutSentence({
 
 export function speakTeluguText(text: string, onEnd?: () => void) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    console.warn("Web Speech API not supported in this browser.");
     return;
   }
 
@@ -74,7 +73,6 @@ export function speakTeluguText(text: string, onEnd?: () => void) {
 
     window.speechSynthesis.speak(utterance);
   } catch (err) {
-    console.error("Speech synthesis error:", err);
   }
 }
 

@@ -96,8 +96,7 @@ function CustomerPayContent() {
         } else {
           toast.authError(data.error || "Could not retrieve account details.", "Error");
         }
-      } catch (err: any) {
-        console.error(err);
+      } catch {
         toast.authError("Failed to connect to customer server.", "Network Issue");
       } finally {
         setLoading(false);
@@ -140,15 +139,17 @@ function CustomerPayContent() {
     );
   };
 
-  const handleLaunchCashfree = async () => {
+  const createCashfreeSession = async (): Promise<{
+    paymentSessionId: string;
+    orderId: string;
+  } | null> => {
     if (payableAmount <= 0) {
       toast.authError("Amount must be greater than ₹0 to initiate checkout.", "Invalid Amount");
-      return;
+      return null;
     }
 
     try {
       setInitiating(true);
-      toast.info("Connecting to Cashfree Payments Gateway...", "Initializing Checkout");
 
       const targetOrderIds =
         payMode === "ORDER_SELECT"
@@ -182,11 +183,23 @@ function CustomerPayContent() {
       setCashfreeSessionId(data.payment_session_id);
       setCashfreeOrderId(data.order_id);
       setCashfreeModalOpen(true);
+      return {
+        paymentSessionId: data.payment_session_id,
+        orderId: data.order_id,
+      };
     } catch (err: any) {
-      console.error(err);
       toast.authError(err.message, "Gateway Error");
+      return null;
     } finally {
       setInitiating(false);
+    }
+  };
+
+  const handleLaunchCashfree = async () => {
+    await createCashfreeSession();
+    const el = document.getElementById("kb-customer-inline-cashfree");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 
@@ -494,34 +507,36 @@ function CustomerPayContent() {
                 >
                   <BrandCashfreeIcon className="w-4 h-4 text-white" />
                   <span>
-                    {initiating ? "Connecting..." : `Pay ${formatCurrency(payableAmount)} with Cashfree`}
+                    {initiating ? "Connecting..." : `Pay ${formatCurrency(payableAmount)} in Payment Panel Below`}
                   </span>
                 </button>
 
                 <p className="text-center text-[10px] text-slate-400">
-                  Supports Google Pay, PhonePe, Paytm, Cards &amp; NetBanking
+                  Supports Google Pay, PhonePe, Paytm, QR, Cards, NetBanking &amp; Wallets In-Page
                 </p>
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* 4. CASHFREE CHECKOUT MODAL */}
-      {cashfreeModalOpen && cashfreeSessionId && (
-        <CashfreeCheckoutModal
-          paymentSessionId={cashfreeSessionId}
-          orderId={cashfreeOrderId || ""}
-          amount={payableAmount}
-          customerName={profile.name}
-          customerMobile={profile.mobile}
-          onSuccess={(orderId, paymentId) => handleCashfreeSuccess(orderId, paymentId)}
-          onFailure={(error) => {
-            toast.authError(error, "Payment Cancelled or Failed");
-            setCashfreeModalOpen(false);
-          }}
-          onClose={() => setCashfreeModalOpen(false)}
-        />
+          {/* 4. IN-PAGE BOOKMYSHOW-STYLE CASHFREE CUSTOM ELEMENTS PANEL */}
+          {payableAmount > 0 && (
+            <div id="kb-customer-inline-cashfree" className="md:col-span-12 pt-2">
+              <CashfreeCheckoutModal
+                isOpen={true}
+                paymentSessionId={cashfreeSessionId || ""}
+                orderId={cashfreeOrderId || ""}
+                amount={payableAmount}
+                customerName={profile.name}
+                customerMobile={profile.mobile}
+                onCreateSession={createCashfreeSession}
+                onSuccess={(orderId, paymentId) => handleCashfreeSuccess(orderId, paymentId)}
+                onFailure={(error) => {
+                  toast.authError(String(error), "Payment Failed");
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -52,7 +52,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error("Admin ticket GET error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to fetch ticket.") },
       { status: 500 }
@@ -122,7 +121,6 @@ export async function POST(
       status: newStatus,
     });
   } catch (error: any) {
-    console.error("Admin ticket reply error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to post admin reply.") },
       { status: 500 }
@@ -162,7 +160,6 @@ export async function PATCH(
       ticket: updated,
     });
   } catch (error: any) {
-    console.error("Admin ticket PATCH error:", error);
     return NextResponse.json(
       { success: false, error: sanitizeApiError(error, "Failed to update ticket.") },
       { status: 500 }
