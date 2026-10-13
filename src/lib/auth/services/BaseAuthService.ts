@@ -10,7 +10,8 @@ export abstract class BaseAuthService implements IAuthService {
       secret ||
       process.env.AUTH_SECRET ||
       process.env.ADMIN_SECRET ||
-      "kb_khata_admin_session_secret_2026";
+      process.env.DATABASE_URL ||
+      "";
   }
 
   // Abstract template method for subclasses to specialize token creation

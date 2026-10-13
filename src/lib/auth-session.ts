@@ -308,6 +308,8 @@ const isSecureCookie =
   (process.env.NODE_ENV === "production" && process.env.ENABLE_HTTPS === "true");
 
 export function setAdminCookie(response: NextResponse, token: string): void {
+  // Strict Role Isolation: clear any active customer session cookie on admin login
+  clearCustomerCookie(response);
   response.cookies.set("kb_admin_session", token, {
     httpOnly: true,
     secure: isSecureCookie,
@@ -335,6 +337,8 @@ export function clearAdminCookie(response: NextResponse): void {
  * Sets secure signed customer session cookie
  */
 export function setCustomerCookie(response: NextResponse, token: string): void {
+  // Strict Role Isolation: clear any active admin session cookie on customer login
+  clearAdminCookie(response);
   response.cookies.set("kb_customer_session", token, {
     httpOnly: true,
     secure: isSecureCookie,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession, requireCustomerSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export async function GET(
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireCustomerSession(req, params.id);
+    if (!auth.authorized) return auth.response!;
+
     const customer = await prisma.customer.findUnique({
       where: { id: params.id },
       include: {
@@ -79,6 +83,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const { name, mobile, altMobile, email, address, creditLimit, notes, villageId } = body;
 
@@ -157,6 +164,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const customer = await prisma.customer.findUnique({
       where: { id: params.id },
     });

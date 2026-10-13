@@ -89,7 +89,7 @@ export default function AppLayoutShell({
   // If this is a standalone route (e.g. login, customer portal)
   if (isStandaloneShell) {
     return (
-      <div className="min-h-screen w-full bg-white text-slate-900 antialiased flex flex-col selection:bg-black selection:text-white">
+      <div className="min-h-screen w-full kb-animated-bg text-slate-900 antialiased flex flex-col selection:bg-black selection:text-white">
         {children}
       </div>
     );
@@ -98,7 +98,7 @@ export default function AppLayoutShell({
   // If the admin route is still verifying or unauthorized, do NOT show dashboard chrome or links!
   if (authStatus !== "authorized") {
     return (
-      <div className="min-h-screen w-full bg-white text-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen w-full kb-animated-bg text-slate-900 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
           <p className="text-xs font-medium text-slate-500">
@@ -111,7 +111,7 @@ export default function AppLayoutShell({
 
   // Authenticated Admin Workspace: Full-width layout with Single-Logo Navbar & Slide-In Left Drawer
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased flex flex-col">
+    <div className="min-h-screen kb-animated-bg text-slate-900 antialiased flex flex-col">
       {/* Top Header Navbar (Single Logo + Menu Drawer Trigger) */}
       <Navbar />
 

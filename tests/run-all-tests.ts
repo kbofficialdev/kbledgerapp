@@ -25,6 +25,20 @@ if (fs.existsSync(envPath)) {
 import { TestReportSummary, TestSuiteResult } from "./types";
 
 async function main() {
+  const { createAdminToken } = await import("../src/lib/auth-session");
+  const { registerActiveSessionInDb, invalidateSessionInDb } = await import("../src/lib/session-db");
+
+  const qaToken = await createAdminToken("ADMIN_QA_HARNESS", 3600, "127.0.0.1");
+  await registerActiveSessionInDb({
+    identifier: "ADMIN_QA_HARNESS",
+    role: "ADMIN",
+    token: qaToken,
+    ipAddress: "127.0.0.1",
+    userAgent: "KB-QA-Test-Harness/1.0",
+    expiresAt: Math.floor(Date.now() / 1000) + 3600,
+  });
+  process.env.QA_RUNTIME_SESSION_TOKEN = qaToken;
+
   const { runPaymentPolicyTests } = await import("./unit/payment-policies.test");
   const { runBiometricsTests } = await import("./unit/biometrics.test");
   const { runTeluguVoiceTests } = await import("./unit/voice-telugu.test");
@@ -41,40 +55,44 @@ async function main() {
   const suites: TestSuiteResult[] = [];
   const overallStart = performance.now();
 
-  console.log(">> [1/7] Executing Payment Security Policy Tests...");
-  const paymentSuite = await runPaymentPolicyTests();
-  suites.push(paymentSuite);
-  printSuiteSummary(paymentSuite);
+  try {
+    console.log(">> [1/7] Executing Payment Security Policy Tests...");
+    const paymentSuite = await runPaymentPolicyTests();
+    suites.push(paymentSuite);
+    printSuiteSummary(paymentSuite);
 
-  console.log("\n>> [2/7] Executing Biometric Authentication Engine Tests...");
-  const bioSuite = await runBiometricsTests();
-  suites.push(bioSuite);
-  printSuiteSummary(bioSuite);
+    console.log("\n>> [2/7] Executing Biometric Authentication Engine Tests...");
+    const bioSuite = await runBiometricsTests();
+    suites.push(bioSuite);
+    printSuiteSummary(bioSuite);
 
-  console.log("\n>> [3/7] Executing Telugu Voice Synthesis Engine Tests...");
-  const voiceSuite = await runTeluguVoiceTests();
-  suites.push(voiceSuite);
-  printSuiteSummary(voiceSuite);
+    console.log("\n>> [3/7] Executing Telugu Voice Synthesis Engine Tests...");
+    const voiceSuite = await runTeluguVoiceTests();
+    suites.push(voiceSuite);
+    printSuiteSummary(voiceSuite);
 
-  console.log("\n>> [4/7] Executing Bahi-Khata Ledger Mathematics Tests...");
-  const ledgerSuite = await runLedgerMathTests();
-  suites.push(ledgerSuite);
-  printSuiteSummary(ledgerSuite);
+    console.log("\n>> [4/7] Executing Bahi-Khata Ledger Mathematics Tests...");
+    const ledgerSuite = await runLedgerMathTests();
+    suites.push(ledgerSuite);
+    printSuiteSummary(ledgerSuite);
 
-  console.log("\n>> [5/7] Executing Live API Contract & Integration Tests...");
-  const apiSuite = await runApiContractTests();
-  suites.push(apiSuite);
-  printSuiteSummary(apiSuite);
+    console.log("\n>> [5/7] Executing Live API Contract & Integration Tests...");
+    const apiSuite = await runApiContractTests();
+    suites.push(apiSuite);
+    printSuiteSummary(apiSuite);
 
-  console.log("\n>> [6/7] Executing Security & Penetration Assessment Tests...");
-  const secSuite = await runSecurityVulnerabilityTests();
-  suites.push(secSuite);
-  printSuiteSummary(secSuite);
+    console.log("\n>> [6/7] Executing Security & Penetration Assessment Tests...");
+    const secSuite = await runSecurityVulnerabilityTests();
+    suites.push(secSuite);
+    printSuiteSummary(secSuite);
 
-  console.log("\n>> [7/7] Executing Performance & Stress Benchmarking Tests...");
-  const perfOutput = await runPerformanceBenchmarkTests();
-  suites.push(perfOutput.suiteResult);
-  printSuiteSummary(perfOutput.suiteResult);
+    console.log("\n>> [7/7] Executing Performance & Stress Benchmarking Tests...");
+    var perfOutput = await runPerformanceBenchmarkTests();
+    suites.push(perfOutput.suiteResult);
+    printSuiteSummary(perfOutput.suiteResult);
+  } finally {
+    await invalidateSessionInDb(qaToken);
+  }
 
   const totalDurationMs = performance.now() - overallStart;
   const totalTests = suites.reduce((acc, s) => acc + s.tests.length, 0);

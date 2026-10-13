@@ -51,15 +51,8 @@ export function generateOtp(identifier: string): string {
  * Verify OTP
  */
 export function verifyOtp(identifier: string, enteredCode: string): { valid: boolean; message: string } {
-  const emergencyPin = process.env.ADMIN_EMERGENCY_PIN;
-  const fallbackPin = process.env.ADMIN_FALLBACK_PIN;
   const key = identifier.toLowerCase().trim();
   const cleanCode = enteredCode.trim();
-
-  if ((emergencyPin && cleanCode === emergencyPin) || (fallbackPin && cleanCode === fallbackPin)) {
-    otpStore.delete(key);
-    return { valid: true, message: "Master authentication code verified successfully." };
-  }
 
   const record = otpStore.get(key);
 

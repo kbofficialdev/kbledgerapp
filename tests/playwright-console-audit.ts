@@ -117,12 +117,14 @@ async function runConsoleAudit() {
   // Phase 2: Authenticated Route Console & Hydration Verification
   console.log("\n>> [Phase 2/2] Verifying Authenticated Routes (Zero Console & Hydration Errors)...");
   const authContext = await browser.newContext();
+  const { createAdminToken } = await import("../src/lib/auth-session");
+  const signedToken = await createAdminToken("ADMIN_QA_HARNESS");
 
   // Inject valid admin session cookie
   await authContext.addCookies([
     {
       name: "kb_admin_session",
-      value: "kb_adm_verified_playwright_audit_session_2026",
+      value: signedToken,
       domain: "localhost",
       path: "/",
       httpOnly: true,
@@ -135,9 +137,9 @@ async function runConsoleAudit() {
 
   // Also set localStorage for client session consistency
   await authPage.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
-  await authPage.evaluate(() => {
-    localStorage.setItem("kb_admin_session", "kb_adm_verified_playwright_audit_session_2026");
-  });
+  await authPage.evaluate((tok) => {
+    localStorage.setItem("kb_admin_session", tok);
+  }, signedToken);
 
   const routesToAudit = [
     "/admin",

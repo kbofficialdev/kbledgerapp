@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export async function GET(
@@ -7,6 +8,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const village = await prisma.village.findUnique({
       where: { id: params.id },
       include: {
@@ -52,6 +56,9 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     const { name, taluk, district, pincode, notes } = body;
 
@@ -80,6 +87,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     // Check if customers exist
     const customerCount = await prisma.customer.count({
       where: { villageId: params.id, isActive: true },

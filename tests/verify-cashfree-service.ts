@@ -1,5 +1,6 @@
 import { CashfreeGatewayService } from "../src/lib/cashfree";
 import { prisma } from "../src/lib/prisma";
+import { createAdminToken } from "../src/lib/auth-session";
 import { chromium } from "playwright";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
@@ -19,9 +20,10 @@ async function runComprehensiveCashfreeTest() {
 
   const results: TestStepResult[] = [];
   const gateway = CashfreeGatewayService.getInstance();
+  const signedToken = await createAdminToken("ADMIN_QA_HARNESS");
   const authHeaders = {
-    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
-    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+    Cookie: `kb_admin_session=${signedToken}`,
+    Authorization: `Bearer ${signedToken}`,
     "Content-Type": "application/json",
   };
 

@@ -3,12 +3,16 @@ import {
   runLangGraphAdminAgent,
   fetchLiveStoreSnapshot,
 } from "@/lib/langgraph-admin-agent";
+import { requireAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const { metrics, villagesList, topDebtors } = await fetchLiveStoreSnapshot();
     return NextResponse.json({
       success: true,
@@ -35,6 +39,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const body = await req.json();
     let { prompt = "", conversationHistory = [], image, toolAction } = body;
 

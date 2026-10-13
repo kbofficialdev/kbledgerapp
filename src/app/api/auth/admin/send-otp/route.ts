@@ -7,9 +7,34 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = await prisma.adminProfile.findFirst({
+    const body = await req.json().catch(() => ({}));
+    const requestedIdentifier = (body.identifier || body.email || body.mobile || body.username || "").trim();
+
+    if (!requestedIdentifier) {
+      return NextResponse.json(
+        { error: "Administrator email, mobile number, or username is required." },
+        { status: 400 }
+      );
+    }
+
+    const admins = await prisma.adminProfile.findMany({
       where: { role: "ADMIN" },
     });
+
+    const cleanDigits = requestedIdentifier.replace(/\D/g, "");
+    const admin = admins.find(
+      (a) =>
+        (a.email && a.email.toLowerCase() === requestedIdentifier.toLowerCase()) ||
+        (a.mobile && cleanDigits.length >= 10 && a.mobile.includes(cleanDigits)) ||
+        (a.username && a.username.toLowerCase() === requestedIdentifier.toLowerCase())
+    );
+
+    if (!admin) {
+      return NextResponse.json(
+        { error: "No administrator account matches this identifier." },
+        { status: 404 }
+      );
+    }
 
     const adminEmail = admin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
     if (!adminEmail) {

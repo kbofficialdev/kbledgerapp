@@ -12,13 +12,14 @@ export async function GET(req: NextRequest) {
       where: { role: "ADMIN" },
     });
 
+    const isAuth = Boolean(adminSession);
     return NextResponse.json({
       success: true,
-      authenticated: Boolean(adminSession),
-      isAuthenticated: Boolean(adminSession),
-      username: adminSession?.username || null,
-      role: adminSession ? "ADMIN" : null,
-      adminEmail: admin?.email || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || null,
+      authenticated: isAuth,
+      isAuthenticated: isAuth,
+      username: isAuth ? adminSession?.username || admin?.username || null : null,
+      role: isAuth ? "ADMIN" : null,
+      adminEmail: isAuth ? admin?.email || null : null,
       hasEnrolledAdmin: Boolean(admin),
     });
   } catch (error: any) {

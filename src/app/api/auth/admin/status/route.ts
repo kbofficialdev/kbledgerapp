@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
       success: true,
       hasEnrolledAdmin,
       isRegistrationAllowed: !hasEnrolledAdmin,
-      adminUsername: admin?.username || null,
-      lastLoginAt: admin?.lastLoginAt || null,
+      adminUsername: isAuthenticated ? admin?.username || null : null,
+      lastLoginAt: isAuthenticated ? admin?.lastLoginAt || null : null,
       isAuthenticated,
     });
   } catch (error: any) {

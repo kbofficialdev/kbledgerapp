@@ -82,7 +82,7 @@ export default function CustomerNavbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full no-print bg-white border-b border-slate-200">
+    <header className="sticky top-0 z-40 w-full no-print kb-navbar-elevated">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Left: ONLY ONE Single Logo at the left */}
         <div className="flex items-center gap-6">

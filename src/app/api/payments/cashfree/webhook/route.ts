@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cashfreeGateway } from "@/lib/cashfree";
+import { executeAcidPaymentSettlement } from "@/lib/acid-ledger";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -33,70 +34,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "IGNORED", reason: "Missing order_id" }, { status: 200 });
     }
 
-    // Process PAYMENT_SUCCESS_WEBHOOK or success event
+    // Process PAYMENT_SUCCESS_WEBHOOK or success event via ACID Ledger Engine
     if (eventType === "PAYMENT_SUCCESS_WEBHOOK" || paymentData?.payment_status === "SUCCESS") {
       const existingPayment = await prisma.payment.findUnique({
         where: { cashfreeOrderId: cfOrderId },
       });
 
       if (existingPayment && existingPayment.status !== "SUCCESS") {
-        const payAmount = Number(existingPayment.amount);
-
-        await prisma.$transaction(async (tx) => {
-          await tx.payment.update({
-            where: { id: existingPayment.id },
-            data: {
-              status: "SUCCESS",
-              cashfreePaymentId: paymentData?.cf_payment_id ? String(paymentData.cf_payment_id) : undefined,
-              bankRrn: paymentData?.bank_reference || undefined,
-              gatewayResponseCode: "SUCCESS",
-              rawGatewayResponse: payload,
-              paidAt: new Date(),
-            },
-          });
-
-          if (existingPayment.orderId) {
-            const order = await tx.order.findUnique({
-              where: { id: existingPayment.orderId },
-            });
-            if (order) {
-              const newPaid = Number(order.paidAmount) + payAmount;
-              const newCredit = Math.max(0, Number(order.totalAmount) - newPaid);
-              await tx.order.update({
-                where: { id: order.id },
-                data: {
-                  paidAmount: newPaid,
-                  creditAmount: newCredit,
-                  paymentStatus: newCredit <= 0 ? "SUCCESS" : "PENDING",
-                },
-              });
-            }
-          }
-
-          const customer = await tx.customer.findUnique({
-            where: { id: existingPayment.customerId },
-          });
-
-          if (customer) {
-            const currentBal = Number(customer.currentBalance);
-            const newBal = currentBal - payAmount;
-            await tx.customer.update({
-              where: { id: customer.id },
-              data: { currentBalance: newBal },
-            });
-
-            await tx.ledgerEntry.create({
-              data: {
-                customerId: customer.id,
-                orderId: existingPayment.orderId || null,
-                entryType: "PAYMENT_CREDIT",
-                debitAmount: 0.0,
-                creditAmount: payAmount,
-                runningBalance: newBal,
-                description: `Cashfree Webhook Confirmation (${cfOrderId})`,
-              },
-            });
-          }
+        await executeAcidPaymentSettlement({
+          customerId: existingPayment.customerId,
+          orderId: existingPayment.orderId || null,
+          amount: Number(existingPayment.amount),
+          method: "CASHFREE_ELEMENTS",
+          cashfreeOrderId: cfOrderId,
+          cashfreePaymentId: paymentData?.cf_payment_id ? String(paymentData.cf_payment_id) : undefined,
+          bankRrn: paymentData?.bank_reference || undefined,
+          rawGatewayResponse: payload,
+          notes: `Cashfree Webhook Confirmation (${cfOrderId})`,
         });
       }
     }

@@ -1046,57 +1046,29 @@ export async function executeAdminAgentTool(
               : 0;
         const creditAmount = Number((totalAmount - paidAmount).toFixed(2));
 
+        const { executeAcidOrderCreation } = await import("@/lib/acid-ledger");
         const orderNumber = `KB-${new Date().toISOString().slice(0, 7).replace("-", "")}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const newBalance = Number(customer.currentBalance) + creditAmount;
-
-        const createdOrder = await prisma.$transaction(async (tx) => {
-          const ord = await tx.order.create({
-            data: {
-              orderNumber,
-              villageId: customer.villageId,
-              customerId: customer.id,
-              totalAmount,
-              paidAmount,
-              creditAmount,
-              paymentType: paymentType as any,
-              paymentStatus: "SUCCESS",
-              notes: args.notes || "Created via Admin GenAI Operations Agent",
-              items: {
-                create: [
-                  {
-                    customItemId: `ITM-${Math.floor(10000 + Math.random() * 90000)}`,
-                    name: args.itemName || "Store Merchandise",
-                    quantity: qty,
-                    unit: args.unit || "pcs",
-                    pricePerUnit: price,
-                    lineTotal: totalAmount,
-                  },
-                ],
-              },
+        const acidRes = await executeAcidOrderCreation({
+          villageId: customer.villageId,
+          customerId: customer.id,
+          orderNumber,
+          paymentType,
+          paidAmount,
+          paymentMethod: "CASH",
+          notes: args.notes || "Created via Admin GenAI Operations Agent",
+          items: [
+            {
+              customItemId: `ITM-${Math.floor(10000 + Math.random() * 90000)}`,
+              name: args.itemName || "Store Merchandise",
+              quantity: qty,
+              unit: args.unit || "pcs",
+              pricePerUnit: price,
             },
-          });
-
-          if (creditAmount > 0) {
-            await tx.customer.update({
-              where: { id: customer.id },
-              data: { currentBalance: newBalance },
-            });
-          }
-
-          await tx.ledgerEntry.create({
-            data: {
-              customerId: customer.id,
-              orderId: ord.id,
-              entryType: "BILL_DEBIT",
-              debitAmount: creditAmount > 0 ? creditAmount : totalAmount,
-              creditAmount: paidAmount > 0 && creditAmount === 0 ? totalAmount : 0,
-              runningBalance: newBalance,
-              description: `Order #${orderNumber} (${args.itemName} × ${qty}) [${paymentType}]`,
-            },
-          });
-
-          return ord;
+          ],
         });
+
+        const createdOrder = acidRes.order;
+        const newBalance = acidRes.newBalance;
 
         const durationMs = Date.now() - start;
         return {
@@ -1144,54 +1116,26 @@ export async function executeAdminAgentTool(
         }
 
         const amount = Math.max(1, Number(args.amount || 0));
-        const balanceBefore = Number(customer.currentBalance);
-        const balanceAfter = Math.max(0, Number((balanceBefore - amount).toFixed(2)));
         const paymentRef = `PAY-AI-${Date.now().toString().slice(-6)}`;
-        const method = ["CASH", "GPAY", "DYNAMIC_QR"].includes((args.method || "").toUpperCase())
-          ? (args.method || "CASH").toUpperCase()
-          : "CASH";
+        const rawMethod = (args.method || "CASH").toUpperCase();
+        const method =
+          rawMethod === "GPAY" || rawMethod === "GOOGLE_PAY"
+            ? "GOOGLE_PAY"
+            : rawMethod === "DYNAMIC_QR"
+              ? "DYNAMIC_QR"
+              : "CASH";
 
-        await prisma.$transaction(async (tx) => {
-          await tx.payment.create({
-            data: {
-              paymentRef,
-              customerId: customer.id,
-              amount,
-              method: method as any,
-              status: "SUCCESS",
-              notes: args.notes || "Recorded via Admin GenAI Operations Agent",
-            },
-          });
-
-          await tx.customer.update({
-            where: { id: customer.id },
-            data: { currentBalance: balanceAfter },
-          });
-
-          await tx.ledgerEntry.create({
-            data: {
-              customerId: customer.id,
-              entryType: "PAYMENT_CREDIT",
-              debitAmount: 0,
-              creditAmount: amount,
-              runningBalance: balanceAfter,
-              description: `Payment Received (${paymentRef}) via ${method}`,
-            },
-          });
-
-          await tx.transactionAudit.create({
-            data: {
-              transactionRef: `TXN-${Date.now().toString().slice(-6)}`,
-              customerId: customer.id,
-              amount,
-              method: method as any,
-              status: "SUCCESS",
-              balanceBefore,
-              balanceAfter,
-              notes: "Settled via Admin GenAI Agent",
-            },
-          });
+        const { executeAcidPaymentSettlement } = await import("@/lib/acid-ledger");
+        const acidPayment = await executeAcidPaymentSettlement({
+          customerId: customer.id,
+          amount,
+          method: method as any,
+          paymentRef,
+          notes: args.notes || "Recorded via Admin GenAI Operations Agent",
         });
+
+        const balanceBefore = acidPayment.balanceBefore;
+        const balanceAfter = acidPayment.balanceAfter;
 
         const durationMs = Date.now() - start;
         return {

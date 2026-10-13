@@ -130,6 +130,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
 
       const data = await res.json();
       if (data.success) {
+        localStorage.removeItem("kb_admin_session");
         toast.authSuccess("Welcome back! Loading your secure Khata account...", "Access Granted");
         window.location.replace("/customer");
       } else {
@@ -234,6 +235,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
 
       const data = await res.json();
       if (data.success) {
+        localStorage.removeItem("kb_customer_session");
         if (data.sessionToken) {
           localStorage.setItem("kb_admin_session", data.sessionToken);
         }
@@ -275,6 +277,7 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
 
       const data = await res.json();
       if (data.success) {
+        localStorage.removeItem("kb_customer_session");
         if (data.sessionToken) {
           localStorage.setItem("kb_admin_session", data.sessionToken);
         }
@@ -296,8 +299,8 @@ export default function UnifiedAuthCard({ initialTab = "customer" }: UnifiedAuth
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Modern Black & White Card */}
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-none">
+      {/* Elevated Modern Black & White Card */}
+      <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-[0_20px_50px_-10px_rgba(15,23,42,0.14),0_6px_18px_-4px_rgba(15,23,42,0.06)]">
         
         {/* Card Header & Brand */}
         <div className="p-6 sm:p-7 pb-4 border-b border-zinc-100 dark:border-zinc-900 text-center space-y-3">

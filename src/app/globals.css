@@ -78,38 +78,94 @@ body {
   }
 }
 
+@keyframes kbGradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes kbToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animated KB Brand Gradient Mesh Background */
+.kb-animated-bg {
+  background-color: #f8fafc;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(15, 23, 42, 0.045) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.07) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.055) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.055) 0px, transparent 50%),
+    linear-gradient(125deg, #f8fafc 0%, #ffffff 35%, #f1f5f9 70%, #ecfdf5 100%);
+  background-size: 220% 220%;
+  animation: kbGradientShift 18s ease-in-out infinite;
+}
+
+.dark .kb-animated-bg {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.04) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
+    linear-gradient(125deg, #09090b 0%, #121215 50%, #09090b 100%);
+  background-size: 220% 220%;
+  animation: kbGradientShift 18s ease-in-out infinite;
+}
+
+.kb-toast-enter {
+  animation: kbToastSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @layer components {
-  /* Flat clean card with subtle border */
+  /* Elevated KB Card with refined multi-layer shadow */
   .kb-card {
-    @apply bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 transition-colors;
+    @apply bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm rounded-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_8px_30px_rgb(15,23,42,0.06),0_2px_8px_rgb(15,23,42,0.04)] hover:shadow-[0_12px_36px_rgb(15,23,42,0.09),0_4px_12px_rgb(15,23,42,0.05)] transition-all duration-200;
   }
 
-  /* Flat Card Surface */
+  /* High-Elevation Card Surface */
   .kb-card-elevated {
-    @apply bg-white dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 transition-colors;
+    @apply bg-white dark:bg-zinc-900 rounded-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_14px_40px_-6px_rgba(15,23,42,0.10),0_4px_14px_-2px_rgba(15,23,42,0.05)] transition-all duration-200;
+  }
+
+  /* Elevated Navbar Surface */
+  .kb-navbar-elevated {
+    @apply bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-zinc-800 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_-1px_rgba(15,23,42,0.04)];
   }
 
   /* Custom input */
   .kb-input {
-    @apply w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-colors;
+    @apply w-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-colors shadow-sm;
   }
 
-  /* Primary flat action button */
+  /* Primary action button */
   .kb-btn-primary {
-    @apply bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium px-4 py-2 rounded-md shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Google Pay Flat Action Button */
+  /* Google Pay Action Button */
   .kb-btn-gpay {
-    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-4 py-2 rounded-md shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Secondary flat action button */
+  /* Secondary action button */
   .kb-btn-secondary {
-    @apply bg-white hover:bg-slate-50 active:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-medium px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-white hover:bg-slate-50 active:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-medium px-4 py-2 rounded-md shadow-sm transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* Flat status pill */
+  /* Status pill */
   .kb-pill {
     @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors;
   }

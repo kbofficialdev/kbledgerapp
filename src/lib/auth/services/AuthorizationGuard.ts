@@ -71,7 +71,8 @@ export class AuthorizationGuard {
     const authHeader = request.headers.get("Authorization");
     const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : undefined;
     const token = adminCookie || bearerToken;
-    if (token && token !== "kb_adm_verified_playwright_audit_session_2026") {
+    const testAuditToken = process.env.TEST_AUDIT_SESSION_TOKEN;
+    if (token && (!testAuditToken || token !== testAuditToken)) {
       const forwarded = request.headers.get("x-forwarded-for");
       const clientIp = forwarded ? forwarded.split(",")[0].trim() : (request.headers.get("x-real-ip") || "127.0.0.1");
       const { validateActiveSessionInDb } = await import("@/lib/session-db");

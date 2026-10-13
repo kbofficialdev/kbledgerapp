@@ -17,20 +17,14 @@ async function capturePreviews() {
     viewport: { width: 1440, height: 900 },
   });
 
+  const { createAdminToken } = await import("../src/lib/auth-session");
+  const signedToken = await createAdminToken("ADMIN_QA_HARNESS");
+
   // Inject admin session cookie
   await context.addCookies([
     {
       name: "kb_admin_session",
-      value: "kb_adm_verified_playwright_audit_session_2026",
-      domain: "localhost",
-      path: "/",
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
-    },
-    {
-      name: "kb_customer_session",
-      value: "kb_cust_verified_audit_session_2026",
+      value: signedToken,
       domain: "localhost",
       path: "/",
       httpOnly: true,

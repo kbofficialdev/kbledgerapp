@@ -23,7 +23,7 @@ export default function CustomerPortalLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-black selection:text-white">
+    <div className="min-h-screen kb-animated-bg text-slate-900 flex flex-col selection:bg-black selection:text-white">
       {/* Customer Unified Navbar */}
       <CustomerNavbar />
 

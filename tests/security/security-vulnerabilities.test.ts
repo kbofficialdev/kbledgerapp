@@ -1,5 +1,6 @@
 import { TestResult, TestSuiteResult } from "../types";
 import { PaymentSecurityPolicyEngine } from "../../src/lib/payment-policies";
+import { createAdminToken } from "../../src/lib/auth-session";
 
 const BASE_URL = process.env.TEST_BASE_URL || "http://127.0.0.1:3000";
 
@@ -7,9 +8,10 @@ export async function runSecurityVulnerabilityTests(): Promise<TestSuiteResult> 
   const tests: TestResult[] = [];
   const suiteStart = performance.now();
 
+  const signedToken = process.env.QA_RUNTIME_SESSION_TOKEN || (await createAdminToken("ADMIN_QA_HARNESS"));
   const authHeaders = {
-    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
-    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+    Cookie: `kb_admin_session=${signedToken}`,
+    Authorization: `Bearer ${signedToken}`,
   };
 
   // Test 1: SQL Injection Immunity via Prisma ORM Parameterized Queries

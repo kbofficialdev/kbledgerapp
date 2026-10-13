@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createAdminToken, requireAdminSession, setAdminCookie } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { username = "kbadmin", faceDescriptor, fallbackPin, sessionToken } = body;
+    const { username = "kbadmin", faceDescriptor, fallbackPin } = body;
 
     if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length < 32) {
       return NextResponse.json(
@@ -21,20 +22,16 @@ export async function POST(req: NextRequest) {
     });
 
     // If admin face is already enrolled:
-    // Registration is disabled! Only allow update if caller is an authenticated admin with a valid session
+    // Registration is disabled unless caller holds a valid cryptographically signed Admin session
     if (existingAdmin) {
-      const authHeader = req.headers.get("authorization") || "";
-      const isAuthValid =
-        sessionToken?.startsWith("kb_adm_") ||
-        authHeader.includes("kb_adm_");
-
-      if (!isAuthValid) {
+      const auth = await requireAdminSession(req);
+      if (!auth.authorized) {
         return NextResponse.json(
           {
             success: false,
             registrationDisabled: true,
             error:
-              "Admin registration is permanently disabled. Administrator face is already enrolled. Please login using face recognition.",
+              "Admin registration is permanently disabled. Administrator face is already enrolled.",
           },
           { status: 403 }
         );
@@ -49,7 +46,7 @@ export async function POST(req: NextRequest) {
           username: username.trim(),
           isFaceEnrolled: true,
           faceDescriptor: faceDescriptor,
-          fallbackPinHash: fallbackPin || process.env.ADMIN_FALLBACK_PIN || null,
+          fallbackPinHash: fallbackPin || existingAdmin.fallbackPinHash || null,
         },
       });
     } else {
@@ -64,8 +61,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Generate initial session token
-    const newSessionToken = `kb_adm_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const newSessionToken = await createAdminToken(admin.username);
 
     // Log enrollment event
     await prisma.systemAuditLog.create({
@@ -76,7 +72,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Admin face biometrics enrolled successfully! Registration is now permanently disabled.",
       sessionToken: newSessionToken,
@@ -86,6 +82,8 @@ export async function POST(req: NextRequest) {
         isFaceEnrolled: admin.isFaceEnrolled,
       },
     });
+    setAdminCookie(response, newSessionToken);
+    return response;
   } catch (error: any) {
     console.error("Enrollment error:", error);
     return NextResponse.json(

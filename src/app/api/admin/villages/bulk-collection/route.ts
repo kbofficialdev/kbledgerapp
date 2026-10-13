@@ -94,91 +94,47 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Execute atomic bulk update in PostgreSQL
-    const results = await prisma.$transaction(async (tx) => {
-      const processed: any[] = [];
-      let totalAmountProcessed = 0;
+    // Execute ACID bulk collection updates with FIFO order allocation & savepoints
+    const { executeAcidPaymentSettlement } = await import("@/lib/acid-ledger");
+    const processed: any[] = [];
+    let totalAmountProcessed = 0;
 
-      for (const entry of validEntries) {
-        const customer = await tx.customer.findUnique({
-          where: { customerCode: entry.customerCode },
-        });
+    for (const entry of validEntries) {
+      const customer = await prisma.customer.findUnique({
+        where: { customerCode: entry.customerCode },
+      });
 
-        if (!customer) {
-          continue; // Skip unrecognized customer codes
-        }
-
-        const balanceBefore = Number(customer.currentBalance);
-        const amountToCredit = entry.collectedAmount;
-        const balanceAfter = Math.max(0, balanceBefore - amountToCredit);
-
-        // 1. Decrement customer balance
-        await tx.customer.update({
-          where: { id: customer.id },
-          data: {
-            currentBalance: new Decimal(balanceAfter.toFixed(2)),
-          },
-        });
-
-        // 2. Create Payment record
-        const paymentRef = `COL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
-        await tx.payment.create({
-          data: {
-            paymentRef,
-            customerId: customer.id,
-            amount: new Decimal(amountToCredit.toFixed(2)),
-            method: "CASH",
-            status: "SUCCESS",
-            notes: `Field collection import: ${entry.notes}`,
-            paidAt: new Date(),
-          },
-        });
-
-        // 3. Create LedgerEntry record
-        await tx.ledgerEntry.create({
-          data: {
-            customerId: customer.id,
-            entryType: "PAYMENT_CREDIT",
-            creditAmount: new Decimal(amountToCredit.toFixed(2)),
-            runningBalance: new Decimal(balanceAfter.toFixed(2)),
-            description: `Field Cash Collection (${paymentRef}) - ${entry.notes}`,
-            entryDate: new Date(),
-          },
-        });
-
-        // 4. Create TransactionAudit record
-        const transactionRef = `TXN-COL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
-        await tx.transactionAudit.create({
-          data: {
-            transactionRef,
-            customerId: customer.id,
-            amount: new Decimal(amountToCredit.toFixed(2)),
-            method: "CASH",
-            status: "SUCCESS",
-            balanceBefore: new Decimal(balanceBefore.toFixed(2)),
-            balanceAfter: new Decimal(balanceAfter.toFixed(2)),
-            ipAddress: clientIp,
-            userAgent,
-            notes: `Excel bulk collection: ${entry.notes}`,
-          },
-        });
-
-        totalAmountProcessed += amountToCredit;
-        processed.push({
-          customerCode: customer.customerCode,
-          customerName: customer.name,
-          amountCredited: amountToCredit,
-          balanceBefore,
-          balanceAfter,
-        });
+      if (!customer) {
+        continue; // Skip unrecognized customer codes
       }
 
-      return {
-        count: processed.length,
-        totalAmount: Number(totalAmountProcessed.toFixed(2)),
-        processed,
-      };
-    });
+      const paymentRef = `COL-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
+      const settlement = await executeAcidPaymentSettlement({
+        customerId: customer.id,
+        amount: entry.collectedAmount,
+        method: "CASH",
+        paymentRef,
+        notes: `Field collection import: ${entry.notes}`,
+        ipAddress: clientIp,
+        userAgent,
+      });
+
+      totalAmountProcessed += settlement.amountPaid;
+      processed.push({
+        customerCode: customer.customerCode,
+        customerName: customer.name,
+        amountCredited: settlement.amountPaid,
+        balanceBefore: settlement.balanceBefore,
+        balanceAfter: settlement.balanceAfter,
+        allocations: settlement.allocations,
+      });
+    }
+
+    const results = {
+      count: processed.length,
+      totalAmount: Number(totalAmountProcessed.toFixed(2)),
+      processed,
+    };
 
     return NextResponse.json({
       success: true,

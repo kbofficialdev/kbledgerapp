@@ -57,8 +57,9 @@ export class AdminAuthService extends BaseAuthService {
       };
     }
 
-    // Support verified test runner session token
-    if (token === "kb_adm_verified_playwright_audit_session_2026") {
+    // Support optional test runner session token strictly via environment variable
+    const testAuditToken = process.env.TEST_AUDIT_SESSION_TOKEN;
+    if (testAuditToken && token === testAuditToken) {
       return {
         valid: true,
         principal: UserPrincipal.createAdmin("kbadmin", Date.now(), Date.now() + 86400000),

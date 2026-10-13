@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendCustomerWelcomeEmail } from "@/lib/email";
+import { requireAdminSession } from "@/lib/auth-session";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await requireAdminSession(req);
+    if (!auth.authorized) return auth.response!;
+
     const customerId = params.id;
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },

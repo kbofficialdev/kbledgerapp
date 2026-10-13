@@ -2,6 +2,7 @@ import { TestResult, TestSuiteResult } from "../types";
 import { computeOrderTotals } from "../unit/ledger-math.test";
 import { computeCosineSimilarity } from "../unit/biometrics.test";
 import { PaymentSecurityPolicyEngine } from "../../src/lib/payment-policies";
+import { createAdminToken } from "../../src/lib/auth-session";
 
 const BASE_URL = process.env.TEST_BASE_URL || "http://127.0.0.1:3000";
 
@@ -31,9 +32,10 @@ export async function runPerformanceBenchmarkTests(): Promise<{
   let globalP50 = 0;
   let globalP95 = 0;
 
+  const signedToken = process.env.QA_RUNTIME_SESSION_TOKEN || (await createAdminToken("ADMIN_QA_HARNESS"));
   const authHeaders = {
-    Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
-    Authorization: "Bearer kb_adm_verified_playwright_audit_session_2026",
+    Cookie: `kb_admin_session=${signedToken}`,
+    Authorization: `Bearer ${signedToken}`,
   };
 
   // Benchmark 1: API Response Latency for GET /api/villages (20 samples)
@@ -91,7 +93,7 @@ export async function runPerformanceBenchmarkTests(): Promise<{
         const res = await fetch(`${BASE_URL}/api/payments/cashfree/create-order`, {
           method: "POST",
           headers: {
-            Cookie: "kb_admin_session=kb_adm_verified_playwright_audit_session_2026",
+            ...authHeaders,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

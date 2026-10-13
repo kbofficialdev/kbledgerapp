@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateCustomItemId, generateOrderNumber } from "@/lib/utils";
 import { requireAdminSession } from "@/lib/auth-session";
+import { extractClientIp } from "@/lib/session-db";
+import { executeAcidOrderCreation } from "@/lib/acid-ledger";
 import { sanitizeApiError } from "@/lib/api-error";
 
 export const dynamic = "force-dynamic";
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify village and customer
+    // Verify village and customer exist before starting ACID transaction
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
     });
@@ -162,165 +163,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate and calculate totals
-    let calculatedTotal = 0;
-    const sanitizedItems = items.map((item: any) => {
-      const name = item.name?.trim() || "Item";
-      const quantity = Math.max(0.001, parseFloat(item.quantity) || 1);
-      const unit = item.unit?.trim() || "pcs";
-      const pricePerUnit = Math.max(0, parseFloat(item.pricePerUnit) || 0);
-      const lineTotal = Math.round(quantity * pricePerUnit * 100) / 100;
-      calculatedTotal += lineTotal;
-
-      return {
-        customItemId: item.customItemId?.trim() || generateCustomItemId(),
-        name,
-        quantity,
-        unit,
-        pricePerUnit,
-        lineTotal,
-      };
-    });
-
-    calculatedTotal = Math.round(calculatedTotal * 100) / 100;
-
-    let finalPaidAmount = 0;
-    let finalCreditAmount = 0;
-
-    if (paymentType === "CREDIT") {
-      finalPaidAmount = 0;
-      finalCreditAmount = calculatedTotal;
-    } else if (paymentType === "DEBIT") {
-      finalPaidAmount = calculatedTotal;
-      finalCreditAmount = 0;
-    } else if (paymentType === "PARTIAL") {
-      finalPaidAmount = Math.min(calculatedTotal, Math.max(0, parseFloat(rawPaidAmount) || 0));
-      finalCreditAmount = Math.round((calculatedTotal - finalPaidAmount) * 100) / 100;
-    }
-
-    const orderNumber = generateOrderNumber();
-
-    // Atomic execution in a Prisma Transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Order
-      const order = await tx.order.create({
-        data: {
-          orderNumber,
-          villageId,
-          customerId,
-          totalAmount: calculatedTotal,
-          paidAmount: finalPaidAmount,
-          creditAmount: finalCreditAmount,
-          paymentType,
-          paymentStatus: "SUCCESS",
-          notes: notes?.trim() || null,
-          items: {
-            create: sanitizedItems.map((i) => ({
-              customItemId: i.customItemId,
-              name: i.name,
-              quantity: i.quantity,
-              unit: i.unit,
-              pricePerUnit: i.pricePerUnit,
-              lineTotal: i.lineTotal,
-            })),
-          },
-        },
-        include: { items: true },
-      });
-
-      // 2. If payment was made (Debit or Partial Paid), record or link Payment
-      let paymentRecord = null;
-      if (finalPaidAmount > 0) {
-        if (cashfreeOrderId) {
-          const existingPayment = await tx.payment.findUnique({
-            where: { cashfreeOrderId },
-          });
-          if (existingPayment) {
-            paymentRecord = await tx.payment.update({
-              where: { id: existingPayment.id },
-              data: {
-                orderId: order.id,
-                amount: finalPaidAmount,
-                status: "SUCCESS",
-                method: paymentMethod || "CASHFREE_ELEMENTS",
-                cashfreePaymentId: cashfreePaymentId || existingPayment.cashfreePaymentId,
-                paymentSessionId: paymentSessionId || existingPayment.paymentSessionId,
-                paidAt: new Date(),
-                notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
-              },
-            });
-          }
-        }
-
-        if (!paymentRecord) {
-          paymentRecord = await tx.payment.create({
-            data: {
-              paymentRef: `PAY-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
-              orderId: order.id,
-              customerId,
-              amount: finalPaidAmount,
-              method: paymentMethod,
-              status: "SUCCESS",
-              cashfreeOrderId: cashfreeOrderId || null,
-              cashfreePaymentId: cashfreePaymentId || null,
-              paymentSessionId: paymentSessionId || null,
-              merchantTxnId: merchantTxnId || null,
-              gpayTransactionId: gpayTransactionId || null,
-              upiRefId: upiRefId || null,
-              bankRrn: bankRrn || null,
-              payerVpa: payerVpa || null,
-              notes: notes ? `Counter bill payment for ${orderNumber} - ${notes}` : `Counter bill payment for ${orderNumber}`,
-            },
-          });
-        }
-      }
-
-      // 3. Update Customer Current Balance:
-      // If customer owed credit (Udhaar), increment currentBalance by finalCreditAmount
-      let newBalance = Number(customer.currentBalance);
-      if (finalCreditAmount > 0) {
-        const updated = await tx.customer.update({
-          where: { id: customerId },
-          data: {
-            currentBalance: {
-              increment: finalCreditAmount,
-            },
-          },
-        });
-        newBalance = Number(updated.currentBalance);
-      }
-
-      // 4. Record Bahi-Khata Ledger Entries
-      // Entry 1: Bill Debit
-      const itemsSummary = sanitizedItems.map((i) => `${i.name} (${i.quantity} ${i.unit})`).join(", ");
-      await tx.ledgerEntry.create({
-        data: {
-          customerId,
-          orderId: order.id,
-          entryType: "BILL_DEBIT",
-          debitAmount: calculatedTotal,
-          creditAmount: 0,
-          runningBalance: Number(customer.currentBalance) + calculatedTotal,
-          description: `Bill #${orderNumber} [${itemsSummary.slice(0, 80)}]`,
-        },
-      });
-
-      // Entry 2: Payment Credit (if paid in part or full)
-      if (finalPaidAmount > 0) {
-        await tx.ledgerEntry.create({
-          data: {
-            customerId,
-            orderId: order.id,
-            entryType: "PAYMENT_CREDIT",
-            debitAmount: 0,
-            creditAmount: finalPaidAmount,
-            runningBalance: newBalance,
-            description: `Payment received (${paymentMethod}) against Bill #${orderNumber}`,
-          },
-        });
-      }
-
-      return { order, paymentRecord, newBalance };
+    const result = await executeAcidOrderCreation({
+      villageId,
+      customerId,
+      items,
+      paymentType,
+      paidAmount: parseFloat(rawPaidAmount) || 0,
+      paymentMethod: paymentMethod || "CASH",
+      notes,
+      merchantTxnId,
+      gpayTransactionId,
+      cashfreeOrderId,
+      cashfreePaymentId,
+      paymentSessionId,
+      upiRefId,
+      bankRrn,
+      payerVpa,
+      ipAddress: extractClientIp(req),
+      userAgent: req.headers.get("user-agent"),
     });
 
     return NextResponse.json(
